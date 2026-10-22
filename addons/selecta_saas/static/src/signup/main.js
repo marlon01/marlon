@@ -145,7 +145,8 @@ class Signup extends Component {
                         <div class="su-terms" t-att-class="{ 'su-invalid': state.errors.accept_terms }">
                             <label class="sl-check">
                                 <input id="su-accept_terms" type="checkbox" t-model="state.accept_terms" t-on-change="() => this.clear('accept_terms')" t-att-aria-invalid="state.errors.accept_terms ? 'true' : null"/>
-                                <span>J'accepte les conditions d'utilisation et la politique de confidentialité.</span>
+                                <span>J'accepte les <a t-att-href="config.terms_url or '/selecta/conditions'" target="_blank" rel="noopener" t-on-click="onLegalClick">conditions d'utilisation<span class="sl-sr"> (nouvel onglet)</span></a>
+                                    et la <a t-att-href="config.privacy_url or '/selecta/confidentialite'" target="_blank" rel="noopener" t-on-click="onLegalClick">politique de confidentialité<span class="sl-sr"> (nouvel onglet)</span></a>.</span>
                             </label>
                             <div t-if="state.errors.accept_terms" id="su-err-accept_terms" class="su-err" t-esc="state.errors.accept_terms"/>
                         </div>
@@ -238,6 +239,11 @@ class Signup extends Component {
         this.state.plan = code;
         this.clear("plan");
     }
+    /** Les liens légaux s'ouvrent dans un nouvel onglet sans cocher ni décocher la case qui les contient. */
+    onLegalClick(ev) {
+        ev.stopPropagation();
+    }
+
     clear(field) {
         if (this.state.errors[field]) {
             delete this.state.errors[field];
@@ -270,7 +276,7 @@ class Signup extends Component {
             errors.password = "Le mot de passe doit comporter au moins 10 caractères, dont des lettres et des chiffres.";
         }
         if (!s.accept_terms) {
-            errors.accept_terms = "Vous devez accepter les conditions d'utilisation.";
+            errors.accept_terms = "Vous devez accepter les conditions d'utilisation et la politique de confidentialité.";
         }
         return errors;
     }

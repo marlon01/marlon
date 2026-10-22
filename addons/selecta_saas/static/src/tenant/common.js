@@ -11,6 +11,8 @@ ICONS.building = `<path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-5h6v5M9 10h.01M15 10
 ICONS.phone = `<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/>`;
 ICONS.mail = `<path d="M3 5h18v14H3zM3 6l9 7 9-7"/>`;
 ICONS.external = `<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/>`;
+ICONS.card = `<path d="M2 6a1 1 0 0 1 1-1h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1zM2 10h20M6 15h4"/>`;
+ICONS.mobile = `<path d="M7 3a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1zM11 18h2"/>`;
 
 /**
  * État partagé : la page « Abonnement » le met à jour après chaque opération, le bandeau
@@ -42,6 +44,16 @@ export const FEATURE_LABELS = {
     llm: "Assistant de rédaction (LLM)",
     branding: "Personnalisation (logo, couleur, slogan)",
 };
+
+/** Prestataires de paiement en ligne (code enregistré sur la facture → nom affiché). */
+export const PROVIDER_NAMES = { cinetpay: "CinetPay", stripe: "Stripe" };
+
+export function providerName(code) {
+    return PROVIDER_NAMES[code] || code || "";
+}
+
+/** Pages légales publiques (servies par le module, hors console). */
+export const LEGAL_LINKS = { terms: "/selecta/conditions", privacy: "/selecta/confidentialite" };
 
 export function fmtMoney(amount, symbol = "$") {
     if (amount === null || amount === undefined) {

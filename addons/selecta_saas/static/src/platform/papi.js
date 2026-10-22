@@ -15,6 +15,9 @@ for (const [k, v] of Object.entries({
     arrowLeft: P("M19 12H5M12 19l-7-7 7-7"),
     external: P("M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"),
     pause: P("M6 4h4v16H6zM14 4h4v16h-4z"),
+    mail: P("M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zM3 7l9 6 9-6"),
+    send: P("M22 2L11 13M22 2l-7 20-4-9-9-4z"),
+    card: P("M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zM2 10h20M6 15h4"),
 })) {
     ICONS[k] = ICONS[k] || v;
 }
@@ -50,6 +53,46 @@ export const TENANT_STATES = [
 ];
 export const TENANT_BADGE = Object.fromEntries(TENANT_STATES.map((s) => [s.key, s.badge]));
 export const INVOICE_BADGE = { open: "", pending: "sl-badge-warn", paid: "sl-badge-ok", rejected: "sl-badge-danger", cancelled: "" };
+export const MAIL_STATES = {
+    queued: { label: "En file", badge: "sl-badge-info" },
+    sent: { label: "Envoyé", badge: "sl-badge-ok" },
+    failed: { label: "Échec", badge: "sl-badge-danger" },
+    cancelled: { label: "Annulé", badge: "" },
+};
+export const PROVIDER_NAMES = { cinetpay: "CinetPay", stripe: "Stripe" };
+
+/**
+ * Mentions complémentaires d'une facture : avoir, prorata, catégorie différée, paiement en ligne.
+ * Retourne [{label, cls, title}] ; cls : "" | "is-ok" | "is-warn".
+ */
+export function invoiceFlags(i) {
+    const out = [];
+    if (i.prorated) {
+        out.push({ label: "prorata", cls: "", title: "Passage à une catégorie supérieure : la nouvelle période commence à la validation." });
+    }
+    if (i.deferred_plan) {
+        const waiting = i.state === "paid" && !i.plan_applied;
+        out.push({
+            label: waiting ? "catégorie appliquée à l'échéance (en attente)" : "catégorie appliquée à l'échéance",
+            cls: waiting ? "is-warn" : "",
+            title: "Catégorie inférieure : ses limites s'appliquent au début de la période facturée.",
+        });
+    }
+    const provider = PROVIDER_NAMES[i.online_provider] || i.online_provider;
+    if (provider) {
+        if (i.state === "paid") {
+            out.push({ label: `payée en ligne via ${provider}`, cls: "is-ok", title: "" });
+        } else if (i.state === "open" || i.state === "rejected") {
+            out.push({
+                label: i.online_message ? `paiement en ligne via ${provider} non abouti` : `paiement en ligne commencé via ${provider}`,
+                cls: i.online_message ? "is-warn" : "",
+                title: i.online_message || "",
+            });
+        }
+    }
+    return out;
+}
+
 export const CYCLE_LABELS = { monthly: "Mensuel", yearly: "Annuel" };
 
 export function money(value, symbol = "$") {

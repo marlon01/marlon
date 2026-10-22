@@ -331,7 +331,7 @@
                                 </details>
                                 <details>
                                     <summary>Quels moyens de paiement acceptez-vous&#160;?</summary>
-                                    <p>Mobile Money (M-Pesa, Airtel Money, Orange Money), virement bancaire ou lien de paiement en ligne. Après paiement, vous déclarez la référence depuis votre console, avec un justificatif si vous le souhaitez&#160;; notre équipe valide et votre abonnement est activé.</p>
+                                    <p>Mobile Money (M-Pesa, Airtel Money, Orange Money), carte bancaire ou virement. Lorsque le paiement en ligne est proposé dans votre console, l’abonnement est activé dès la confirmation de l’opérateur. Sinon, vous déclarez la référence de votre paiement, avec un justificatif si vous le souhaitez&#160;; notre équipe valide et votre abonnement est activé.</p>
                                 </details>
                                 <details>
                                     <summary>Puis-je changer de catégorie&#160;?</summary>
@@ -339,7 +339,7 @@
                                 </details>
                                 <details>
                                     <summary>Mes données sont-elles en sécurité et confidentielles&#160;?</summary>
-                                    <p>Les données de chaque structure sont cloisonnées. La surveillance webcam est analysée localement sur le poste du candidat&#160;: aucun flux vidéo n’est transmis, seuls les clichés probatoires d’incident sont conservés. Les codes secrets ne sont jamais stockés en clair et toutes les opérations sont journalisées.</p>
+                                    <p>Les données de chaque structure sont cloisonnées. La surveillance webcam est analysée localement sur le poste du candidat&#160;: aucun flux vidéo n’est transmis, seuls les clichés probatoires d’incident sont conservés. Les codes secrets ne sont jamais stockés en clair et toutes les opérations sont journalisées. Le détail figure dans notre <a href="/selecta/confidentialite">politique de confidentialité</a>.</p>
                                 </details>
                                 <details>
                                     <summary>Combien de candidats puis-je évaluer&#160;?</summary>
@@ -395,7 +395,10 @@
                     </div>
                     <div class="lp-container lp-foot-legal">
                         <span>© <t t-out="year"/> <t t-out="issuer"/>. Tous droits réservés.</span>
-                        <span>SELECTA — concours et recrutements en ligne sécurisés.</span>
+                        <nav class="lp-foot-legal-links" aria-label="Informations légales">
+                            <a href="/selecta/conditions">Conditions d’utilisation</a>
+                            <a href="/selecta/confidentialite">Politique de confidentialité</a>
+                        </nav>
                     </div>
                 </footer>
 

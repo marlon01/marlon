@@ -73,6 +73,8 @@
 .su-terms { display: grid; gap: 6px; font-size: 14px; }
 .su-terms .sl-check { align-items: flex-start; }
 .su-terms .sl-check input { margin: 1px 0 0; flex: none; }
+.su-terms a { color: var(--sl-ink); font-weight: 600; text-decoration: underline; text-decoration-color: var(--sl-border-strong); text-underline-offset: 2px; position: relative; }
+.su-terms a:hover { text-decoration-color: currentColor; }
 .su-submit { width: 100%; }
 .su-login { margin: 0; text-align: center; font-size: 14.5px; color: var(--sl-ink-soft); }
 .su-login a { font-weight: 600; }

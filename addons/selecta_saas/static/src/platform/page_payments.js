@@ -1,7 +1,7 @@
 /** @odoo-module */
 import { Component, onWillStart, useState, xml } from "@odoo/owl";
 import { confirmDialog, Icon, notify } from "@selecta_concours/common/ui";
-import { CYCLE_LABELS, errMessage, fmtDate, fmtDateTime, INVOICE_BADGE, money, papi, pstore } from "@selecta_saas/platform/papi";
+import { CYCLE_LABELS, errMessage, fmtDate, fmtDateTime, INVOICE_BADGE, invoiceFlags, money, papi, PROVIDER_NAMES, pstore } from "@selecta_saas/platform/papi";
 
 export class PaymentsPage extends Component {
     static components = { Icon };
@@ -37,12 +37,22 @@ export class PaymentsPage extends Component {
                         <tr t-foreach="state.rows" t-as="i" t-key="i.id">
                             <td data-label="Structure"><a t-att-href="'#/tenants/' + i.tenant_id" class="pf-cell-title" t-esc="i.tenant"/></td>
                             <td data-label="Facture"><span class="sl-mono" t-esc="i.name"/><div class="sl-muted ad-small"><t t-esc="i.plan"/> · <t t-esc="cycle[i.billing_cycle]"/></div></td>
-                            <td data-label="Montant" class="num sl-figures pf-amount" t-esc="money(i.amount, i.symbol)"/>
+                            <td data-label="Montant" class="num">
+                                <span class="sl-figures pf-amount" t-esc="money(i.amount, i.symbol)"/>
+                                <div t-if="i.credit_amount" class="sl-muted ad-small pf-nowrap" t-att-title="'Prix de la période : ' + money(i.gross_amount, i.symbol)">avoir −<t t-esc="money(i.credit_amount, i.symbol)"/></div>
+                            </td>
                             <td data-label="Statut" t-if="state.tab == 'all'">
                                 <span t-attf-class="sl-badge {{badge[i.state]}}" t-esc="i.state_label"/>
                                 <div t-if="i.reject_reason" class="ad-small ad-danger-text pf-clip" t-att-title="i.reject_reason" t-esc="i.reject_reason"/>
                             </td>
-                            <td data-label="Moyen" class="ad-small" t-esc="i.payment_method_label or '—'"/>
+                            <td data-label="Moyen" class="ad-small">
+                                <t t-esc="i.payment_method_label or (i.online_provider ? 'En ligne' : '—')"/>
+                                <div t-if="i.online_provider" class="sl-muted">via <t t-esc="provider(i)"/></div>
+                                <div t-if="flags(i).length" class="pf-flags">
+                                    <span t-foreach="flags(i)" t-as="fl" t-key="fl_index" t-attf-class="pf-flag {{fl.cls}}" t-att-title="fl.title or false" t-esc="fl.label"/>
+                                </div>
+                                <div t-if="i.online_message and i.state != 'paid'" class="pf-warn-text pf-clip" t-att-title="i.online_message" t-esc="i.online_message"/>
+                            </td>
                             <td data-label="Référence" class="ad-small">
                                 <div class="sl-mono" t-esc="i.payment_reference or '—'"/>
                                 <a t-if="i.payer_phone" t-att-href="'tel:' + i.payer_phone" t-esc="i.payer_phone"/>
@@ -152,6 +162,13 @@ export class PaymentsPage extends Component {
         } finally {
             this.state.busy = 0;
         }
+    }
+    flags(i) {
+        // Le prestataire figure déjà dans la colonne : seules les autres mentions sont reprises.
+        return invoiceFlags(i).filter((f) => !/en ligne via/.test(f.label));
+    }
+    provider(i) {
+        return PROVIDER_NAMES[i.online_provider] || i.online_provider;
     }
     money(v, s) {
         return money(v, s);

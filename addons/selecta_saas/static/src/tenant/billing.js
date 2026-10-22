@@ -1,21 +1,24 @@
 /** @odoo-module */
 /* Page « Abonnement » de la console d'une structure : catégorie, consommation, offres, paiement, factures. */
-import { Component, onWillStart, useRef, useState, xml } from "@odoo/owl";
+import { Component, onMounted, onWillStart, onWillUnmount, useRef, useState, xml } from "@odoo/owl";
 import { extensions, store } from "@selecta_concours/admin/store";
 import { api } from "@selecta_concours/common/rpc";
 import { confirmDialog, Icon, notify } from "@selecta_concours/common/ui";
 import { fmtDateTime, fmtNum, readFileAsDataURL } from "@selecta_concours/common/utils";
 import { SubscriptionBanner } from "@selecta_saas/tenant/banner";
+import { CheckoutDialog } from "@selecta_saas/tenant/checkout_dialog";
 import {
-    CYCLE_LABELS, FEATURE_LABELS, INVOICE_BADGE, TENANT_BADGE, daysLabel, fmtDate, fmtMoney, saasBus,
+    CYCLE_LABELS, FEATURE_LABELS, INVOICE_BADGE, LEGAL_LINKS, TENANT_BADGE, daysLabel, fmtDate, fmtMoney, providerName,
+    saasBus,
 } from "@selecta_saas/tenant/common";
 import { printInvoice } from "@selecta_saas/tenant/invoice_print";
 
 const PROOF_MAX = 5 * 1024 * 1024;
 const PROOF_TYPES = ["application/pdf", "image/png", "image/jpeg", "image/webp"];
+const PAYMENT_RESULTS = ["paid", "pending", "failed", "none"];
 
 export class SubscriptionPage extends Component {
-    static components = { Icon };
+    static components = { Icon, CheckoutDialog };
     static template = xml`
         <div class="ad-page ss-page">
             <header class="ad-head">
@@ -27,6 +30,43 @@ export class SubscriptionPage extends Component {
                     <button class="sl-btn sl-btn-ghost sl-btn-sm" t-on-click="() => this.load()" t-att-disabled="state.loading"><Icon name="'refresh'" size="16"/>Actualiser</button>
                 </div>
             </header>
+
+            <section t-if="state.payResult and state.info" t-attf-class="ss-result is-{{payTone}}" t-att-role="state.payResult.status == 'failed' ? 'alert' : 'status'"
+                     aria-labelledby="ss-result-title" tabindex="-1" id="ss-result">
+                <span class="ss-result-icon"><Icon name="payIcon" size="22"/></span>
+                <div class="ss-result-text">
+                    <t t-if="state.payResult.status == 'paid'">
+                        <h2 id="ss-result-title">Paiement confirmé</h2>
+                        <p t-if="state.payResult.credit">Le montant a été couvert par l'avoir de votre abonnement en cours : aucun paiement n'est nécessaire.
+                            <t t-if="state.info.tenant.period_end">Abonnement « <t t-esc="state.info.tenant.plan.name"/> » actif jusqu'au <strong t-esc="date(state.info.tenant.period_end)"/>.</t></p>
+                        <p t-elif="state.info.tenant.period_end">Abonnement « <t t-esc="state.info.tenant.plan.name"/> » actif jusqu'au <strong t-esc="date(state.info.tenant.period_end)"/>. Un reçu vous a été envoyé par e-mail ; la facture est disponible ci-dessous.</p>
+                        <p t-else="">Votre abonnement est actif. La facture acquittée est disponible ci-dessous.</p>
+                        <p t-if="lastPaid and lastPaid.deferred_plan and !lastPaid.plan_applied" class="ad-small">La catégorie « <t t-esc="lastPaid.plan"/> » s'appliquera le <t t-esc="date(lastPaid.period_start)"/>.</p>
+                    </t>
+                    <t t-elif="state.payResult.status == 'pending'">
+                        <h2 id="ss-result-title">Paiement en cours de confirmation par l'opérateur…</h2>
+                        <p>Certaines transactions Mobile Money sont confirmées après quelques minutes. Votre abonnement sera activé automatiquement ;
+                            vous pouvez aussi vérifier maintenant. Ne payez pas une seconde fois.</p>
+                        <p t-if="onlineInvoice and onlineInvoice.online_message" class="ad-small">Réponse de l'opérateur : « <t t-esc="onlineInvoice.online_message"/> »</p>
+                    </t>
+                    <t t-elif="state.payResult.status == 'failed'">
+                        <h2 id="ss-result-title">Le paiement n'a pas abouti</h2>
+                        <p>Aucun montant n'a été débité pour cette tentative<t t-if="onlineInvoice and onlineInvoice.online_message"> (« <t t-esc="onlineInvoice.online_message"/> »)</t>.
+                            Vous pouvez réessayer, choisir un autre moyen de paiement ou régler hors ligne.</p>
+                    </t>
+                    <t t-else="">
+                        <h2 id="ss-result-title">Aucun paiement en ligne constaté</h2>
+                        <p>La transaction a peut-être été abandonnée avant sa validation. Si vous avez été débité, contactez le support SELECTA<t t-if="supportLine"> : <t t-esc="supportLine"/></t>.</p>
+                    </t>
+                </div>
+                <div class="ss-result-actions">
+                    <button t-if="state.payResult.status == 'pending' and onlineInvoice" class="sl-btn sl-btn-sm sl-btn-primary" t-att-disabled="state.checking" t-on-click="checkOnline">
+                        <span t-if="state.checking" class="sl-spinner"/><Icon t-else="" name="'refresh'" size="16"/>Vérifier maintenant
+                    </button>
+                    <button t-if="['failed', 'none'].includes(state.payResult.status) and current and current.state != 'pending'" class="sl-btn sl-btn-sm sl-btn-primary" t-on-click="retryPayment">Réessayer le paiement</button>
+                    <button type="button" class="sl-btn sl-btn-ghost sl-btn-icon" aria-label="Masquer ce message" t-on-click="() => this.state.payResult = null"><Icon name="'x'" size="16"/></button>
+                </div>
+            </section>
 
             <div t-if="state.loading and !state.info" class="ad-loading"><span class="sl-spinner"/> Chargement de l'abonnement…</div>
             <div t-elif="state.error" class="ad-panel ss-error" role="alert">
@@ -89,6 +129,17 @@ export class SubscriptionPage extends Component {
                         <div><div class="ss-eyebrow">Objet</div><div>Catégorie « <t t-esc="current.plan"/> », <t t-esc="cycleLabel(current.billing_cycle).toLowerCase()"/></div></div>
                         <div class="ss-pay-print"><button class="sl-btn sl-btn-sm" t-on-click="() => this.print(current)"><Icon name="'print'" size="16"/>Facture</button></div>
                     </div>
+                    <div t-if="current.credit_amount > 0 or current.deferred_plan or current.prorated" class="ss-pay-detail">
+                        <p t-if="current.credit_amount > 0" class="ss-calc">
+                            <span>Prix de la période <strong class="sl-figures" t-esc="money(current.gross_amount, current.symbol)"/></span>
+                            <span class="ss-calc-op" aria-hidden="true">−</span>
+                            <span><span class="sl-sr">moins l'</span>avoir sur votre abonnement en cours <strong class="sl-figures" t-esc="money(current.credit_amount, current.symbol)"/></span>
+                            <span class="ss-calc-op" aria-hidden="true">=</span>
+                            <span><strong class="sl-figures" t-esc="money(current.amount, current.symbol)"/> à régler</span>
+                        </p>
+                        <p t-if="current.prorated" class="sl-muted ad-small">Changement vers une catégorie supérieure : nouvelle période <t t-esc="current.billing_cycle == 'yearly' ? 'de 12 mois' : 'd’un mois'"/> à compter du paiement.</p>
+                        <p t-if="current.deferred_plan" class="sl-muted ad-small">La catégorie « <t t-esc="current.plan"/> » s'appliquera à l'échéance<t t-if="t.period_end"> du <t t-esc="date(t.period_end)"/></t> ; jusque-là vous conservez votre catégorie actuelle (« <t t-esc="t.plan.name"/> »).</p>
+                    </div>
 
                     <t t-if="current.state == 'pending'">
                         <div class="ss-pending">
@@ -115,14 +166,33 @@ export class SubscriptionPage extends Component {
                             <t t-if="current.reject_reason"> Motif : « <t t-esc="current.reject_reason"/> ».</t>
                             Vérifiez la référence ou le montant, puis déclarez à nouveau votre paiement.
                         </div>
+                        <div t-if="providers.length" class="ss-online" id="ss-online">
+                            <div class="ss-online-head">
+                                <h3>Payer en ligne</h3>
+                                <p class="sl-muted">Paiement sécurisé sur la page de l'opérateur. L'abonnement est activé dès la confirmation, sans déclaration à faire.</p>
+                            </div>
+                            <div class="ss-online-btns">
+                                <button t-foreach="providers" t-as="pv" t-key="pv.code" type="button" class="ss-online-btn" t-att-class="{'is-first': pv_first}"
+                                        t-att-disabled="state.busy or state.redirecting" t-att-aria-busy="state.redirecting == pv.code ? 'true' : 'false'" t-on-click="() => this.payOnline(pv)">
+                                    <span class="ss-online-ico"><span t-if="state.redirecting == pv.code" class="sl-spinner"/><Icon t-else="" name="providerIcon(pv.code)" size="20"/></span>
+                                    <span class="ss-online-label">
+                                        <strong t-esc="state.redirecting == pv.code ? 'Redirection vers ' + providerSplit(pv).name + '…' : providerSplit(pv).title"/>
+                                        <small t-esc="providerSplit(pv).hint"/>
+                                    </span>
+                                    <span class="ss-online-amt sl-figures" t-esc="money(current.amount, current.symbol)"/>
+                                </button>
+                            </div>
+                            <p t-if="current.online_message" class="ss-online-msg" role="status"><Icon name="'alert'" size="15"/>Dernière tentative (<t t-esc="providerLabel(current.online_provider)"/>) : « <t t-esc="current.online_message"/> »</p>
+                        </div>
+                        <h3 t-if="providers.length" class="ss-offline-title"><span>Autre moyen : paiement hors ligne</span></h3>
                         <ol class="ss-steps">
                             <li>
                                 <h3><span>1</span>Réglez <t t-esc="money(current.amount, current.symbol)"/></h3>
                                 <div t-if="state.info.payment_instructions" class="ss-instructions" t-esc="state.info.payment_instructions"/>
                                 <p t-else="" class="sl-muted">Les modalités de paiement vous seront communiquées par le support SELECTA.</p>
                                 <p class="ad-small sl-muted">Indiquez le numéro <strong class="sl-mono" t-esc="current.name"/> en motif de paiement.</p>
-                                <a t-if="state.info.payment_link" class="sl-btn sl-btn-primary" t-att-href="state.info.payment_link" target="_blank" rel="noopener noreferrer">
-                                    Payer en ligne<Icon name="'external'" size="16"/>
+                                <a t-if="state.info.payment_link" class="sl-btn" t-att-class="providers.length ? '' : 'sl-btn-primary'" t-att-href="state.info.payment_link" target="_blank" rel="noopener noreferrer">
+                                    <t t-esc="providers.length ? 'Ouvrir le lien de paiement' : 'Payer en ligne'"/><Icon name="'external'" size="16"/>
                                 </a>
                             </li>
                             <li>
@@ -201,7 +271,8 @@ export class SubscriptionPage extends Component {
                     <div class="ss-plans-head">
                         <div>
                             <h2 id="ss-plans-title">Catégories et tarifs</h2>
-                            <p class="sl-muted">Le changement de catégorie prend effet à la validation du paiement ; la période déjà payée et les jours d'essai restants sont conservés.</p>
+                            <p class="sl-muted">Vers une catégorie supérieure, la part non consommée de votre période est déduite et une nouvelle période démarre au paiement.
+                                Vers une catégorie inférieure, le changement s'applique à l'échéance en cours. Les jours d'essai restants sont conservés.</p>
                         </div>
                         <div class="ss-cycle" role="radiogroup" aria-label="Cycle de facturation">
                             <button type="button" role="radio" t-att-aria-checked="state.cycle == 'monthly' ? 'true' : 'false'"
@@ -238,8 +309,10 @@ export class SubscriptionPage extends Component {
                                 <li t-if="p.support"><Icon name="'phone'" size="15"/>Support : <t t-esc="p.support"/></li>
                             </ul>
                             <button class="sl-btn ss-plan-btn" t-att-class="(p.id == t.plan.id or p.highlight) ? 'sl-btn-primary' : ''"
-                                    t-att-disabled="!canChoose" t-att-title="chooseHint" t-on-click="() => this.choose(p)"
-                                    t-esc="chooseLabel(p)"/>
+                                    t-att-disabled="!canChoose or state.quoting" t-att-title="chooseHint" t-on-click="(ev) => this.choose(p, ev)"
+                                    t-att-aria-busy="state.quoting == p.id ? 'true' : 'false'">
+                                <span t-if="state.quoting == p.id" class="sl-spinner"/><t t-esc="chooseLabel(p)"/>
+                            </button>
                         </article>
                     </div>
                 </section>
@@ -254,15 +327,26 @@ export class SubscriptionPage extends Component {
                     </div>
                     <div t-else="" class="ss-table-wrap">
                         <table class="ad-table">
-                            <thead><tr><th scope="col">Numéro</th><th scope="col">Date</th><th scope="col">Catégorie</th><th scope="col">Cycle</th><th scope="col" class="num">Montant</th><th scope="col">Statut</th><th scope="col">Période</th><th scope="col"><span class="sl-sr">Actions</span></th></tr></thead>
+                            <thead><tr><th scope="col">Numéro</th><th scope="col">Date</th><th scope="col">Catégorie</th><th scope="col">Cycle</th><th scope="col" class="num">Montant réglé</th><th scope="col">Statut</th><th scope="col">Période</th><th scope="col"><span class="sl-sr">Actions</span></th></tr></thead>
                             <tbody>
                                 <tr t-foreach="state.info.invoices" t-as="inv" t-key="inv.id" t-att-class="{'is-muted': inv.state == 'cancelled'}">
                                     <td class="sl-mono" t-esc="inv.name"/>
                                     <td t-esc="date(inv.date, 'medium')"/>
-                                    <td t-esc="inv.plan"/>
+                                    <td>
+                                        <t t-esc="inv.plan"/>
+                                        <small t-if="planNote(inv)" class="ss-cell-note" t-esc="planNote(inv)"/>
+                                    </td>
                                     <td t-esc="cycleLabel(inv.billing_cycle)"/>
-                                    <td class="num sl-figures" t-esc="money(inv.amount, inv.symbol)"/>
-                                    <td><span t-attf-class="sl-badge {{invoiceBadge(inv.state)}}" t-esc="inv.state_label"/></td>
+                                    <td class="num">
+                                        <span class="sl-figures" t-esc="money(inv.amount, inv.symbol)"/>
+                                        <small t-if="inv.credit_amount > 0" class="ss-cell-note">
+                                            <t t-esc="money(inv.gross_amount, inv.symbol)"/> − avoir <t t-esc="money(inv.credit_amount, inv.symbol)"/>
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <span t-attf-class="sl-badge {{invoiceBadge(inv.state)}}" t-esc="inv.state_label"/>
+                                        <small t-if="paidNote(inv)" class="ss-cell-note" t-esc="paidNote(inv)"/>
+                                    </td>
                                     <td class="ad-small" t-esc="periodLabel(inv)"/>
                                     <td class="num"><button class="sl-btn sl-btn-ghost sl-btn-sm" t-on-click="() => this.print(inv)" t-att-aria-label="'Imprimer la facture ' + inv.name"><Icon name="'print'" size="16"/>Facture</button></td>
                                 </tr>
@@ -277,7 +361,14 @@ export class SubscriptionPage extends Component {
                         <a t-if="state.info.support_email" t-att-href="'mailto:' + state.info.support_email"><Icon name="'mail'" size="16"/><t t-esc="state.info.support_email"/></a>
                         <span t-if="state.info.support_phone"><Icon name="'phone'" size="16"/><t t-esc="state.info.support_phone"/></span>
                     </div>
+                    <nav class="ss-legal" aria-label="Informations légales">
+                        <a t-att-href="legal.terms" target="_blank" rel="noopener">Conditions d'utilisation<span class="sl-sr"> (nouvel onglet)</span></a>
+                        <a t-att-href="legal.privacy" target="_blank" rel="noopener">Politique de confidentialité<span class="sl-sr"> (nouvel onglet)</span></a>
+                    </nav>
                 </footer>
+                <CheckoutDialog t-if="state.checkout" plan="state.checkout.plan" cycle="state.checkout.cycle" quote="state.checkout.quote"
+                                tenant="state.info.tenant" replaces="state.checkout.replaces" busy="state.busy"
+                                onConfirm.bind="confirmCheckout" onClose.bind="closeCheckout" onSwitchCycle.bind="switchCheckoutCycle"/>
             </t>
         </div>`;
     static props = { route: { type: Object, optional: true } };
@@ -286,9 +377,48 @@ export class SubscriptionPage extends Component {
         this.proofRef = useRef("proof");
         this.featureKeys = Object.keys(FEATURE_LABELS);
         this.featureLabels = FEATURE_LABELS;
-        this.state = useState({ info: null, loading: true, error: "", busy: false, cycle: "monthly" });
+        this.legal = LEGAL_LINKS;
+        this.state = useState({
+            info: null, loading: true, error: "", busy: false, cycle: "monthly",
+            quoting: null, checkout: null, redirecting: null, checking: false, payResult: null,
+        });
         this.form = useState(this.emptyForm());
+        // Retour du prestataire de paiement : /selecta/admin#/subscription?payment=paid|pending|failed|none
+        const payment = this.props.route?.params?.payment;
+        if (PAYMENT_RESULTS.includes(payment)) {
+            this.state.payResult = { status: payment };
+        }
         onWillStart(() => this.load(true));
+        // Retour arrière depuis la page du prestataire (cache du navigateur) : réactiver les boutons.
+        const onPageShow = (ev) => {
+            if (ev.persisted && this.state.redirecting) {
+                this.state.redirecting = null;
+                this.load();
+            }
+        };
+        window.addEventListener("pageshow", onPageShow);
+        onWillUnmount(() => window.removeEventListener("pageshow", onPageShow));
+        onMounted(() => {
+            if (payment !== undefined) {
+                this.cleanPaymentParam();
+            }
+            if (this.state.payResult) {
+                document.getElementById("ss-result")?.focus({ preventScroll: true });
+            }
+        });
+    }
+
+    /** Retire « ?payment=… » de l'adresse : un rechargement ne réaffiche pas le message. */
+    cleanPaymentParam() {
+        try {
+            const [path, query] = location.hash.split("?");
+            const params = new URLSearchParams(query || "");
+            params.delete("payment");
+            const rest = params.toString();
+            history.replaceState(history.state, "", `${location.pathname}${location.search}${path}${rest ? "?" + rest : ""}`);
+        } catch {
+            // Adresse non modifiable (iframe sandboxée…) : sans incidence.
+        }
     }
 
     emptyForm(method = "") {
@@ -326,6 +456,23 @@ export class SubscriptionPage extends Component {
     get current() {
         const invoices = this.state.info?.invoices || [];
         return invoices.find((i) => i.state === "pending") || invoices.find((i) => ["open", "rejected"].includes(i.state)) || null;
+    }
+    get providers() {
+        return this.state.info?.online_providers || [];
+    }
+    /** Facture sur laquelle une transaction en ligne a été ouverte (pour « Vérifier maintenant »). */
+    get onlineInvoice() {
+        const invoices = this.state.info?.invoices || [];
+        return invoices.find((i) => ["open", "rejected"].includes(i.state) && i.online_provider) || null;
+    }
+    get lastPaid() {
+        return (this.state.info?.invoices || []).find((i) => i.state === "paid") || null;
+    }
+    get payTone() {
+        return { paid: "ok", pending: "warn", failed: "danger" }[this.state.payResult?.status] || "info";
+    }
+    get payIcon() {
+        return { paid: "check", pending: "clock", failed: "alert" }[this.state.payResult?.status] || "receipt";
     }
     get canChoose() {
         const t = this.state.info.tenant;
@@ -442,6 +589,42 @@ export class SubscriptionPage extends Component {
         }
         return "Choisir";
     }
+    providerIcon(code) {
+        return code === "cinetpay" ? "mobile" : "card";
+    }
+    providerLabel(code) {
+        return providerName(code);
+    }
+    /** « Mobile Money ou carte (CinetPay) » → titre « Mobile Money ou carte », mention « via CinetPay ». */
+    providerSplit(pv) {
+        const m = /^(.*?)\s*\(([^)]+)\)\s*$/.exec(pv.label || "");
+        const name = m ? m[2] : providerName(pv.code);
+        return { title: m ? m[1] : pv.label, name, hint: `via ${name}` };
+    }
+    planNote(inv) {
+        if (inv.deferred_plan) {
+            if (inv.state === "paid") {
+                return inv.plan_applied ? "Catégorie inférieure, appliquée à l'échéance" : `Appliquée le ${fmtDate(inv.period_start, "medium")}`;
+            }
+            return "Appliquée à l'échéance en cours";
+        }
+        if (inv.prorated) {
+            return "Changement de catégorie, avoir déduit";
+        }
+        return "";
+    }
+    paidNote(inv) {
+        if (inv.state !== "paid") {
+            return inv.state === "open" && inv.online_message ? "Tentative en ligne non aboutie" : "";
+        }
+        if (inv.online_provider) {
+            return `Payée en ligne via ${providerName(inv.online_provider)}`;
+        }
+        if (inv.amount <= 0 && inv.credit_amount > 0) {
+            return "Réglée par l'avoir";
+        }
+        return "";
+    }
     periodLabel(inv) {
         if (inv.period_start && inv.period_end) {
             return `${fmtDate(inv.period_start, "medium")} → ${fmtDate(inv.period_end, "medium")}`;
@@ -450,33 +633,127 @@ export class SubscriptionPage extends Component {
     }
 
     // ------------------------------------------------------------------ actions
-    async choose(p) {
-        const cycle = this.state.cycle;
-        const amount = fmtMoney(this.price(p), p.symbol);
-        const replaces = this.current && ["open", "rejected"].includes(this.current.state)
-            ? `\n\nLa facture ${this.current.name} en attente sera remplacée.`
-            : "";
-        const ok = await confirmDialog({
-            title: `Souscrire à « ${p.name} »`,
-            body: `Cycle : ${CYCLE_LABELS[cycle].toLowerCase()}\nMontant : ${amount}${cycle === "yearly" ? " pour 12 mois" : " pour 1 mois"}\n\n`
-                + `Une facture va être émise. Réglez-la selon les modalités indiquées, puis déclarez votre paiement : `
-                + `l'abonnement est activé dès sa validation.${replaces}`,
-            confirmLabel: `Émettre la facture (${amount})`,
-        });
-        if (!ok) {
-            return;
-        }
-        this.state.busy = true;
+    async choose(p, ev) {
+        this.returnFocus = ev?.currentTarget || null;
+        this.state.quoting = p.id;
         try {
-            const inv = await api("billing_checkout", [p.id, cycle]);
-            await this.load();
-            notify(`Facture ${inv.name} émise : ${fmtMoney(inv.amount, inv.symbol)}.`, "ok");
-            this.scrollToPayment();
+            await this.openCheckout(p, this.state.cycle);
+        } finally {
+            this.state.quoting = null;
+        }
+    }
+
+    async openCheckout(plan, cycle) {
+        try {
+            const quote = await api("billing_quote", [plan.id, cycle]);
+            const cur = this.current;
+            this.state.checkout = {
+                plan, cycle, quote, replaces: cur && ["open", "rejected"].includes(cur.state) ? cur.name : undefined,
+            };
         } catch (e) {
             notify(e.message, "danger");
+        }
+    }
+
+    async switchCheckoutCycle(cycle) {
+        const { plan } = this.state.checkout;
+        this.state.cycle = cycle;
+        this.state.busy = true;
+        try {
+            await this.openCheckout(plan, cycle);
         } finally {
             this.state.busy = false;
         }
+    }
+
+    closeCheckout() {
+        if (this.state.busy) {
+            return;
+        }
+        this.state.checkout = null;
+        const el = this.returnFocus;
+        this.returnFocus = null;
+        if (el && document.contains(el)) {
+            el.focus();
+        }
+    }
+
+    async confirmCheckout() {
+        const { plan, cycle } = this.state.checkout;
+        this.state.busy = true;
+        try {
+            const inv = await api("billing_checkout", [plan.id, cycle]);
+            this.state.checkout = null;
+            this.returnFocus = null;
+            await this.load();
+            if (inv.state === "paid") {
+                this.state.payResult = { status: "paid", credit: true };
+                const end = this.state.info.tenant.period_end;
+                notify(`Catégorie « ${inv.plan} » activée, couverte par votre avoir${end ? ` : abonnement actif jusqu'au ${fmtDate(end)}` : ""}.`, "ok", 6000);
+                requestAnimationFrame(() => {
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                    document.getElementById("ss-result")?.focus({ preventScroll: true });
+                });
+            } else {
+                notify(`Facture ${inv.name} émise : ${fmtMoney(inv.amount, inv.symbol)} à régler.`, "ok");
+                this.scrollToPayment();
+            }
+        } catch (e) {
+            notify(e.message, "danger", 8000);
+        } finally {
+            this.state.busy = false;
+        }
+    }
+
+    async payOnline(pv) {
+        const inv = this.current;
+        if (!inv || this.state.redirecting) {
+            return;
+        }
+        this.state.redirecting = pv.code;
+        try {
+            const res = await api("billing_pay_online", [inv.id, pv.code]);
+            if (!res || !res.url) {
+                throw new Error("Le prestataire n'a pas renvoyé de page de paiement.");
+            }
+            window.location.assign(res.url);
+            // La page reste « en redirection » jusqu'au départ du navigateur.
+        } catch (e) {
+            this.state.redirecting = null;
+            notify(e.message || "Paiement en ligne indisponible pour le moment.", "danger", 8000);
+            this.load();
+        }
+    }
+
+    async checkOnline() {
+        const inv = this.onlineInvoice;
+        if (!inv) {
+            return;
+        }
+        this.state.checking = true;
+        try {
+            const res = await api("billing_check_online", [inv.id]);
+            this.apply(res.info);
+            if (res.status === "paid") {
+                this.state.payResult = { status: "paid" };
+                notify("Paiement confirmé : votre abonnement est actif.", "ok");
+            } else if (res.status === "failed") {
+                this.state.payResult = { status: "failed" };
+            } else if (res.status === "pending") {
+                notify("Toujours en attente de confirmation par l'opérateur. Réessayez dans quelques minutes.", "info", 6000);
+            } else {
+                this.state.payResult = { status: "none" };
+            }
+        } catch (e) {
+            notify(e.message, "danger");
+        } finally {
+            this.state.checking = false;
+        }
+    }
+
+    retryPayment() {
+        this.state.payResult = null;
+        this.scrollToPayment();
     }
 
     scrollToPayment() {
@@ -484,7 +761,7 @@ export class SubscriptionPage extends Component {
             const el = document.getElementById("ss-payment");
             if (el) {
                 el.scrollIntoView({ behavior: "smooth", block: "start" });
-                el.querySelector("#ss-ref")?.focus({ preventScroll: true });
+                (el.querySelector(".ss-online-btn:not([disabled])") || el.querySelector("#ss-ref"))?.focus({ preventScroll: true });
             }
         });
     }

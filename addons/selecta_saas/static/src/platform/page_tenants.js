@@ -4,7 +4,7 @@ import { confirmDialog, Icon, notify } from "@selecta_concours/common/ui";
 import { debounce, fmtNum, STATE_BADGE, STATE_LABELS } from "@selecta_concours/common/utils";
 import {
     copyText, CYCLE_LABELS, daysLabel, dueDate, errMessage, fmtDate, fmtDateTime, formDialog, INVOICE_BADGE,
-    limitLabel, money, papi, refreshPending, TENANT_BADGE, TENANT_STATES,
+    invoiceFlags, limitLabel, MAIL_STATES, money, papi, refreshPending, TENANT_BADGE, TENANT_STATES,
 } from "@selecta_saas/platform/papi";
 
 // ======================================================================= liste des structures
@@ -237,11 +237,20 @@ export class TenantDetailPage extends Component {
                                 <tr t-foreach="t.invoices" t-as="i" t-key="i.id">
                                     <td data-label="Facture" class="sl-mono" t-esc="i.name"/>
                                     <td data-label="Catégorie"><t t-esc="i.plan"/><div class="sl-muted ad-small" t-esc="cycle[i.billing_cycle]"/></td>
-                                    <td data-label="Montant" class="num sl-figures" t-esc="money(i.amount, i.symbol)"/>
+                                    <td data-label="Montant" class="num">
+                                        <span class="sl-figures pf-nowrap" t-esc="money(i.amount, i.symbol)"/>
+                                        <div t-if="i.credit_amount" class="sl-muted ad-small pf-nowrap" t-att-title="'Prix de la période : ' + money(i.gross_amount, i.symbol)">
+                                            avoir −<t t-esc="money(i.credit_amount, i.symbol)"/>
+                                        </div>
+                                    </td>
                                     <td data-label="Statut">
                                         <span t-attf-class="sl-badge {{ibadge[i.state]}}" t-esc="i.state_label"/>
                                         <div t-if="i.reject_reason" class="ad-small ad-danger-text" t-esc="i.reject_reason"/>
                                         <a t-if="i.state == 'pending'" href="#/payments" class="ad-link ad-small">Traiter</a>
+                                        <div t-if="flags(i).length" class="pf-flags">
+                                            <span t-foreach="flags(i)" t-as="fl" t-key="fl_index" t-attf-class="pf-flag {{fl.cls}}" t-att-title="fl.title or false" t-esc="fl.label"/>
+                                        </div>
+                                        <div t-if="i.online_message and i.state != 'paid'" class="ad-small pf-warn-text" t-esc="i.online_message"/>
                                     </td>
                                     <td data-label="Période" class="ad-small"><t t-if="i.period_start"><t t-esc="date(i.period_start)"/> → <t t-esc="date(i.period_end)"/></t><t t-else="">—</t></td>
                                     <td data-label="Paiement" class="ad-small"><t t-esc="i.payment_method_label or '—'"/><div t-if="i.payment_reference" class="sl-mono" t-esc="i.payment_reference"/></td>
@@ -250,6 +259,36 @@ export class TenantDetailPage extends Component {
                             </tbody>
                         </table>
                         <div t-else="" class="ad-empty"><p>Aucune facture : la structure n'a pas encore choisi d'abonnement.</p></div>
+                    </t>
+                    <t t-elif="state.tab == 'mails'">
+                        <table t-if="t.mails.length" class="ad-table pf-cards pf-mails">
+                            <thead><tr><th>Date</th><th>Modèle</th><th>Destinataire</th><th>Objet</th><th>Statut</th><th>Tentatives et erreur</th><th class="num"><span class="sl-sr">Actions</span></th></tr></thead>
+                            <tbody>
+                                <tr t-foreach="t.mails" t-as="m" t-key="m.id">
+                                    <td data-label="Date" class="ad-small pf-nowrap" t-esc="dt(m.date)"/>
+                                    <td data-label="Modèle" t-esc="m.label"/>
+                                    <td data-label="Destinataire" class="ad-small"><span class="pf-break" t-esc="m.email_to"/></td>
+                                    <td data-label="Objet" class="ad-small" t-esc="m.subject"/>
+                                    <td data-label="Statut">
+                                        <span t-attf-class="sl-badge {{mstates[m.state].badge}}" t-esc="mstates[m.state].label"/>
+                                        <div t-if="m.sent_date" class="sl-muted ad-small pf-nowrap">le <t t-esc="dt(m.sent_date)"/></div>
+                                    </td>
+                                    <td data-label="Tentatives" class="ad-small">
+                                        <span class="sl-figures" t-esc="m.attempts"/><t t-if="m.attempts"> tentative(s)</t>
+                                        <div t-if="m.last_error" class="pf-mail-error" t-esc="m.last_error"/>
+                                    </td>
+                                    <td class="num">
+                                        <button t-if="m.state == 'failed'" class="sl-btn sl-btn-sm" t-on-click="() => this.retryMail(m)" t-att-disabled="state.retrying == m.id">
+                                            <t t-if="state.retrying == m.id"><span class="sl-spinner"/> Envoi…</t><t t-else=""><Icon name="'refresh'" size="14"/>Réessayer</t>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div t-else="" class="ad-empty"><Icon name="'mail'" size="28"/><p>Aucun courriel adressé à cette structure.</p></div>
+                        <p t-if="t.mails.length" class="sl-muted ad-small pf-pad">
+                            Les 30 messages les plus récents. Les messages « En file » partent toutes les 5 minutes lorsque l'envoi est activé (<a href="#/settings" class="ad-link">Paramètres › Messagerie</a>).
+                        </p>
                     </t>
                     <t t-elif="state.tab == 'staff'">
                         <table t-if="t.staff.length" class="ad-table pf-cards">
@@ -300,7 +339,8 @@ export class TenantDetailPage extends Component {
         </div>`;
     static props = { tenantId: Number };
     setup() {
-        this.state = useState({ t: null, plans: [], notes: "", tab: "invoices", busy: false, error: "" });
+        this.state = useState({ t: null, plans: [], notes: "", tab: "invoices", busy: false, error: "", retrying: 0 });
+        this.mstates = MAIL_STATES;
         this.badge = TENANT_BADGE;
         this.ibadge = INVOICE_BADGE;
         this.cycle = CYCLE_LABELS;
@@ -316,6 +356,7 @@ export class TenantDetailPage extends Component {
         }
     }
     setData(t) {
+        t.mails = t.mails || [];
         this.state.t = t;
         this.state.notes = t.notes || "";
     }
@@ -326,6 +367,7 @@ export class TenantDetailPage extends Component {
         const t = this.state.t;
         return [
             { key: "invoices", label: "Factures", count: t.invoices.length, hasCount: true },
+            { key: "mails", label: "Courriels", count: t.mails.length, hasCount: true },
             { key: "staff", label: "Personnel", count: t.staff.length, hasCount: true },
             { key: "concours", label: "Concours", count: t.concours.length, hasCount: true },
             { key: "audit", label: "Intégrité du journal d'audit" },
@@ -447,6 +489,27 @@ export class TenantDetailPage extends Component {
         });
         if (ok) {
             await this.run("reactivate", {}, "Compte réactivé.");
+        }
+    }
+    flags(i) {
+        return invoiceFlags(i);
+    }
+    async retryMail(m) {
+        this.state.retrying = m.id;
+        try {
+            const res = await papi("mail_retry", [m.id]);
+            if (res) {
+                Object.assign(m, res);
+                if (res.state === "sent") {
+                    notify(`Message envoyé à ${res.email_to}.`, "ok");
+                } else {
+                    notify(`Nouvel échec : ${res.last_error || "erreur inconnue"}. Le message reste en file pour un prochain essai.`, "warn", 8000);
+                }
+            }
+        } catch (e) {
+            notify(errMessage(e), "danger", 7000);
+        } finally {
+            this.state.retrying = 0;
         }
     }
     async saveNotes() {

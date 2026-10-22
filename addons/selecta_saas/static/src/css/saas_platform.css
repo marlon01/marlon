@@ -171,6 +171,84 @@
 .pf-savebar > span { margin-right: auto; }
 .pf-savebar.is-dirty { border-color: var(--pf-accent); box-shadow: inset 3px 0 0 var(--pf-accent); }
 
+/* Index des sections : colonne collante à gauche, barre horizontale collante sur écran étroit. */
+.pf-settings-page { max-width: 1260px; }
+.pf-settings-layout { display: grid; grid-template-columns: 196px minmax(0, 1fr); gap: 28px; align-items: start; }
+.pf-index { position: sticky; top: 24px; }
+.pf-index-title { margin: 0 0 8px; font-size: 11.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--sl-muted); }
+.pf-index ul { list-style: none; margin: 0; padding: 0; border-left: 1px solid var(--sl-border-strong); }
+.pf-index-link { display: flex; align-items: center; gap: 8px; padding: 7px 10px 7px 14px; margin-left: -1px; border-left: 2px solid transparent;
+  color: var(--sl-ink-soft); text-decoration: none; font-size: 14px; line-height: 1.3; }
+.pf-index-link:hover { color: var(--sl-ink); background: rgba(20, 33, 61, .04); }
+.pf-index-link:focus-visible { outline: none; box-shadow: var(--sl-focus); border-radius: 4px; }
+.pf-index-link.is-active { color: var(--sl-ink); font-weight: 650; border-left-color: var(--pf-accent-ink); }
+.pf-index-link > span:first-child { flex: 1; }
+.pf-index-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--pf-accent); flex: none; }
+.pf-index-dot.is-error { background: var(--sl-danger); }
+.pf-section { scroll-margin-top: 20px; }
+.pf-section h2:focus { outline: none; }
+.pf-section-intro { margin: -4px 0 16px; font-size: 14px; max-width: 75ch; }
+.pf-alert-tight { margin: 0; padding: 10px 14px; font-size: 13.5px; }
+.pf-mt { margin-top: 16px; }
+.pf-warn-text { color: var(--sl-warn); }
+.pf-break { overflow-wrap: anywhere; }
+.pf-label-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pf-label-split { justify-content: space-between; }
+.pf-badge-sm { font-size: 11px; padding: 1px 7px; font-weight: 600; }
+.pf-field-pair { display: grid; grid-template-columns: minmax(80px, 1fr) minmax(0, 1.6fr); gap: 12px; }
+.pf-linkbtn { background: none; border: 0; padding: 0; font: inherit; font-size: 13px; font-weight: 600; color: var(--brand); text-decoration: underline; cursor: pointer; }
+.pf-linkbtn:focus-visible { outline: none; box-shadow: var(--sl-focus); border-radius: 3px; }
+
+/* Messagerie */
+.pf-mailstats { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--sl-border); border-radius: var(--sl-radius-s); margin-bottom: 18px; }
+.pf-mailstats > div { padding: 10px 14px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.pf-mailstats > div + div { border-left: 1px solid var(--sl-border); }
+.pf-mailstats-label { font-size: 12.5px; font-weight: 600; color: var(--sl-muted); flex: 1 1 100%; }
+.pf-mailstats b { font-size: 24px; line-height: 1.1; color: var(--sl-ink); }
+.pf-mailstats .is-failed b { color: var(--sl-danger); }
+.pf-failed { border: 1px solid var(--sl-border); border-radius: var(--sl-radius-s); margin: -8px 0 18px; overflow-x: auto; }
+.pf-failed .ad-table { margin: 0; width: 100%; }
+.pf-mail-error { font-family: var(--sl-mono); font-size: 12px; color: var(--sl-danger); overflow-wrap: anywhere; margin-top: 3px; text-align: left; }
+.pf-mails td { vertical-align: top; }
+.pf-test { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--sl-border); display: grid; gap: 10px; }
+.pf-test-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+
+/* Prestataires de paiement */
+.pf-providers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.pf-provider { border: 1px solid var(--sl-border); border-radius: var(--sl-radius); padding: 16px 18px; display: grid; gap: 14px; align-content: start; background: var(--sl-paper); }
+.pf-provider-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--sl-border); }
+.pf-provider-head h3 { font-size: 17px; margin: 0 0 1px; }
+.pf-provider-head .sl-badge { white-space: nowrap; }
+.pf-provider-help { margin: -4px 0 0; font-size: 13px; color: var(--sl-ink-soft); }
+.pf-provider code, .pf-section .sl-help code { font-family: var(--sl-mono); font-size: 12px; background: var(--sl-bg); padding: 0 4px; border-radius: 3px; }
+
+/* Données personnelles */
+.pf-retention { display: grid; grid-template-columns: minmax(220px, 300px) minmax(0, 1fr); gap: 18px 28px; align-items: start; }
+.pf-suffix { display: flex; align-items: center; gap: 10px; }
+.pf-suffix .sl-input { max-width: 140px; }
+.pf-suffix span { color: var(--sl-ink-soft); }
+.pf-retention-text { border-left: 2px solid var(--sl-border-strong); padding-left: 16px; font-size: 14px; }
+.pf-retention-text p { margin: 0 0 6px; }
+
+/* Documents juridiques */
+.pf-legal { display: grid; grid-template-columns: minmax(0, 1fr) 230px; gap: 24px; align-items: start; }
+.pf-legal-fields { display: grid; gap: 20px; }
+.pf-legal-text { font-family: var(--sl-mono); font-size: 13px; line-height: 1.55; min-height: 220px; resize: vertical; }
+.pf-syntax { border: 1px solid var(--sl-border); border-radius: var(--sl-radius-s); padding: 14px 16px; font-size: 13px; color: var(--sl-ink-soft); position: sticky; top: 24px; }
+.pf-syntax h3 { font-size: 13px; margin: 0 0 8px; color: var(--sl-ink); }
+.pf-syntax dl { margin: 0 0 10px; display: grid; gap: 6px; }
+.pf-syntax dl > div { display: grid; gap: 1px; }
+.pf-syntax dt { color: var(--sl-ink); }
+.pf-syntax dd { margin: 0; }
+.pf-syntax code { font-family: var(--sl-mono); font-size: 12.5px; background: var(--sl-bg); padding: 1px 5px; border-radius: 3px; }
+.pf-syntax p { margin: 0 0 6px; }
+
+/* Mentions de facture (avoir, prorata, paiement en ligne) */
+.pf-flags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.pf-flag { font-size: 11.5px; line-height: 1.35; padding: 1px 7px; border: 1px solid var(--sl-border-strong); border-radius: 4px; color: var(--sl-ink-soft); background: var(--sl-surface); }
+.pf-flag.is-ok { border-color: color-mix(in srgb, var(--sl-ok) 45%, transparent); color: #075A3D; background: var(--sl-ok-bg); }
+.pf-flag.is-warn { border-color: color-mix(in srgb, var(--sl-warn) 45%, transparent); color: #7A4C0B; background: var(--sl-warn-bg); }
+
 /* ---------------------------------------------------------------- responsive */
 @media (max-width: 1280px) {
   .pf-kpis { grid-template-columns: repeat(4, 1fr); }
@@ -178,8 +256,22 @@
   .pf-kpis .ad-kpi:nth-child(-n+4) { border-top: 0; }
   .pf-kpis .ad-kpi:nth-child(4n+1) { border-left: 0; }
 }
+@media (max-width: 1200px) {
+  .pf-providers { grid-template-columns: 1fr; }
+  .pf-legal { grid-template-columns: 1fr; }
+  .pf-syntax { position: static; }
+}
 @media (max-width: 1100px) {
   .pf-detail-grid { grid-template-columns: 1fr; }
+  .pf-settings-layout { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .pf-index { top: 0; z-index: 50; margin: 0 -32px 18px; padding: 0 32px; background: color-mix(in srgb, var(--sl-bg) 94%, transparent);
+    border-bottom: 1px solid var(--sl-border); backdrop-filter: blur(4px); }
+  .pf-index-title { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .pf-index ul { display: flex; gap: 2px; border-left: 0; overflow-x: auto; scrollbar-width: none; }
+  .pf-index ul::-webkit-scrollbar { display: none; }
+  .pf-index-link { white-space: nowrap; margin: 0; padding: 11px 10px 9px; border-left: 0; border-bottom: 2px solid transparent; font-size: 13.5px; }
+  .pf-index-link.is-active { border-bottom-color: var(--pf-accent-ink); }
+  .pf-section { scroll-margin-top: 64px; }
 }
 @media (max-width: 900px) {
   .pf-backdrop { display: block; position: fixed; inset: 0; z-index: 650; background: rgba(14, 22, 42, .45); }
@@ -196,6 +288,10 @@
   .ad-toolbar .ad-search { flex: 1 1 100%; }
   .ad-toolbar .sl-select { flex: 1 1 auto; }
   .pf-savebar { flex-wrap: wrap; }
+  .pf-index { top: 53px; margin: 0 -16px 16px; padding: 0 8px; }
+  .pf-section { scroll-margin-top: 112px; }
+  .pf-retention { grid-template-columns: 1fr; }
+  .pf-retention-text { padding-left: 12px; }
   .pf-savebar > span { flex: 1 1 100%; }
 }
 @media (max-width: 720px) {
