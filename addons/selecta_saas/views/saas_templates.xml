@@ -1,0 +1,421 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Deux applications autonomes supplémentaires servies par le gabarit commun de SELECTA. -->
+    <template id="selecta_layout_saas" inherit_id="selecta_concours.selecta_layout" name="SELECTA layout (SaaS)">
+        <xpath expr="//script[@id='selecta-config']" position="before">
+            <t t-if="app == 'signup'"><t t-call-assets="selecta_saas.assets_signup" t-js="false"/></t>
+            <t t-if="app == 'platform'"><t t-call-assets="selecta_saas.assets_platform" t-js="false"/></t>
+        </xpath>
+        <xpath expr="//script[@id='selecta-config']" position="after">
+            <t t-if="app == 'signup'"><t t-call-assets="selecta_saas.assets_signup" t-css="false"/></t>
+            <t t-if="app == 'platform'"><t t-call-assets="selecta_saas.assets_platform" t-css="false"/></t>
+        </xpath>
+    </template>
+
+    <!-- Montant « à la française » : 3 490 ou 24,17 (variable attendue : amount). -->
+    <template id="lp_amount" name="SELECTA — montant">
+        <t t-set="_int" t-value="int(amount or 0)"/>
+        <t t-set="_cents" t-value="int(round(((amount or 0) - _int) * 100))"/>
+        <t t-out="(str(_int) if _int &lt; 1000 else '%s&#160;%03d' % (_int // 1000, _int % 1000)) + ((',%02d' % _cents) if _cents else '')"/>
+    </template>
+
+    <!-- Bouton d'appel à l'action : essai gratuit ou contact lorsque les inscriptions sont fermées. -->
+    <template id="lp_cta" name="SELECTA — appel à l'action">
+        <a t-if="signup_enabled" t-att-class="cta_class" t-att-href="cta_href or '/selecta/signup'"><t t-out="cta_label"/></a>
+        <a t-else="" t-att-class="cta_class" t-att-href="'mailto:%s?subject=Ouverture%%20d%%27un%%20espace%%20SELECTA' % contact_email">Nous contacter</a>
+    </template>
+
+    <template id="landing" name="SELECTA — présentation">
+        <t t-set="contact_email" t-value="support_email or 'contact@naxoris.com'"/>
+        <t t-set="issuer" t-value="issuer or 'Naxoris'"/>
+        <t t-set="phones" t-value="[p.strip() for p in (support_phone or '').split('·') if p.strip()]"/>
+        <t t-set="meta_desc" t-value="'SELECTA organise vos concours et tests de recrutement en ligne avec intégrité : épreuves chronométrées, surveillance IA par webcam, résultats immédiats et procès-verbal scellé vérifiable. Essai gratuit de %s jours, sans carte bancaire.' % trial_days"/>
+        <html lang="fr">
+            <head>
+                <meta charset="utf-8"/>
+                <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+                <title>SELECTA — Concours et tests de recrutement en ligne, sécurisés et vérifiables</title>
+                <meta name="description" t-att-content="meta_desc"/>
+                <meta name="theme-color" content="#14213D"/>
+                <meta property="og:type" content="website"/>
+                <meta property="og:locale" content="fr_FR"/>
+                <meta property="og:site_name" content="SELECTA"/>
+                <meta property="og:title" content="SELECTA — des concours en ligne aux résultats incontestables"/>
+                <meta property="og:description" t-att-content="meta_desc"/>
+                <link rel="icon" href="/selecta_concours/static/description/icon.png"/>
+                <link rel="stylesheet" href="/selecta_concours/static/src/css/selecta_base.css"/>
+                <link rel="stylesheet" href="/selecta_saas/static/src/css/saas_public.css"/>
+            </head>
+            <body class="lp">
+                <a class="lp-skip" href="#contenu">Aller au contenu</a>
+
+                <!-- ============================================================ barre supérieure -->
+                <header class="lp-top">
+                    <div class="lp-container lp-top-in">
+                        <a class="lp-mark" href="/selecta" aria-label="SELECTA, accueil">
+                            <span class="lp-mark-seal" aria-hidden="true">S</span>
+                            <span class="lp-mark-word">SELECTA</span>
+                        </a>
+                        <nav class="lp-nav" aria-label="Navigation principale">
+                            <a href="#fonctionnalites">Fonctionnalités</a>
+                            <a href="#tarifs">Tarifs</a>
+                            <a href="#faq">FAQ</a>
+                        </nav>
+                        <div class="lp-top-actions">
+                            <a class="lp-top-link lp-hide-s" href="/selecta/exam">Espace candidat</a>
+                            <a class="lp-top-link" href="/selecta/login">Se connecter</a>
+                            <t t-call="selecta_saas.lp_cta">
+                                <t t-set="cta_class" t-value="'sl-btn sl-btn-primary sl-btn-sm lp-top-cta'"/>
+                                <t t-set="cta_label" t-value="'Essai gratuit'"/>
+                            </t>
+                            <details class="lp-menu">
+                                <summary aria-label="Ouvrir le menu">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+                                </summary>
+                                <nav class="lp-menu-panel" aria-label="Menu">
+                                    <a href="#fonctionnalites">Fonctionnalités</a>
+                                    <a href="#fonctionnement">Fonctionnement</a>
+                                    <a href="#tarifs">Tarifs</a>
+                                    <a href="#securite">Sécurité</a>
+                                    <a href="#faq">FAQ</a>
+                                    <hr/>
+                                    <a href="/selecta/exam">Espace candidat</a>
+                                    <a href="/selecta/login">Se connecter</a>
+                                </nav>
+                            </details>
+                        </div>
+                    </div>
+                </header>
+
+                <main id="contenu">
+                    <!-- ======================================================== héros -->
+                    <section class="lp-hero" aria-labelledby="lp-h1">
+                        <div class="lp-container lp-hero-in">
+                            <div class="lp-hero-text">
+                                <p class="lp-eyebrow">Concours et tests de recrutement en ligne</p>
+                                <h1 id="lp-h1">Des concours en ligne dont personne ne peut contester les résultats.</h1>
+                                <p class="lp-lede">Entreprises, écoles et administrations organisent avec SELECTA leurs concours et tests de recrutement en ligne, en toute intégrité&#160;: épreuves chronométrées, surveillance IA par webcam, résultats immédiats et procès-verbal scellé, vérifiable par tous.</p>
+                                <div class="lp-hero-cta">
+                                    <t t-call="selecta_saas.lp_cta">
+                                        <t t-set="cta_class" t-value="'sl-btn sl-btn-primary sl-btn-lg'"/>
+                                        <t t-set="cta_label" t-value="'Démarrer l’essai gratuit de %s jours' % trial_days"/>
+                                    </t>
+                                    <a class="sl-btn sl-btn-lg lp-btn-quiet" href="#tarifs">Voir les tarifs</a>
+                                </div>
+                                <p class="lp-hero-note" t-if="signup_enabled">Sans carte bancaire · Votre espace est créé immédiatement</p>
+                                <p class="lp-hero-note" t-else="">Les inscriptions en ligne sont momentanément fermées : écrivez-nous, nous ouvrons votre espace.</p>
+                                <ul class="lp-proof">
+                                    <li><strong>Chronomètre</strong> sous l’autorité du serveur</li>
+                                    <li><strong>Vision 100&#160;% locale</strong>, aucun flux vidéo transmis</li>
+                                    <li><strong>Empreinte SHA-256</strong> et QR code de vérification</li>
+                                </ul>
+                            </div>
+
+                            <!-- Visuel : extrait de procès-verbal scellé (illustratif). -->
+                            <figure class="lp-pv" role="img" aria-label="Illustration : procès-verbal de résultats scellé par SELECTA, avec classement, empreinte SHA-256, QR code et sceau de vérification.">
+                                <div class="lp-pv-sheet" aria-hidden="true">
+                                    <div class="lp-pv-head">
+                                        <span>Procès-verbal des résultats</span>
+                                        <span class="sl-mono">CNC-2026-0042</span>
+                                    </div>
+                                    <div class="lp-pv-title">Concours de recrutement — Analystes crédit</div>
+                                    <div class="lp-pv-meta">Clôturé le 14/10/2026 à 11:30 · 248 candidats · seuil 60&#160;%</div>
+                                    <table class="lp-pv-table">
+                                        <thead><tr><th>Rang</th><th>N° d’inscription</th><th class="r">Note</th><th>Décision</th></tr></thead>
+                                        <tbody>
+                                            <tr><td>1</td><td class="sl-mono">RC-0117</td><td class="r">92,5&#160;%</td><td><span class="lp-pv-ok">Admis</span></td></tr>
+                                            <tr><td>2</td><td class="sl-mono">RC-0042</td><td class="r">88,0&#160;%</td><td><span class="lp-pv-ok">Admis</span></td></tr>
+                                            <tr><td>3</td><td class="sl-mono">RC-0203</td><td class="r">81,5&#160;%</td><td><span class="lp-pv-ok">Admis</span></td></tr>
+                                            <tr><td>4</td><td class="sl-mono">RC-0009</td><td class="r">74,0&#160;%</td><td><span class="lp-pv-ok">Admis</span></td></tr>
+                                            <tr class="lp-pv-fade"><td>5</td><td class="sl-mono">RC-0158</td><td class="r">57,5&#160;%</td><td><span class="lp-pv-no">Non admis</span></td></tr>
+                                        </tbody>
+                                    </table>
+                                    <div class="lp-pv-foot">
+                                        <svg class="lp-pv-qr" viewBox="-1 -1 23 23" aria-hidden="true"><path fill="currentColor" d="M0 0h7v1h-7zM8 0h5v1h-5zM14 0h7v1h-7zM0 1h1v1h-1zM6 1h1v1h-1zM10 1h1v1h-1zM12 1h1v1h-1zM14 1h1v1h-1zM20 1h1v1h-1zM0 2h1v1h-1zM2 2h3v1h-3zM6 2h1v1h-1zM9 2h2v1h-2zM12 2h1v1h-1zM14 2h1v1h-1zM16 2h3v1h-3zM20 2h1v1h-1zM0 3h1v1h-1zM2 3h3v1h-3zM6 3h1v1h-1zM12 3h1v1h-1zM14 3h1v1h-1zM16 3h3v1h-3zM20 3h1v1h-1zM0 4h1v1h-1zM2 4h3v1h-3zM6 4h1v1h-1zM10 4h3v1h-3zM14 4h1v1h-1zM16 4h3v1h-3zM20 4h1v1h-1zM0 5h1v1h-1zM6 5h1v1h-1zM10 5h1v1h-1zM14 5h1v1h-1zM20 5h1v1h-1zM0 6h7v1h-7zM8 6h1v1h-1zM11 6h2v1h-2zM14 6h7v1h-7zM8 7h1v1h-1zM10 7h1v1h-1zM0 8h2v1h-2zM8 8h1v1h-1zM10 8h5v1h-5zM17 8h1v1h-1zM0 9h5v1h-5zM8 9h1v1h-1zM11 9h1v1h-1zM16 9h2v1h-2zM19 9h1v1h-1zM1 10h2v1h-2zM5 10h3v1h-3zM10 10h1v1h-1zM14 10h1v1h-1zM16 10h2v1h-2zM1 11h1v1h-1zM4 11h4v1h-4zM9 11h3v1h-3zM13 11h2v1h-2zM17 11h1v1h-1zM1 12h4v1h-4zM6 12h2v1h-2zM10 12h1v1h-1zM14 12h1v1h-1zM16 12h2v1h-2zM9 13h1v1h-1zM14 13h1v1h-1zM18 13h3v1h-3zM0 14h7v1h-7zM9 14h1v1h-1zM12 14h1v1h-1zM14 14h2v1h-2zM18 14h2v1h-2zM0 15h1v1h-1zM6 15h1v1h-1zM8 15h1v1h-1zM11 15h1v1h-1zM15 15h3v1h-3zM19 15h2v1h-2zM0 16h1v1h-1zM2 16h3v1h-3zM6 16h1v1h-1zM8 16h2v1h-2zM11 16h2v1h-2zM16 16h1v1h-1zM18 16h1v1h-1zM20 16h1v1h-1zM0 17h1v1h-1zM2 17h3v1h-3zM6 17h1v1h-1zM8 17h5v1h-5zM14 17h1v1h-1zM16 17h5v1h-5zM0 18h1v1h-1zM2 18h3v1h-3zM6 18h1v1h-1zM8 18h1v1h-1zM10 18h1v1h-1zM14 18h1v1h-1zM18 18h3v1h-3zM0 19h1v1h-1zM6 19h1v1h-1zM9 19h7v1h-7zM19 19h1v1h-1zM0 20h7v1h-7zM8 20h8v1h-8z"/></svg>
+                                        <div class="lp-pv-hash">
+                                            <div class="lp-pv-hash-label">Empreinte SHA-256</div>
+                                            <div class="sl-mono">9f3c 41a8 0be2 77d4 … c05e e71a</div>
+                                            <div class="lp-pv-hash-label">Vérifiable sur /selecta/verify</div>
+                                        </div>
+                                    </div>
+                                    <svg class="lp-pv-seal" viewBox="0 0 120 120" aria-hidden="true">
+                                        <defs><path id="lp-seal-arc" d="M60 60m-44 0a44 44 0 1 1 88 0a44 44 0 1 1-88 0"/></defs>
+                                        <circle cx="60" cy="60" r="56" fill="none" stroke="currentColor" stroke-width="2.5"/>
+                                        <circle cx="60" cy="60" r="34" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                                        <text font-size="10.5" font-weight="700" letter-spacing="2.6" fill="currentColor"><textPath href="#lp-seal-arc">SCELLÉ · SELECTA · VÉRIFIABLE ·</textPath></text>
+                                        <path d="M47 61l9 9 18-19" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </div>
+                            </figure>
+                        </div>
+                    </section>
+
+                    <!-- ======================================================== fonctionnalités -->
+                    <section id="fonctionnalites" class="lp-section" aria-labelledby="lp-feat-h">
+                        <div class="lp-container">
+                            <header class="lp-sec-head">
+                                <p class="lp-eyebrow"><span class="lp-num">01</span>Fonctionnalités</p>
+                                <h2 id="lp-feat-h">Tout ce qu’exige un concours sérieux, sans salle d’examen à louer.</h2>
+                                <p class="lp-sec-lede">Chaque garantie est appliquée par le serveur, pas par la bonne volonté des participants.</p>
+                            </header>
+                            <ul class="lp-features">
+                                <li class="lp-feature">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 6v6l4 2"/></svg>
+                                    <h3>Épreuves chronométrées, sans retour arrière</h3>
+                                    <p>Le chronomètre est sous l’autorité du serveur&#160;: changer l’heure du poste ne sert à rien. Une page validée est définitive, les réponses sont scellées.</p>
+                                </li>
+                                <li class="lp-feature">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/></svg>
+                                    <h3>Surveillance IA par webcam</h3>
+                                    <p>Visage absent, plusieurs personnes, regard détourné, contrôle continu d’identité, changement d’onglet. Vision 100&#160;% locale&#160;: aucun flux vidéo n’est transmis.</p>
+                                </li>
+                                <li class="lp-feature">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+                                    <h3>Résultats immédiats</h3>
+                                    <p>Correction automatique dès la dernière page&#160;: note et décision affichées au candidat, liste des admis mise à jour en temps réel, export Excel.</p>
+                                </li>
+                                <li class="lp-feature">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M9 15l2 2 4-4"/></svg>
+                                    <h3>Procès-verbal scellé et vérifiable</h3>
+                                    <p>À la publication, la liste est figée par une empreinte SHA-256. Un QR code renvoie à une page publique&#160;: toute version divergente est un faux.</p>
+                                </li>
+                                <li class="lp-feature">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h11M17 16l2 2 3-3"/></svg>
+                                    <h3>QCM entièrement paramétrables</h3>
+                                    <p>Choix unique ou multiple, barème, matières, illustrations, import CSV, tirage aléatoire individuel et mélange des propositions pour chaque voisin.</p>
+                                </li>
+                                <li class="lp-feature">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 2a2.5 2.5 0 0 0-2.45 3A3 3 0 0 0 5 8a3 3 0 0 0 .4 4.5A3 3 0 0 0 7 18a2.5 2.5 0 0 0 5 .5V4.5A2.5 2.5 0 0 0 9.5 2zM14.5 2A2.5 2.5 0 0 1 17 4.5a3 3 0 0 1 2 3.5 3 3 0 0 1-.4 4.5A3 3 0 0 1 17 18a2.5 2.5 0 0 1-5 .5"/></svg>
+                                    <h3>Analyse IA des épreuves</h3>
+                                    <p>Psychométrie, détection de clés de correction erronées, collusion statistique entre candidats, vitesses anormales et indice d’intégrité du concours.</p>
+                                </li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <!-- ======================================================== fonctionnement -->
+                    <section id="fonctionnement" class="lp-section lp-section-paper" aria-labelledby="lp-how-h">
+                        <div class="lp-container">
+                            <header class="lp-sec-head">
+                                <p class="lp-eyebrow"><span class="lp-num">02</span>Fonctionnement</p>
+                                <h2 id="lp-how-h">Du premier questionnaire au procès-verbal, en quatre étapes.</h2>
+                            </header>
+                            <ol class="lp-steps">
+                                <li>
+                                    <h3>Créez votre espace</h3>
+                                    <p>Choisissez votre catégorie et ouvrez votre espace cloisonné en quelques minutes. L’essai de <t t-out="trial_days"/> jours commence aussitôt.</p>
+                                </li>
+                                <li>
+                                    <h3>Composez vos questionnaires</h3>
+                                    <p>Saisissez ou importez votre banque de questions, puis réglez durée, tirage, seuil d’admission et niveau de surveillance.</p>
+                                </li>
+                                <li>
+                                    <h3>Convoquez vos candidats</h3>
+                                    <p>Importez la liste, imprimez les convocations&#160;: chaque candidat reçoit un code secret personnel, utilisable une seule fois.</p>
+                                </li>
+                                <li>
+                                    <h3>Publiez des résultats scellés</h3>
+                                    <p>À la clôture, la liste des admis est établie. Publiez le procès-verbal scellé, vérifiable par QR code.</p>
+                                </li>
+                            </ol>
+                        </div>
+                    </section>
+
+                    <!-- ======================================================== tarifs -->
+                    <section id="tarifs" class="lp-section lp-pricing" data-cycle="monthly" aria-labelledby="lp-price-h">
+                        <t t-set="gift_months" t-value="max([int(round((p.price_monthly * 12 - p.price_yearly) / p.price_monthly)) for p in plans if p.price_monthly] or [0])"/>
+                        <div class="lp-container">
+                            <header class="lp-sec-head lp-sec-head-row">
+                                <div>
+                                    <p class="lp-eyebrow"><span class="lp-num">03</span>Tarifs</p>
+                                    <h2 id="lp-price-h">Un tarif selon la nature de votre structure.</h2>
+                                    <p class="lp-sec-lede">Toutes les catégories commencent par un essai gratuit de <t t-out="trial_days"/> jours, sans carte bancaire. Prix en dollars américains (USD), hors frais de transfert.</p>
+                                </div>
+                                <div class="lp-cycle" role="group" aria-label="Période de facturation">
+                                    <button type="button" class="lp-cycle-btn" data-cycle="monthly" aria-pressed="true">Mensuel</button>
+                                    <button type="button" class="lp-cycle-btn" data-cycle="yearly" aria-pressed="false">Annuel <span class="lp-cycle-gift" t-if="gift_months"><t t-out="gift_months"/> mois offerts</span></button>
+                                </div>
+                            </header>
+                            <p class="lp-empty" t-if="not plans">La grille tarifaire est en cours de mise à jour. <a t-att-href="'mailto:%s' % contact_email">Contactez-nous</a> pour un devis.</p>
+                            <ul class="lp-plans" t-if="plans" t-att-data-count="len(plans)">
+                                <li t-foreach="plans" t-as="plan" t-att-class="'lp-plan' + (' lp-plan-hl' if plan.highlight else '')">
+                                    <t t-set="symbol" t-value="plan.currency_id.symbol or '$'"/>
+                                    <t t-set="saving" t-value="max(0.0, plan.price_monthly * 12 - plan.price_yearly)"/>
+                                    <div class="lp-plan-flag" t-if="plan.highlight">Recommandé</div>
+                                    <h3 class="lp-plan-name" t-out="plan.name"/>
+                                    <p class="lp-plan-aud" t-out="plan.audience or ' '"/>
+                                    <div class="lp-price lp-price-m">
+                                        <span class="lp-price-amt sl-figures"><t t-call="selecta_saas.lp_amount"><t t-set="amount" t-value="plan.price_monthly"/></t></span>
+                                        <span class="lp-price-cur"><t t-out="symbol"/></span>
+                                        <span class="lp-price-per">/ mois</span>
+                                    </div>
+                                    <div class="lp-price lp-price-y">
+                                        <span class="lp-price-amt sl-figures"><t t-call="selecta_saas.lp_amount"><t t-set="amount" t-value="plan.price_yearly"/></t></span>
+                                        <span class="lp-price-cur"><t t-out="symbol"/></span>
+                                        <span class="lp-price-per">/ an</span>
+                                    </div>
+                                    <p class="lp-price-sub lp-price-m">ou <t t-call="selecta_saas.lp_amount"><t t-set="amount" t-value="plan.price_yearly"/></t>&#160;<t t-out="symbol"/> par an<t t-if="saving"> — <t t-call="selecta_saas.lp_amount"><t t-set="amount" t-value="saving"/></t>&#160;<t t-out="symbol"/> d’économie</t></p>
+                                    <p class="lp-price-sub lp-price-y">soit <t t-call="selecta_saas.lp_amount"><t t-set="amount" t-value="plan.price_yearly / 12.0"/></t>&#160;<t t-out="symbol"/> par mois<t t-if="saving"> · <strong>économisez <t t-call="selecta_saas.lp_amount"><t t-set="amount" t-value="saving"/></t>&#160;<t t-out="symbol"/></strong></t></p>
+                                    <p class="lp-plan-desc" t-if="plan.description" t-out="plan.description"/>
+                                    <t t-call="selecta_saas.lp_cta">
+                                        <t t-set="cta_class" t-value="'sl-btn lp-plan-cta ' + ('sl-btn-primary' if plan.highlight else 'sl-btn-ink')"/>
+                                        <t t-set="cta_href" t-value="'/selecta/signup?plan=%s' % plan.code"/>
+                                        <t t-set="cta_label" t-value="'Essayer %s jours' % trial_days"/>
+                                    </t>
+                                    <dl class="lp-limits">
+                                        <div><dt>Concours actifs</dt><dd class="sl-figures"><t t-out="plan.max_active_concours or 'Illimité'"/></dd></div>
+                                        <div><dt>Candidats par mois</dt><dd class="sl-figures"><t t-if="plan.max_candidates_month"><t t-call="selecta_saas.lp_amount"><t t-set="amount" t-value="plan.max_candidates_month"/></t></t><t t-else="">Illimité</t></dd></div>
+                                        <div><dt>Comptes du personnel</dt><dd class="sl-figures"><t t-out="plan.max_staff or 'Illimité'"/></dd></div>
+                                    </dl>
+                                    <ul class="lp-checks">
+                                        <li t-att-class="'' if plan.feature_ai_analysis else 'lp-off'"><t t-call="selecta_saas.lp_check"><t t-set="on" t-value="plan.feature_ai_analysis"/></t>Analyse IA (psychométrie, fraude)</li>
+                                        <li t-att-class="'' if plan.feature_llm else 'lp-off'"><t t-call="selecta_saas.lp_check"><t t-set="on" t-value="plan.feature_llm"/></t>Assistant de rédaction (LLM)</li>
+                                        <li t-att-class="'' if plan.feature_branding else 'lp-off'"><t t-call="selecta_saas.lp_check"><t t-set="on" t-value="plan.feature_branding"/></t>Logo, couleur et slogan</li>
+                                        <li><t t-call="selecta_saas.lp_check"><t t-set="on" t-value="True"/></t>Support&#160;: <t t-out="plan.support or 'par e-mail'"/></li>
+                                    </ul>
+                                </li>
+                            </ul>
+                            <p class="lp-price-note">Paiement par Mobile Money, virement bancaire ou lien de paiement en ligne. Surveillance webcam, procès-verbal scellé et journal d’audit sont inclus dans toutes les catégories.</p>
+                        </div>
+                    </section>
+
+                    <!-- ======================================================== sécurité -->
+                    <section id="securite" class="lp-section lp-trust" aria-labelledby="lp-trust-h">
+                        <div class="lp-container lp-trust-in">
+                            <header class="lp-sec-head">
+                                <p class="lp-eyebrow"><span class="lp-num">04</span>Sécurité et confiance</p>
+                                <h2 id="lp-trust-h">Conçu pour résister à la fraude, y compris de l’intérieur.</h2>
+                                <p class="lp-sec-lede">Aucune note n’est modifiable, même par un administrateur. Chaque opération est horodatée et consignée.</p>
+                            </header>
+                            <ul class="lp-trust-list">
+                                <li>
+                                    <h3>Données cloisonnées par structure</h3>
+                                    <p>Chaque structure dispose de son propre espace&#160;: questions, candidats et résultats ne sont jamais visibles d’une autre organisation.</p>
+                                </li>
+                                <li>
+                                    <h3>Journal d’audit chaîné</h3>
+                                    <p>Chaque entrée est liée cryptographiquement à la précédente&#160;: toute altération en base est détectée lors de la vérification d’intégrité.</p>
+                                </li>
+                                <li>
+                                    <h3>Codes candidats HMAC</h3>
+                                    <p>Codes secrets de 12 caractères, jamais stockés en clair (HMAC-SHA256), verrouillage après essais infructueux, une seule session active.</p>
+                                </li>
+                                <li>
+                                    <h3>Hors ligne possible</h3>
+                                    <p>Si le réseau coupe, le candidat continue&#160;: ses réponses sont mises en file sécurisée puis synchronisées. Installation sur site disponible.</p>
+                                </li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <!-- ======================================================== FAQ -->
+                    <section id="faq" class="lp-section" aria-labelledby="lp-faq-h">
+                        <div class="lp-container lp-faq-in">
+                            <header class="lp-sec-head">
+                                <p class="lp-eyebrow"><span class="lp-num">05</span>Questions fréquentes</p>
+                                <h2 id="lp-faq-h">Ce que l’on nous demande avant de commencer.</h2>
+                                <p class="lp-sec-lede">Une autre question&#160;? <a t-att-href="'mailto:%s' % contact_email" t-out="contact_email"/></p>
+                            </header>
+                            <div class="lp-faq">
+                                <details>
+                                    <summary>Comment fonctionne l’essai gratuit&#160;?</summary>
+                                    <p>Vous créez votre espace en ligne et disposez de <t t-out="trial_days"/> jours pour tester toutes les fonctions de votre catégorie, avec un nombre limité de candidats. Aucune carte bancaire n’est demandée et rien n’est facturé automatiquement.</p>
+                                </details>
+                                <details>
+                                    <summary>Que se passe-t-il à la fin de l’essai&#160;?</summary>
+                                    <p>Sans abonnement, votre console passe en consultation seule&#160;: vos concours, résultats et procès-verbaux restent lisibles et exportables, mais vous ne pouvez plus en créer ni en ouvrir. Il suffit de souscrire pour tout réactiver, sans perte de données.</p>
+                                </details>
+                                <details>
+                                    <summary>Quels moyens de paiement acceptez-vous&#160;?</summary>
+                                    <p>Mobile Money (M-Pesa, Airtel Money, Orange Money), virement bancaire ou lien de paiement en ligne. Après paiement, vous déclarez la référence depuis votre console, avec un justificatif si vous le souhaitez&#160;; notre équipe valide et votre abonnement est activé.</p>
+                                </details>
+                                <details>
+                                    <summary>Puis-je changer de catégorie&#160;?</summary>
+                                    <p>Oui. Vous choisissez une catégorie à l’inscription et pouvez en changer lors de votre souscription ou de votre renouvellement, mensuel ou annuel, depuis l’espace Abonnement de votre console.</p>
+                                </details>
+                                <details>
+                                    <summary>Mes données sont-elles en sécurité et confidentielles&#160;?</summary>
+                                    <p>Les données de chaque structure sont cloisonnées. La surveillance webcam est analysée localement sur le poste du candidat&#160;: aucun flux vidéo n’est transmis, seuls les clichés probatoires d’incident sont conservés. Les codes secrets ne sont jamais stockés en clair et toutes les opérations sont journalisées.</p>
+                                </details>
+                                <details>
+                                    <summary>Combien de candidats puis-je évaluer&#160;?</summary>
+                                    <p>Cela dépend de votre catégorie&#160;: de quelques centaines de candidats par mois pour une école à un volume illimité pour une administration publique (voir la grille ci-dessus). Pour un concours national, contactez-nous afin de dimensionner la session.</p>
+                                </details>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- ======================================================== appel final -->
+                    <section class="lp-final" aria-labelledby="lp-final-h">
+                        <div class="lp-container lp-final-in">
+                            <div>
+                                <h2 id="lp-final-h">Votre prochain concours mérite un procès-verbal incontestable.</h2>
+                                <p t-if="signup_enabled"><t t-out="trial_days"/> jours d’essai, toutes les fonctions de votre catégorie, sans carte bancaire.</p>
+                                <p t-else="">Écrivez-nous&#160;: nous ouvrons votre espace et vous accompagnons pour votre premier concours.</p>
+                            </div>
+                            <t t-call="selecta_saas.lp_cta">
+                                <t t-set="cta_class" t-value="'sl-btn sl-btn-primary sl-btn-lg'"/>
+                                <t t-set="cta_label" t-value="'Démarrer l’essai gratuit'"/>
+                            </t>
+                        </div>
+                    </section>
+                </main>
+
+                <!-- ============================================================ pied de page -->
+                <footer class="lp-foot">
+                    <div class="lp-container lp-foot-in">
+                        <div class="lp-foot-brand">
+                            <div class="lp-mark lp-mark-inv">
+                                <span class="lp-mark-seal" aria-hidden="true">S</span>
+                                <span class="lp-mark-word">SELECTA</span>
+                            </div>
+                            <p>La culture de l’excellence. Une solution <t t-out="issuer"/>.</p>
+                        </div>
+                        <div class="lp-foot-col">
+                            <h2>Produit</h2>
+                            <a href="#fonctionnalites">Fonctionnalités</a>
+                            <a href="#tarifs">Tarifs</a>
+                            <a href="#faq">Questions fréquentes</a>
+                        </div>
+                        <div class="lp-foot-col">
+                            <h2>Accès</h2>
+                            <a href="/selecta/exam">Espace candidat</a>
+                            <a href="/selecta/login">Se connecter</a>
+                            <a t-if="signup_enabled" href="/selecta/signup">Créer un espace</a>
+                        </div>
+                        <address class="lp-foot-col">
+                            <h2>Support</h2>
+                            <a t-att-href="'mailto:%s' % contact_email" t-out="contact_email"/>
+                            <a t-foreach="phones" t-as="ph" t-att-href="'tel:%s' % ph.replace(' ', '')" t-out="ph"/>
+                        </address>
+                    </div>
+                    <div class="lp-container lp-foot-legal">
+                        <span>© <t t-out="year"/> <t t-out="issuer"/>. Tous droits réservés.</span>
+                        <span>SELECTA — concours et recrutements en ligne sécurisés.</span>
+                    </div>
+                </footer>
+
+                <script>
+                    (function () {
+                        var section = document.getElementById("tarifs");
+                        if (!section) { return; }
+                        var buttons = section.querySelectorAll(".lp-cycle-btn");
+                        buttons.forEach(function (btn) {
+                            btn.addEventListener("click", function () {
+                                var cycle = btn.getAttribute("data-cycle");
+                                section.setAttribute("data-cycle", cycle);
+                                buttons.forEach(function (b) { b.setAttribute("aria-pressed", String(b === btn)); });
+                            });
+                        });
+                    })();
+                </script>
+            </body>
+        </html>
+    </template>
+
+    <template id="lp_check" name="SELECTA — coche">
+        <svg t-if="on" class="lp-ck" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+        <svg t-else="" class="lp-ck lp-ck-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12"/></svg>
+        <span class="sl-sr" t-out="'Inclus : ' if on else 'Non inclus : '"/>
+    </template>
+</odoo>
