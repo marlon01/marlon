@@ -62,7 +62,7 @@ class SelectaSaasMail(models.Model):
         icp = self.env['ir.config_parameter'].sudo()
         base_url = (icp.get_param('web.base.url') or '').rstrip('/')
         return dict(values or {}, tenant=tenant, company=tenant.company_id if tenant else None,
-                    base_url=base_url, platform=self._setting('issuer_name', 'SELECTA'),
+                    base_url=base_url, platform=self._setting('issuer_name', 'Naxoris'),
                     support_email=self._setting('support_email'), support_phone=self._setting('support_phone'),
                     fmt_date=lambda d: d and tools.format_date(self.env, d, lang_code='fr_FR', date_format='d MMMM y') or '',
                     fmt_amount=lambda a, cur='$': ('{:,.2f}'.format(a or 0).replace(',', ' ').replace('.', ',')
@@ -112,7 +112,9 @@ class SelectaSaasMail(models.Model):
                             'attempts': mail.attempts + 1})
             except Exception as exc:  # noqa: BLE001 - toute erreur SMTP est consignée puis retentée
                 attempts = mail.attempts + 1
-                mail.write({'attempts': attempts, 'last_error': str(exc)[:250],
+                # MailDeliveryException porte (titre, détail) : seul le détail est utile à l'opérateur.
+                detail = exc.args[-1] if len(exc.args) > 1 else exc
+                mail.write({'attempts': attempts, 'last_error': str(detail)[:250],
                             'state': 'failed' if attempts >= MAX_ATTEMPTS else 'queued'})
                 _logger.warning("SELECTA SaaS : échec d'envoi du courriel %s à %s : %s", mail.id, mail.email_to, exc)
 
