@@ -57,7 +57,7 @@ export function providerName(code) {
  * une tentative en ligne laisse `online_provider` renseigné même si la structure a finalement payé hors ligne.
  */
 export function paidOnline(inv) {
-    return inv.state === "paid" && !!inv.online_provider && !inv.declared_date && inv.payment_method !== "manual";
+    return inv.state === "paid" && !!inv.paid_online;
 }
 
 /** Pages légales publiques (servies par le module, hors console). */

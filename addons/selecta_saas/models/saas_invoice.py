@@ -56,6 +56,7 @@ class SelectaSaasInvoice(models.Model):
     online_session = fields.Char(readonly=True, copy=False)
     online_started = fields.Datetime(readonly=True)
     online_message = fields.Char(readonly=True)
+    paid_online = fields.Boolean(readonly=True, copy=False)
     state = fields.Selection(INVOICE_STATES, default='open', required=True, index=True)
     period_start = fields.Datetime(readonly=True)
     period_end = fields.Datetime(readonly=True)
@@ -106,6 +107,9 @@ class SelectaSaasInvoice(models.Model):
             raise UserError(_("Cette facture est déjà soldée ou annulée."))
         tenant = self.tenant_id
         if self.prorated:
+            # Les périodes payées non consommées ont été déduites : elles sont remplacées, et une
+            # catégorie inférieure programmée ne doit plus s'appliquer.
+            tenant._unconsumed_invoices().filtered(lambda i: i != self).write({'plan_applied': True})
             start, end = tenant._start_new_period(self.billing_cycle)
         else:
             start, end = tenant._extend_period(self.billing_cycle)
@@ -184,7 +188,7 @@ class SelectaSaasInvoice(models.Model):
         status, provider_ref, detail = provider.check(self)
         if status == 'paid':
             self._validate(method=provider.method, reference=provider_ref or self.online_reference)
-            self.online_message = False
+            self.write({'online_message': False, 'paid_online': True})
         else:
             self.online_message = (detail or '')[:200] or False
         return status
@@ -227,4 +231,5 @@ class SelectaSaasInvoice(models.Model):
             'gross_amount': self.gross_amount or self.amount, 'credit_amount': self.credit_amount,
             'prorated': self.prorated, 'deferred_plan': self.deferred_plan, 'plan_applied': self.plan_applied,
             'online_provider': self.online_provider or False, 'online_message': self.online_message or '',
+            'paid_online': self.paid_online,
         }

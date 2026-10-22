@@ -153,6 +153,32 @@ class TestSaasFeatures(SaasCommon):
         self.Tenant._cron_lifecycle()
         self.assertEqual(self.tenant_a.plan_id, self.plan_ecole)
 
+    def test_upgrade_after_paid_downgrade_keeps_value_and_plan(self):
+        """Avoir sur toutes les périodes payées ; la catégorie inférieure programmée est annulée."""
+        self._paid_period(self.tenant_a, self.plan_pme, days_total=30, days_left=10)
+        down = self.bo(self.user_a).billing_checkout(self.plan_ecole.id, 'monthly')
+        self.env['selecta.saas.invoice'].browse(down['id'])._validate()
+        # Valeur payée non consommée : ~10/30 de 79 $ + la période École/ONG à venir (29 $).
+        grande = self.env.ref('selecta_saas.plan_grande')
+        quote = self.bo(self.user_a).billing_quote(grande.id, 'yearly')
+        self.assertAlmostEqual(quote['credit'], int(79 * 10 / 30 + 29), delta=1)
+        up = self.bo(self.user_a).billing_checkout(grande.id, 'yearly')
+        self.env['selecta.saas.invoice'].browse(up['id'])._validate()
+        self.Tenant._cron_lifecycle()
+        self.assertEqual(self.tenant_a.plan_id, grande)
+        self.env['selecta.saas.invoice'].browse(down['id']).period_start = fields.Datetime.now() - timedelta(minutes=1)
+        self.Tenant._cron_lifecycle()
+        self.assertEqual(self.tenant_a.plan_id, grande, "la catégorie inférieure remplacée ne doit plus s'appliquer")
+
+    def test_unreachable_provider_message_is_not_technical(self):
+        import requests
+        inv = self.bo(self.user_a).billing_checkout(self.plan_pme.id, 'monthly')
+        record = self.env['selecta.saas.invoice'].browse(inv['id'])
+        record.write({'online_provider': 'cinetpay', 'online_reference': 'R-1', 'online_started': fields.Datetime.now()})
+        with patch.object(CinetPay, '_post', side_effect=requests.ConnectionError('HTTPSConnectionPool(host=…)')):
+            self.assertEqual(record._online_check(), 'pending')
+        self.assertNotIn('HTTPSConnectionPool', record.online_message)
+
     # ------------------------------------------------------------------ données, logo, documents
     def test_biometric_data_purged_after_retention(self):
         Concours = self.env['selecta.concours']

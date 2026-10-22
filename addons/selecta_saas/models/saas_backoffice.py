@@ -55,7 +55,8 @@ class SelectaBackoffice(models.AbstractModel):
                        'details': icp.get_param('selecta_saas.issuer_details') or ''},
             'customer': {'name': tenant.company_id.name, 'contact': tenant.contact_name or '',
                          'email': tenant.email or '', 'phone': tenant.phone or '',
-                         'country': tenant.country_id.name or ''},
+                         'country': (tenant.country_id.with_context(lang='fr_FR') if self.env['res.lang']._lang_get('fr_FR')
+                                     else tenant.country_id).name or ''},
         }
 
     @api.model

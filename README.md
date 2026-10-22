@@ -44,7 +44,7 @@ Chaque structure est une société Odoo distincte ; ses comptes n'appartiennent 
 * Personnel limité à sa structure ; le client Odoo générique (`/odoo`) est inaccessible au personnel des structures.
 * Paramètres communs au serveur (assistant LLM, anti force brute) réservés à l'administrateur système.
 * Limitation des tentatives fondée sur l'adresse réelle de la connexion (`proxy_mode` derrière le proxy), pas sur un en-tête falsifiable.
-* Tests automatisés : `odoo-bin -d <base> -i selecta_saas --test-tags /selecta_saas --stop-after-init` (36 tests : cloisonnement, quotas, consultation seule, facturation, proratisation, paiement en ligne simulé, courriels, conservation des données, régressions de sécurité).
+* Tests automatisés : `odoo-bin -d <base> -i selecta_saas --test-tags /selecta_saas --stop-after-init` (38 tests : cloisonnement, quotas, consultation seule, facturation, proratisation, paiement en ligne simulé, courriels, conservation des données, régressions de sécurité).
 
 ### Mise en ligne (Docker, HTTPS automatique)
 ```bash

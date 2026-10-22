@@ -19,6 +19,7 @@ from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 TIMEOUT = 20
+UNREACHABLE = "Confirmation de l'opérateur en attente : nouvelle vérification automatique dans quelques minutes."
 
 
 class ProviderError(UserError):
@@ -106,7 +107,8 @@ class CinetPay(BaseProvider):
         try:
             data = self._post(self.API + '/payment/check', json=payload).json()
         except (requests.RequestException, ValueError) as exc:
-            return 'pending', False, str(exc)[:200]
+            _logger.warning("CinetPay : vérification de %s impossible : %s", invoice.online_reference, exc)
+            return 'pending', False, UNREACHABLE
         info = data.get('data') or {}
         status = (info.get('status') or '').upper()
         if str(data.get('code')) == '00' and status == 'ACCEPTED':
@@ -116,7 +118,7 @@ class CinetPay(BaseProvider):
             return 'paid', info.get('operator_id') or invoice.online_reference, info.get('payment_method') or ''
         if status in ('REFUSED', 'CANCELED', 'CANCELLED') or str(data.get('code')) in ('600', '627'):
             return 'failed', False, data.get('message') or status
-        return 'pending', False, data.get('message') or status
+        return 'pending', False, "Paiement en attente de confirmation par l'opérateur."
 
 
 class Stripe(BaseProvider):
@@ -169,9 +171,11 @@ class Stripe(BaseProvider):
             resp = self._get(self.API + '/checkout/sessions/%s' % invoice.online_session, headers=self._auth())
             data = resp.json()
         except (requests.RequestException, ValueError) as exc:
-            return 'pending', False, str(exc)[:200]
+            _logger.warning("Stripe : vérification de %s impossible : %s", invoice.online_reference, exc)
+            return 'pending', False, UNREACHABLE
         if resp.status_code >= 400:
-            return 'pending', False, (data.get('error') or {}).get('message') or ''
+            _logger.warning("Stripe : vérification de %s refusée : %s", invoice.online_reference, data)
+            return 'pending', False, UNREACHABLE
         if data.get('client_reference_id') != invoice.online_reference:
             return 'failed', False, _("Session de paiement étrangère à cette facture.")
         if data.get('payment_status') == 'paid':
@@ -181,7 +185,7 @@ class Stripe(BaseProvider):
             return 'paid', data.get('payment_intent') or data.get('id'), 'card'
         if data.get('status') == 'expired':
             return 'failed', False, _("Session de paiement expirée.")
-        return 'pending', False, data.get('payment_status') or ''
+        return 'pending', False, "Paiement en attente de confirmation."
 
 
 PROVIDERS = {p.code: p for p in (CinetPay, Stripe)}

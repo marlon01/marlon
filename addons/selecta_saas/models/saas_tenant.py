@@ -237,13 +237,25 @@ class SelectaSaasTenant(models.Model):
         self.write(vals)
         return start, end
 
-    def _current_paid_invoice(self):
-        """Facture couvrant la période en cours (base de calcul de l'avoir)."""
+    def _unconsumed_invoices(self):
+        """Factures payées dont la période n'est pas entièrement consommée (en cours ou à venir)."""
         self.ensure_one()
-        now = fields.Datetime.now()
         return self.env['selecta.saas.invoice'].sudo().search([
-            ('tenant_id', '=', self.id), ('state', '=', 'paid'), ('period_start', '<=', now),
-            ('period_end', '>', now)], order='period_end desc', limit=1)
+            ('tenant_id', '=', self.id), ('state', '=', 'paid'), ('period_end', '>', fields.Datetime.now())],
+            order='period_start')
+
+    def _unconsumed_value(self):
+        """Valeur payée non encore consommée : prorata du temps restant de chaque période."""
+        now = fields.Datetime.now()
+        value = 0.0
+        for inv in self._unconsumed_invoices():
+            if not inv.period_start or not inv.period_end:
+                continue
+            total = (inv.period_end - inv.period_start).total_seconds()
+            remaining = (inv.period_end - max(now, inv.period_start)).total_seconds()
+            if total > 0:
+                value += inv.amount * max(0.0, min(remaining, total)) / total
+        return value
 
     def _quote(self, plan, cycle):
         """Montant à facturer pour ``plan``/``cycle`` en tenant compte de la période payée en cours."""
@@ -256,12 +268,10 @@ class SelectaSaasTenant(models.Model):
         if plan.price_monthly < self.plan_id.price_monthly:
             quote['deferred'] = True  # catégorie inférieure : effet à l'échéance, période ajoutée
             return quote
-        current = self._current_paid_invoice()
-        if current and current.period_end and current.period_start:
-            total = (current.period_end - current.period_start).total_seconds()
-            remaining = max(0.0, (current.period_end - fields.Datetime.now()).total_seconds())
+        if self._unconsumed_invoices():
             # Avoir arrondi au dollar inférieur : montants entiers, compatibles avec tous les prestataires.
-            credit = float(int(current.amount * remaining / total)) if total > 0 else 0.0
+            # Il couvre aussi les périodes déjà payées à venir, remplacées par la nouvelle période.
+            credit = float(int(self._unconsumed_value()))
             quote.update(credit=min(credit, gross), amount=max(0.0, gross - credit), prorated=True)
         return quote
 
