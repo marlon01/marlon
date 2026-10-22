@@ -22,7 +22,7 @@
     <!-- Bouton d'appel à l'action : essai gratuit ou contact lorsque les inscriptions sont fermées. -->
     <template id="lp_cta" name="SELECTA — appel à l'action">
         <a t-if="signup_enabled" t-att-class="cta_class" t-att-href="cta_href or '/selecta/signup'"><t t-out="cta_label"/></a>
-        <a t-else="" t-att-class="cta_class" t-att-href="'mailto:%s?subject=Ouverture%%20d%%27un%%20espace%%20SELECTA' % contact_email">Nous contacter</a>
+        <a t-else="" t-att-class="cta_class" t-att-href="'mailto:' + contact_email + '?subject=Ouverture%20d%27un%20espace%20SELECTA'">Nous contacter</a>
     </template>
 
     <template id="landing" name="SELECTA — présentation">

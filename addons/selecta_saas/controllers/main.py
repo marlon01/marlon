@@ -63,7 +63,8 @@ class SelectaSaasController(SelectaExamController):
     def signup_page(self, plan=None, **kw):
         if request.session.uid:
             return request.redirect('/selecta/admin')
-        countries = request.env['res.country'].sudo().search([])
+        # Noms des pays en français lorsque la langue est chargée (--load-language=fr_FR).
+        countries = request.env['res.country'].sudo().with_context(lang='fr_FR').search([]).sorted('name')
         return render_app('signup', "SELECTA — Créer votre espace", {
             'plans': [p._public_dict() for p in _plans()],
             'plan': plan or '',
@@ -72,6 +73,7 @@ class SelectaSaasController(SelectaExamController):
             'signup_enabled': read_setting(request.env, 'signup_enabled'),
             'countries': [{'code': c.code, 'name': c.name} for c in countries],
             'default_country': 'CD',
+            'support_email': read_setting(request.env, 'support_email'),
         })
 
     @http.route('/selecta/saas/signup', type='json', auth='public', csrf=False)

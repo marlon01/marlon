@@ -5,7 +5,7 @@
 #   3. Changez admin_passwd dans odoo-saas.conf (mot de passe maître).
 #   4. docker compose up -d
 #   5. Une seule fois :
-#        docker compose run --rm odoo odoo -d selecta -i selecta_saas --without-demo=all --stop-after-init
+#        docker compose run --rm odoo odoo -d selecta -i selecta_saas --without-demo=all --load-language=fr_FR --stop-after-init
 #   6. https://<domaine>/selecta/login avec admin / admin : changez immédiatement ce mot de passe,
 #      puis ouvrez l'administration centrale : https://<domaine>/selecta/platform
 #

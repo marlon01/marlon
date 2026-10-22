@@ -18,7 +18,7 @@ export class SettingsPage extends Component {
             </header>
             <div t-if="state.error" class="sl-alert sl-alert-danger ad-mb" role="alert"><t t-esc="state.error"/></div>
             <div t-if="!state.form and !state.error" class="ad-loading"><span class="sl-spinner"/></div>
-            <form t-if="state.form" t-on-submit.prevent="save" novalidate="novalidate">
+            <form t-if="state.form" class="pf-settings" t-on-submit.prevent="save" novalidate="novalidate">
                 <t t-set="f" t-value="state.form"/>
                 <section class="ad-panel">
                     <div class="ad-panel-head"><h2>Essai gratuit et inscriptions</h2></div>

@@ -38,7 +38,7 @@ function passwordStrength(pw) {
 class Signup extends Component {
     static components = { Icon };
     static template = xml`
-        <div class="su-wrap">
+        <div class="su-wrap" t-att-class="{ 'su-wrap-single': !(config.signup_enabled and plan) }">
             <main class="su-main">
                 <div class="su-card">
                     <a class="su-mark" href="/selecta" aria-label="SELECTA, retour à la présentation">

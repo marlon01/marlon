@@ -26,7 +26,7 @@ export class PaymentsPage extends Component {
             <div t-if="state.error" class="sl-alert sl-alert-danger ad-mb" role="alert"><t t-esc="state.error"/></div>
             <section class="ad-panel ad-panel-flush" role="tabpanel">
                 <div t-if="state.loading and !state.loaded" class="ad-loading"><span class="sl-spinner"/></div>
-                <table t-elif="state.rows.length" class="ad-table pf-payments">
+                <table t-elif="state.rows.length" class="ad-table pf-payments pf-cards">
                     <thead><tr>
                         <th scope="col">Structure</th><th scope="col">Facture</th><th scope="col" class="num">Montant</th>
                         <th t-if="state.tab == 'all'" scope="col">Statut</th>
@@ -35,18 +35,18 @@ export class PaymentsPage extends Component {
                     </tr></thead>
                     <tbody>
                         <tr t-foreach="state.rows" t-as="i" t-key="i.id">
-                            <td><a t-att-href="'#/tenants/' + i.tenant_id" class="pf-cell-title" t-esc="i.tenant"/></td>
-                            <td><span class="sl-mono" t-esc="i.name"/><div class="sl-muted ad-small"><t t-esc="i.plan"/> · <t t-esc="cycle[i.billing_cycle]"/></div></td>
-                            <td class="num sl-figures pf-amount" t-esc="money(i.amount, i.symbol)"/>
-                            <td t-if="state.tab == 'all'">
+                            <td data-label="Structure"><a t-att-href="'#/tenants/' + i.tenant_id" class="pf-cell-title" t-esc="i.tenant"/></td>
+                            <td data-label="Facture"><span class="sl-mono" t-esc="i.name"/><div class="sl-muted ad-small"><t t-esc="i.plan"/> · <t t-esc="cycle[i.billing_cycle]"/></div></td>
+                            <td data-label="Montant" class="num sl-figures pf-amount" t-esc="money(i.amount, i.symbol)"/>
+                            <td data-label="Statut" t-if="state.tab == 'all'">
                                 <span t-attf-class="sl-badge {{badge[i.state]}}" t-esc="i.state_label"/>
                                 <div t-if="i.reject_reason" class="ad-small ad-danger-text pf-clip" t-att-title="i.reject_reason" t-esc="i.reject_reason"/>
                             </td>
-                            <td class="ad-small" t-esc="i.payment_method_label or '—'"/>
-                            <td class="sl-mono ad-small" t-esc="i.payment_reference or '—'"/>
-                            <td class="ad-small"><a t-if="i.payer_phone" t-att-href="'tel:' + i.payer_phone" t-esc="i.payer_phone"/><t t-else="">—</t></td>
-                            <td class="ad-small" t-esc="i.declared_date ? dt(i.declared_date) : '—'"/>
-                            <td class="ad-small">
+                            <td data-label="Moyen" class="ad-small" t-esc="i.payment_method_label or '—'"/>
+                            <td data-label="Référence" class="sl-mono ad-small" t-esc="i.payment_reference or '—'"/>
+                            <td data-label="Téléphone" class="ad-small"><a t-if="i.payer_phone" t-att-href="'tel:' + i.payer_phone" t-esc="i.payer_phone"/><t t-else="">—</t></td>
+                            <td data-label="Déclaré le" class="ad-small" t-esc="i.declared_date ? dt(i.declared_date) : '—'"/>
+                            <td data-label="Justificatif" class="ad-small">
                                 <a t-if="i.has_proof" t-att-href="proofUrl(i)" class="pf-proof" target="_blank" rel="noopener" t-att-title="i.proof_filename or 'Justificatif'">
                                     <Icon name="'download'" size="14"/>Télécharger
                                 </a>

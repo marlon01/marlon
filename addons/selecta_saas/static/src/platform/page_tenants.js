@@ -42,23 +42,23 @@ export class TenantsListPage extends Component {
             <div t-if="state.error" class="sl-alert sl-alert-danger ad-mb" role="alert"><t t-esc="state.error"/></div>
             <section class="ad-panel ad-panel-flush">
                 <div t-if="state.loading and !state.all.length" class="ad-loading"><span class="sl-spinner"/></div>
-                <table t-elif="rows.length" class="ad-table pf-tenants">
+                <table t-elif="rows.length" class="ad-table pf-tenants pf-cards">
                     <thead><tr>
                         <th scope="col">Structure</th><th scope="col">Catégorie</th><th scope="col">Statut</th>
                         <th scope="col" class="num">Jours restants</th><th scope="col">Échéance</th><th scope="col">Pays</th><th scope="col">Créée le</th>
                     </tr></thead>
                     <tbody>
                         <tr t-foreach="rows" t-as="t" t-key="t.id" class="is-link" t-on-click="() => this.open(t)">
-                            <td>
+                            <td data-label="Structure">
                                 <a t-att-href="'#/tenants/' + t.id" class="pf-cell-title" t-esc="t.name"/>
                                 <div class="sl-muted ad-small"><t t-esc="t.contact_name"/><t t-if="t.contact_name and t.email"> · </t><t t-esc="t.email"/></div>
                             </td>
-                            <td><t t-esc="t.plan_name"/><div t-if="t.state == 'active' or t.state == 'past_due'" class="sl-muted ad-small" t-esc="cycle[t.billing_cycle]"/></td>
-                            <td><span t-attf-class="sl-badge {{badge[t.state]}}" t-esc="t.state_label"/></td>
-                            <td class="num sl-figures" t-att-class="{'ad-danger-text': t.state == 'trial' and t.days_left lte 3}" t-esc="days(t)"/>
-                            <td t-esc="date(due(t))"/>
-                            <td t-esc="t.country or '—'"/>
-                            <td t-esc="date(t.created)"/>
+                            <td data-label="Catégorie"><t t-esc="t.plan_name"/><div t-if="t.state == 'active' or t.state == 'past_due'" class="sl-muted ad-small" t-esc="cycle[t.billing_cycle]"/></td>
+                            <td data-label="Statut"><span t-attf-class="sl-badge {{badge[t.state]}}" t-esc="t.state_label"/></td>
+                            <td data-label="Jours restants" class="num sl-figures" t-att-class="{'ad-danger-text': t.state == 'trial' and t.days_left lte 3}" t-esc="days(t)"/>
+                            <td data-label="Échéance" t-esc="date(due(t))"/>
+                            <td data-label="Pays" t-esc="t.country or '—'"/>
+                            <td data-label="Créée le" t-esc="date(t.created)"/>
                         </tr>
                     </tbody>
                 </table>
@@ -231,50 +231,50 @@ export class TenantDetailPage extends Component {
                 </div>
                 <section class="ad-panel ad-panel-flush" role="tabpanel" t-att-aria-labelledby="'pf-tab-' + state.tab">
                     <t t-if="state.tab == 'invoices'">
-                        <table t-if="t.invoices.length" class="ad-table">
+                        <table t-if="t.invoices.length" class="ad-table pf-cards">
                             <thead><tr><th>Facture</th><th>Catégorie</th><th class="num">Montant</th><th>Statut</th><th>Période</th><th>Paiement</th><th>Émise le</th></tr></thead>
                             <tbody>
                                 <tr t-foreach="t.invoices" t-as="i" t-key="i.id">
-                                    <td class="sl-mono" t-esc="i.name"/>
-                                    <td><t t-esc="i.plan"/><div class="sl-muted ad-small" t-esc="cycle[i.billing_cycle]"/></td>
-                                    <td class="num sl-figures" t-esc="money(i.amount, i.symbol)"/>
-                                    <td>
+                                    <td data-label="Facture" class="sl-mono" t-esc="i.name"/>
+                                    <td data-label="Catégorie"><t t-esc="i.plan"/><div class="sl-muted ad-small" t-esc="cycle[i.billing_cycle]"/></td>
+                                    <td data-label="Montant" class="num sl-figures" t-esc="money(i.amount, i.symbol)"/>
+                                    <td data-label="Statut">
                                         <span t-attf-class="sl-badge {{ibadge[i.state]}}" t-esc="i.state_label"/>
                                         <div t-if="i.reject_reason" class="ad-small ad-danger-text" t-esc="i.reject_reason"/>
                                         <a t-if="i.state == 'pending'" href="#/payments" class="ad-link ad-small">Traiter</a>
                                     </td>
-                                    <td class="ad-small"><t t-if="i.period_start"><t t-esc="date(i.period_start)"/> → <t t-esc="date(i.period_end)"/></t><t t-else="">—</t></td>
-                                    <td class="ad-small"><t t-esc="i.payment_method_label or '—'"/><div t-if="i.payment_reference" class="sl-mono" t-esc="i.payment_reference"/></td>
-                                    <td class="ad-small" t-esc="date(i.date)"/>
+                                    <td data-label="Période" class="ad-small"><t t-if="i.period_start"><t t-esc="date(i.period_start)"/> → <t t-esc="date(i.period_end)"/></t><t t-else="">—</t></td>
+                                    <td data-label="Paiement" class="ad-small"><t t-esc="i.payment_method_label or '—'"/><div t-if="i.payment_reference" class="sl-mono" t-esc="i.payment_reference"/></td>
+                                    <td data-label="Émise le" class="ad-small" t-esc="date(i.date)"/>
                                 </tr>
                             </tbody>
                         </table>
                         <div t-else="" class="ad-empty"><p>Aucune facture : la structure n'a pas encore choisi d'abonnement.</p></div>
                     </t>
                     <t t-elif="state.tab == 'staff'">
-                        <table t-if="t.staff.length" class="ad-table">
+                        <table t-if="t.staff.length" class="ad-table pf-cards">
                             <thead><tr><th>Nom</th><th>Identifiant</th><th>Rôle</th><th>Dernière connexion</th><th>Statut</th></tr></thead>
                             <tbody>
                                 <tr t-foreach="t.staff" t-as="u" t-key="u.id" t-att-class="{'is-muted': !u.active}">
-                                    <td><strong t-esc="u.name"/></td>
-                                    <td class="sl-mono" t-esc="u.login"/>
-                                    <td t-esc="u.role or '—'"/>
-                                    <td t-esc="u.login_date ? dt(u.login_date) : 'Jamais'"/>
-                                    <td><span t-attf-class="sl-badge {{u.active ? 'sl-badge-ok' : ''}}" t-esc="u.active ? 'Actif' : 'Désactivé'"/></td>
+                                    <td data-label="Nom"><strong t-esc="u.name"/></td>
+                                    <td data-label="Identifiant" class="sl-mono" t-esc="u.login"/>
+                                    <td data-label="Rôle" t-esc="u.role or '—'"/>
+                                    <td data-label="Dernière connexion" t-esc="u.login_date ? dt(u.login_date) : 'Jamais'"/>
+                                    <td data-label="Statut"><span t-attf-class="sl-badge {{u.active ? 'sl-badge-ok' : ''}}" t-esc="u.active ? 'Actif' : 'Désactivé'"/></td>
                                 </tr>
                             </tbody>
                         </table>
                         <div t-else="" class="ad-empty"><p>Aucun compte du personnel.</p></div>
                     </t>
                     <t t-elif="state.tab == 'concours'">
-                        <table t-if="t.concours.length" class="ad-table">
+                        <table t-if="t.concours.length" class="ad-table pf-cards">
                             <thead><tr><th>Concours</th><th>État</th><th>Ouverture</th><th class="num">Candidats</th></tr></thead>
                             <tbody>
                                 <tr t-foreach="t.concours" t-as="c" t-key="c.id">
-                                    <td><strong t-esc="c.name"/><div class="sl-muted sl-mono ad-small" t-esc="c.reference"/></td>
-                                    <td><span t-attf-class="sl-badge {{cbadge[c.state] or ''}}" t-esc="clabels[c.state] or c.state"/></td>
-                                    <td t-esc="dt(c.date_start)"/>
-                                    <td class="num sl-figures" t-esc="c.candidates"/>
+                                    <td data-label="Concours"><strong t-esc="c.name"/><div class="sl-muted sl-mono ad-small" t-esc="c.reference"/></td>
+                                    <td data-label="État"><span t-attf-class="sl-badge {{cbadge[c.state] or ''}}" t-esc="clabels[c.state] or c.state"/></td>
+                                    <td data-label="Ouverture" t-esc="dt(c.date_start)"/>
+                                    <td data-label="Candidats" class="num sl-figures" t-esc="c.candidates"/>
                                 </tr>
                             </tbody>
                         </table>
