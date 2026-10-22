@@ -29,10 +29,12 @@ class SelectaQuestion(models.Model):
     _name = 'selecta.question'
     _description = 'Question QCM'
     _order = 'category_id, sequence, id'
+    _check_company_auto = True
 
     name = fields.Text(string="Énoncé", required=True)
     sequence = fields.Integer(default=10)
-    category_id = fields.Many2one('selecta.question.category', string="Matière", ondelete='restrict', index=True)
+    category_id = fields.Many2one('selecta.question.category', string="Matière", ondelete='restrict', index=True,
+                                  check_company=True)
     qtype = fields.Selection([('single', 'Choix unique'), ('multiple', 'Choix multiples')],
                              default='single', required=True)
     points = fields.Float(default=1.0, required=True)
@@ -76,6 +78,13 @@ class SelectaQuestion(models.Model):
                     "La question « %(q)s » est utilisée par le concours « %(c)s » déjà ouvert ou clôturé. "
                     "Elle est figée pour garantir l'équité : dupliquez-la pour créer une nouvelle version.",
                     q=(q.name or '')[:50], c=locked[0].name))
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        companies = {vals.get('company_id') or self.env.company.id for vals in vals_list}
+        for company in self.env['res.company'].browse(companies):
+            company._selecta_guard('question.create', count=len(vals_list))
+        return super().create(vals_list)
 
     def write(self, vals):
         content_fields = {'name', 'qtype', 'points', 'choice_ids', 'image'}

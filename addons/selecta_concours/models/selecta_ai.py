@@ -412,6 +412,8 @@ class SelectaAI(models.AbstractModel):
 
     def _llm_enrich(self, r):
         icp = self.env['ir.config_parameter'].sudo()
+        if not self.env.company._selecta_feature('llm'):
+            return {'ok': False, 'error': _("L'assistant de rédaction n'est pas inclus dans votre abonnement.")}
         if icp.get_param('selecta.llm_enabled') not in ('True', 'true', '1'):
             return {'ok': False, 'error': _("Assistant LLM désactivé dans les paramètres.")}
         endpoint = icp.get_param('selecta.llm_endpoint')

@@ -395,6 +395,7 @@ class SelectaBackoffice(models.AbstractModel):
         if only_missing:
             cands = cands.filtered(lambda c: not c.has_code)
         concours = self.env['selecta.concours'].browse(int(concours_id))
+        concours.company_id._selecta_guard('codes.generate', concours=concours)
         return {
             'codes': cands._generate_codes(),
             'concours': {'name': concours.name, 'reference': concours.reference,
@@ -505,6 +506,7 @@ class SelectaBackoffice(models.AbstractModel):
         import json
         c = self.env['selecta.concours'].browse(int(concours_id))
         c.check_access('read')
+        c.company_id._selecta_guard('analysis', concours=c)
         if c.analysis_json and not refresh and not use_llm and c.state == 'published':
             return json.loads(c.analysis_json)
         data = self.env['selecta.ai'].analyze(c, use_llm=use_llm)
@@ -533,7 +535,7 @@ class SelectaBackoffice(models.AbstractModel):
     @api.model
     def audit_verify(self):
         require_group(self.env, G_ADMIN, G_JURY)
-        res = self.env['selecta.audit.log'].sudo().verify_chain()
+        res = self.env['selecta.audit.log'].sudo().verify_chain(self.env.company.id)
         self.env['selecta.audit.log']._log('audit.verify', _("Vérification d'intégrité du journal : %s",
                                                              'conforme' if res['ok'] else 'ANOMALIE'), res)
         return res
@@ -544,7 +546,8 @@ class SelectaBackoffice(models.AbstractModel):
         require_group(self.env, G_ADMIN)
         groups = [self.env.ref(g) for g in ROLE_GROUPS.values()]
         users = self.env['res.users'].sudo().with_context(active_test=False).search(
-            [('groups_id', 'in', [g.id for g in groups]), ('share', '=', False), ('id', '!=', self.env.ref('base.user_root').id)])
+            [('groups_id', 'in', [g.id for g in groups]), ('share', '=', False),
+             ('company_id', '=', self.env.company.id), ('id', '!=', self.env.ref('base.user_root').id)])
         out = []
         for u in users:
             role = next((r for r in ('admin', 'jury', 'concepteur', 'surveillant') if u.has_group(ROLE_GROUPS[r])), None)
@@ -566,7 +569,7 @@ class SelectaBackoffice(models.AbstractModel):
         if password and len(password) < 10:
             raise UserError(_("Le mot de passe doit comporter au moins 10 caractères."))
         if vals.get('id'):
-            user = Users.browse(int(vals['id']))
+            user = self._staff_user(vals['id'])
             if user.has_group('base.group_system') and user.id != self.env.uid:
                 raise AccessError(_("Un administrateur système ne peut être modifié depuis SELECTA."))
             write = {'name': vals.get('name') or user.name, 'email': vals.get('email') or False}
@@ -578,21 +581,33 @@ class SelectaBackoffice(models.AbstractModel):
         else:
             if not vals.get('login') or not password:
                 raise UserError(_("Identifiant et mot de passe obligatoires."))
+            self.env.company._selecta_guard('staff.create')
             user = Users.create({
                 'name': vals.get('name') or vals['login'], 'login': vals['login'].strip(), 'email': vals.get('email') or False,
                 'password': password, 'company_id': self.env.company.id, 'company_ids': [(6, 0, [self.env.company.id])],
                 'groups_id': [(6, 0, [self.env.ref('base.group_user').id, role_group.id])],
             })
+            # Le contact du compte appartient à la structure : invisible des autres organisations.
+            user.partner_id.company_id = self.env.company
         self.env['selecta.audit.log']._log('staff.save', _("Compte %(l)s : rôle %(r)s", l=user.login, r=ROLE_LABELS[role]),
                                            {'user_id': user.id, 'password_changed': bool(password)})
         return self.staff_list()
 
+    def _staff_user(self, user_id):
+        """Compte du personnel de la structure courante ; toute autre organisation est hors d'atteinte."""
+        user = self.env['res.users'].sudo().with_context(active_test=False).browse(int(user_id)).exists()
+        if not user or user.company_id != self.env.company or (user.company_ids - self.env.company):
+            raise AccessError(_("Ce compte n'appartient pas à votre structure."))
+        return user
+
     @api.model
     def staff_toggle(self, user_id):
         require_group(self.env, G_ADMIN)
-        user = self.env['res.users'].sudo().with_context(active_test=False).browse(int(user_id))
+        user = self._staff_user(user_id)
         if user.id == self.env.uid or user.has_group('base.group_system'):
             raise AccessError(_("Opération interdite sur ce compte."))
+        if not user.active:
+            self.env.company._selecta_guard('staff.create')
         user.active = not user.active
         self.env['selecta.audit.log']._log('staff.toggle', _("Compte %(l)s %(s)s", l=user.login,
                                                              s='activé' if user.active else 'désactivé'), {})
@@ -605,6 +620,9 @@ class SelectaBackoffice(models.AbstractModel):
         icp = self.env['ir.config_parameter'].sudo()
         company = self.env.company
         return {
+            'company_id': company.id,
+            'can_edit_platform': self.env.user.has_group('base.group_system'),
+            'branding': company._selecta_feature('branding'),
             'company_name': company.name, 'brand_color': company.selecta_brand_color or '#0B5FFF',
             'tagline': company.selecta_tagline or '',
             'llm_enabled': icp.get_param('selecta.llm_enabled') in ('True', 'true', '1'),
@@ -614,6 +632,10 @@ class SelectaBackoffice(models.AbstractModel):
             'login_max_failures': int(icp.get_param('selecta.login_max_failures', 8)),
             'login_lock_minutes': int(icp.get_param('selecta.login_lock_minutes', 15)),
             'base_url': icp.get_param('web.base.url') or '',
+        } if self.env.user.has_group('base.group_system') else {
+            'company_id': company.id, 'can_edit_platform': False, 'branding': company._selecta_feature('branding'),
+            'company_name': company.name, 'brand_color': company.selecta_brand_color or '#0B5FFF',
+            'tagline': company.selecta_tagline or '',
         }
 
     @api.model
@@ -624,6 +646,8 @@ class SelectaBackoffice(models.AbstractModel):
         cvals = {}
         if vals.get('company_name'):
             cvals['name'] = vals['company_name']
+        if not company._selecta_feature('branding'):
+            vals = {k: v for k, v in vals.items() if k not in ('brand_color', 'tagline', 'logo_data')}
         if 'brand_color' in vals:
             cvals['selecta_brand_color'] = vals['brand_color']
         if 'tagline' in vals:
@@ -632,21 +656,24 @@ class SelectaBackoffice(models.AbstractModel):
             cvals['logo'] = vals['logo_data'].split(',', 1)[-1]
         if cvals:
             company.write(cvals)
-        mapping = {'llm_enabled': 'selecta.llm_enabled', 'llm_endpoint': 'selecta.llm_endpoint',
-                   'llm_model': 'selecta.llm_model', 'login_max_failures': 'selecta.login_max_failures',
-                   'login_lock_minutes': 'selecta.login_lock_minutes'}
-        for k, p in mapping.items():
-            if k in vals:
-                icp.set_param(p, str(vals[k]))
-        if vals.get('llm_api_key'):
-            icp.set_param('selecta.llm_api_key', vals['llm_api_key'])
+        # Paramètres communs à toutes les structures hébergées (point d'accès réseau, secrets,
+        # anti force brute) : jamais modifiables par l'administrateur d'une organisation.
+        if self.env.user.has_group('base.group_system'):
+            mapping = {'llm_enabled': 'selecta.llm_enabled', 'llm_endpoint': 'selecta.llm_endpoint',
+                       'llm_model': 'selecta.llm_model', 'login_max_failures': 'selecta.login_max_failures',
+                       'login_lock_minutes': 'selecta.login_lock_minutes'}
+            for k, p in mapping.items():
+                if k in vals:
+                    icp.set_param(p, str(vals[k]))
+            if vals.get('llm_api_key'):
+                icp.set_param('selecta.llm_api_key', vals['llm_api_key'])
         self.env['selecta.audit.log']._log('settings.save', _("Mise à jour des paramètres"),
                                            {k: v for k, v in vals.items() if k not in ('llm_api_key', 'logo_data')})
         return self.settings_get()
 
     @api.model
     def llm_test(self):
-        require_group(self.env, G_ADMIN)
+        require_group(self.env, 'base.group_system')
         fake = {'stats': {'n': 0}, 'reliability': None, 'categories': [], 'items': [], 'integrity_score': 100,
                 'fraud': {'collusion': [], 'speed': []}, 'population': {'disqualified': 0},
                 'concours': {'threshold': 50}}

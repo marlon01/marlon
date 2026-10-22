@@ -61,6 +61,11 @@
         <field name="model_id" ref="model_selecta_attempt"/>
         <field name="domain_force">[('company_id', 'in', company_ids)]</field>
     </record>
+    <record id="rule_audit_company" model="ir.rule">
+        <field name="name">SELECTA : journal d'audit par structure</field>
+        <field name="model_id" ref="model_selecta_audit_log"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
     <record id="rule_event_company" model="ir.rule">
         <field name="name">SELECTA : surveillance par structure</field>
         <field name="model_id" ref="model_selecta_proctor_event"/>

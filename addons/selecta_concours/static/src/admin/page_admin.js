@@ -200,23 +200,24 @@ export class SettingsPage extends Component {
     static template = xml`
         <div class="ad-page" t-if="state.s">
             <header class="ad-head">
-                <div><h1>Paramètres</h1><p class="sl-muted">Identité de la structure, sécurité des connexions et assistant d'analyse.</p></div>
+                <div><h1>Paramètres</h1><p class="sl-muted" t-esc="state.s.can_edit_platform ? 'Identité de la structure, sécurité des connexions et assistant IA.' : 'Identité de votre structure et accès des postes.'"/></div>
                 <div class="ad-head-actions"><button class="sl-btn sl-btn-primary" t-on-click="save"><Icon name="'check'"/>Enregistrer</button></div>
             </header>
             <section class="ad-panel ad-form">
                 <h2 class="ad-span-2">Structure organisatrice</h2>
                 <div class="sl-field"><label>Nom affiché aux candidats</label><input class="sl-input" t-model="state.s.company_name"/></div>
-                <div class="sl-field"><label>Slogan</label><input class="sl-input" t-model="state.s.tagline"/></div>
-                <div class="sl-field"><label>Couleur de marque</label><div class="sl-row"><input type="color" t-model="state.s.brand_color" class="ad-color"/><span class="sl-mono" t-esc="state.s.brand_color"/></div></div>
-                <div class="sl-field"><label>Logo</label><div class="sl-row"><img t-att-src="state.logoPreview or logo" class="ad-logo-preview" alt=""/><label class="sl-btn sl-btn-sm"><Icon name="'upload'" size="16"/>Changer<input type="file" accept="image/*" class="sl-hidden" t-on-change="pickLogo"/></label></div></div>
+                <p t-if="!state.s.branding" class="sl-help ad-span-2">La personnalisation (logo, couleur, slogan) est incluse dans les abonnements supérieurs.</p>
+                <div class="sl-field" t-if="state.s.branding"><label>Slogan</label><input class="sl-input" t-model="state.s.tagline"/></div>
+                <div class="sl-field" t-if="state.s.branding"><label>Couleur de marque</label><div class="sl-row"><input type="color" t-model="state.s.brand_color" class="ad-color"/><span class="sl-mono" t-esc="state.s.brand_color"/></div></div>
+                <div class="sl-field" t-if="state.s.branding"><label>Logo</label><div class="sl-row"><img t-att-src="state.logoPreview or logo" class="ad-logo-preview" alt=""/><label class="sl-btn sl-btn-sm"><Icon name="'upload'" size="16"/>Changer<input type="file" accept="image/*" class="sl-hidden" t-on-change="pickLogo"/></label></div></div>
             </section>
-            <section class="ad-panel ad-form">
+            <section class="ad-panel ad-form" t-if="state.s.can_edit_platform">
                 <h2 class="ad-span-2">Sécurité des connexions</h2>
                 <div class="sl-field"><label>Essais infructueux avant verrouillage du poste</label><input type="number" min="3" class="sl-input" t-model.number="state.s.login_max_failures"/></div>
                 <div class="sl-field"><label>Durée du verrouillage (minutes)</label><input type="number" min="1" class="sl-input" t-model.number="state.s.login_lock_minutes"/></div>
                 <p class="sl-help ad-span-2">S'applique aux codes candidats et aux comptes du personnel. Un code compte 60 bits d'entropie : sa découverte par essais successifs est impossible en pratique.</p>
             </section>
-            <section class="ad-panel ad-form">
+            <section class="ad-panel ad-form" t-if="state.s.can_edit_platform">
                 <h2 class="ad-span-2">Assistant de rédaction (LLM local, facultatif)</h2>
                 <p class="sl-help ad-span-2">L'analyse psychométrique et la détection de fraude fonctionnent sans cet assistant. S'il est activé, seules des statistiques anonymisées lui sont transmises. Recommandé : Ollama installé sur le serveur, pour rester 100 % hors ligne.</p>
                 <label class="ad-toggle ad-span-2"><span class="sl-switch"><input type="checkbox" t-model="state.s.llm_enabled"/><span/></span><span><strong>Activer l'assistant</strong></span></label>
@@ -228,7 +229,7 @@ export class SettingsPage extends Component {
             <section class="ad-panel">
                 <h2>Accès des postes</h2>
                 <dl class="ad-statlist">
-                    <div><dt>Espace candidat</dt><dd class="sl-mono" t-esc="origin + '/selecta/exam'"/></div>
+                    <div><dt>Espace candidat</dt><dd class="sl-mono" t-esc="origin + '/selecta/exam?org=' + state.s.company_id"/></div>
                     <div><dt>Console du personnel</dt><dd class="sl-mono" t-esc="origin + '/selecta/login'"/></div>
                 </dl>
                 <p class="sl-help">Sur les postes candidats, utilisez le lanceur « Poste candidat » fourni : navigateur en mode kiosque verrouillé, caméra autorisée, aucune barre d'adresse.</p>

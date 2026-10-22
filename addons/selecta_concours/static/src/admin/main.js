@@ -1,6 +1,6 @@
 /** @odoo-module */
 import { Component, mount, onWillStart, onWillUnmount, useState, whenReady, xml } from "@odoo/owl";
-import { store } from "@selecta_concours/admin/store";
+import { extensions, store } from "@selecta_concours/admin/store";
 import { api } from "@selecta_concours/common/rpc";
 import { Icon, UiHost } from "@selecta_concours/common/ui";
 import { readConfig } from "@selecta_concours/common/utils";
@@ -13,15 +13,15 @@ import { AnalysisPage } from "@selecta_concours/admin/page_analysis";
 import { AuditPage, SettingsPage, StaffPage } from "@selecta_concours/admin/page_admin";
 
 const NAV = [
-    { key: "dashboard", label: "Tableau de bord", icon: "dashboard", roles: ["admin", "concepteur", "jury", "surveillant"] },
-    { key: "concours", label: "Concours", icon: "trophy", roles: ["admin", "concepteur", "jury", "surveillant"] },
-    { key: "questions", label: "Banque de questions", icon: "book", roles: ["admin", "concepteur", "jury"] },
-    { key: "monitor", label: "Surveillance en direct", icon: "eye", roles: ["admin", "jury", "surveillant"] },
-    { key: "results", label: "Résultats", icon: "chart", roles: ["admin", "jury"] },
-    { key: "analysis", label: "Analyse IA", icon: "brain", roles: ["admin", "jury"] },
-    { key: "audit", label: "Journal d'audit", icon: "shield", roles: ["admin", "jury"] },
-    { key: "staff", label: "Personnel et accès", icon: "users", roles: ["admin"] },
-    { key: "settings", label: "Paramètres", icon: "settings", roles: ["admin"] },
+    { key: "dashboard", label: "Tableau de bord", icon: "dashboard", roles: ["admin", "concepteur", "jury", "surveillant"], sequence: 10 },
+    { key: "concours", label: "Concours", icon: "trophy", roles: ["admin", "concepteur", "jury", "surveillant"], sequence: 20 },
+    { key: "questions", label: "Banque de questions", icon: "book", roles: ["admin", "concepteur", "jury"], sequence: 30 },
+    { key: "monitor", label: "Surveillance en direct", icon: "eye", roles: ["admin", "jury", "surveillant"], sequence: 40 },
+    { key: "results", label: "Résultats", icon: "chart", roles: ["admin", "jury"], sequence: 50 },
+    { key: "analysis", label: "Analyse IA", icon: "brain", roles: ["admin", "jury"], sequence: 60 },
+    { key: "audit", label: "Journal d'audit", icon: "shield", roles: ["admin", "jury"], sequence: 70 },
+    { key: "staff", label: "Personnel et accès", icon: "users", roles: ["admin"], sequence: 80 },
+    { key: "settings", label: "Paramètres", icon: "settings", roles: ["admin"], sequence: 90 },
 ];
 
 function parseHash() {
@@ -69,8 +69,10 @@ class AdminApp extends Component {
                     <button class="sl-btn sl-btn-ghost sl-btn-icon" t-on-click="() => this.state.navOpen = !this.state.navOpen" aria-label="Menu"><Icon name="'menu'"/></button>
                     <strong>SELECTA</strong>
                 </div>
+                <t t-foreach="banners" t-as="Banner" t-key="Banner_index"><t t-component="Banner"/></t>
                 <t t-set="r" t-value="state.route"/>
-                <DashboardPage t-if="r.name == 'dashboard'"/>
+                <t t-if="extensionPage" t-component="extensionPage" t-key="'x' + r.name + (r.id or 0)" route="r"/>
+                <DashboardPage t-elif="r.name == 'dashboard'"/>
                 <ConcoursEditPage t-elif="r.name == 'concours' and r.id" t-key="'c' + r.id" concoursId="r.id" tab="r.params.tab or 'general'"/>
                 <ConcoursEditPage t-elif="r.name == 'concours' and r.params.new" t-key="'cnew'" concoursId="0" tab="'general'"/>
                 <ConcoursListPage t-elif="r.name == 'concours'"/>
@@ -106,7 +108,15 @@ class AdminApp extends Component {
     }
     get nav() {
         const roles = this.session.roles;
-        return NAV.filter((n) => n.roles.some((r) => roles[r]));
+        return [...NAV, ...extensions.nav]
+            .filter((n) => n.roles.some((r) => roles[r]))
+            .sort((a, b) => (a.sequence || 100) - (b.sequence || 100));
+    }
+    get banners() {
+        return extensions.banners;
+    }
+    get extensionPage() {
+        return extensions.pages[this.state.route.name] || null;
     }
     isActive(key) {
         return this.state.route.name === key;

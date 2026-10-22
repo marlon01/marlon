@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'SELECTA — La culture de l\'excellence',
-    'version': '18.0.1.0.0',
+    'version': '18.0.1.1.0',
     'summary': "Plateforme autonome de concours : QCM chronométrés, surveillance IA par webcam, "
                "résultats instantanés, anti-fraude, analyse psychométrique, fonctionnement hors-ligne.",
     'description': """

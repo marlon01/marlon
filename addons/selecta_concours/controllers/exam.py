@@ -12,7 +12,7 @@ from markupsafe import Markup
 from odoo.tools import file_open
 
 _logger = logging.getLogger(__name__)
-VERSION = '18.0.1.0.0'
+VERSION = '18.0.1.1.0'
 
 
 def _ip():
@@ -172,6 +172,7 @@ class SelectaExamController(http.Controller):
                         'code': 'not_open'}
             if not attempt and concours.date_end and now > concours.date_end:
                 return {'error': _("La fenêtre de connexion est fermée."), 'code': 'closed'}
+            concours.company_id._selecta_guard('exam.login', concours=concours)
             ua = (request.httprequest.headers.get('User-Agent') or '')[:250]
             Attempt = request.env['selecta.attempt'].sudo().with_context(selecta_engine=True)
             if not attempt:

@@ -29,6 +29,7 @@ class SelectaConcours(models.Model):
     _name = 'selecta.concours'
     _description = 'Concours / test de sélection'
     _order = 'date_start desc, id desc'
+    _check_company_auto = True
 
     name = fields.Char(required=True)
     reference = fields.Char(readonly=True, copy=False, index=True)
@@ -51,7 +52,7 @@ class SelectaConcours(models.Model):
     duration_minutes = fields.Integer(default=60, required=True)
     questions_per_page = fields.Integer(default=5, required=True)
     question_ids = fields.Many2many('selecta.question', 'selecta_concours_question_rel',
-                                    'concours_id', 'question_id', string="Questions")
+                                    'concours_id', 'question_id', string="Questions", check_company=True)
     nb_questions_drawn = fields.Integer(default=0, string="Questions tirées par candidat (0 = toutes)")
     shuffle_questions = fields.Boolean(default=True)
     shuffle_choices = fields.Boolean(default=True)
@@ -119,8 +120,11 @@ class SelectaConcours(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
+            company = self.env['res.company'].browse(vals.get('company_id')) if vals.get('company_id') else self.env.company
+            company._selecta_guard('concours.create')
             if not vals.get('reference'):
-                vals['reference'] = self.env['ir.sequence'].sudo().next_by_code('selecta.concours') or '/'
+                vals['reference'] = self.env['ir.sequence'].sudo().with_company(company).next_by_code(
+                    'selecta.concours') or '/'
         records = super().create(vals_list)
         for rec in records:
             self.env['selecta.audit.log']._log('concours.create', _("Création du concours %s", rec.name),
@@ -163,6 +167,7 @@ class SelectaConcours(models.Model):
                 raise UserError(_("Questionnaire incohérent :\n• %s", "\n• ".join(problems[:15])))
             if c.nb_questions_drawn and c.nb_questions_drawn > len(c.question_ids):
                 raise UserError(_("Le nombre de questions tirées dépasse la banque sélectionnée."))
+            c.company_id._selecta_guard('concours.ready', concours=c)
             c._engine().write({'state': 'ready'})
             self.env['selecta.audit.log']._log('concours.ready', _("Concours validé et prêt"),
                                                {'questions': len(c.question_ids)}, concours=c)
@@ -186,6 +191,7 @@ class SelectaConcours(models.Model):
                 raise UserError(_("Aucun candidat inscrit."))
             if not c.candidate_ids.filtered('code_hash'):
                 raise UserError(_("Générez les codes d'accès des candidats avant l'ouverture."))
+            c.company_id._selecta_guard('concours.open', concours=c)
             c._engine().write({'state': 'open', 'opened_date': fields.Datetime.now()})
             snapshot = hashlib.sha256(json.dumps(c._question_snapshot(), sort_keys=True).encode()).hexdigest()
             self.env['selecta.audit.log']._log('concours.open', _("Ouverture de l'épreuve"),
@@ -226,7 +232,7 @@ class SelectaConcours(models.Model):
             material = json.dumps({
                 'concours': c.reference, 'name': c.name,
                 'admis': [(r['rank'], r['reference'], r['name'], r['percentage']) for r in rows],
-                'audit_head': self.env['selecta.audit.log'].head_hash(),
+                'audit_head': self.env['selecta.audit.log'].head_hash(c.company_id.id),
             }, sort_keys=True, ensure_ascii=False)
             digest = hashlib.sha256(material.encode('utf-8')).hexdigest()
             c._engine().write({'state': 'published', 'results_hash': digest,

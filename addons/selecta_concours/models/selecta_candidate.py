@@ -44,6 +44,16 @@ class SelectaCandidate(models.Model):
         ('ref_unique', 'unique(concours_id, reference)', "Ce numéro d'inscription existe déjà pour ce concours."),
     ]
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        per_company = {}
+        for vals in vals_list:
+            company = self.env['selecta.concours'].browse(vals.get('concours_id')).sudo().company_id
+            per_company[company] = per_company.get(company, 0) + 1
+        for company, count in per_company.items():
+            company._selecta_guard('candidate.create', count=count)
+        return super().create(vals_list)
+
     def _compute_has_code(self):
         for c in self:
             c.has_code = bool(c.sudo().code_hash)

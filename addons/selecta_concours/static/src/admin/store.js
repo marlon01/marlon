@@ -7,6 +7,14 @@ export function hasRole(...roles) {
     return roles.some((x) => r[x]);
 }
 
+/**
+ * Points d'extension de la console, alimentés par les modules complémentaires (abonnement…) :
+ *   nav     : [{ key, label, icon, roles, sequence }] — entrées ajoutées au menu ;
+ *   pages   : { key: Composant } — page affichée pour la route #/key ;
+ *   banners : [Composant] — bandeaux affichés en tête de toutes les pages.
+ */
+export const extensions = { nav: [], pages: {}, banners: [] };
+
 export function navigate(path) {
     location.hash = path;
 }

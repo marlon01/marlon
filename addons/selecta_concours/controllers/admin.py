@@ -13,6 +13,16 @@ from .exam import _ip, render_app
 class SelectaHome(Home):
     """Après une connexion Odoo standard, le personnel SELECTA arrive directement sur la console."""
 
+    @http.route()
+    def web_client(self, s_action=None, **kw):
+        # Le personnel des structures n'utilise jamais le client Odoo : il reste dans sa console,
+        # ce qui évite d'exposer des écrans génériques (contacts, discussions…) partagés entre structures.
+        if request.db and request.session.uid:
+            user = request.env['res.users'].sudo().browse(request.session.uid)
+            if user._selecta_is_staff() and not user.has_group('base.group_system'):
+                return request.redirect('/selecta/admin')
+        return super().web_client(s_action=s_action, **kw)
+
     def _login_redirect(self, uid, redirect=None):
         if not redirect:
             user = request.env['res.users'].sudo().browse(uid)
