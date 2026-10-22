@@ -18,7 +18,7 @@ from datetime import timedelta, timezone
 from odoo import api, fields, models, _
 from odoo.exceptions import AccessError, UserError
 
-from .selecta_concours import require_group, G_ADMIN, G_PROCTOR
+from .selecta_concours import is_engine, require_group, G_ADMIN, G_PROCTOR
 
 CRITICAL_EVENTS = {'multiple_faces', 'identity_mismatch', 'camera_lost', 'devtools'}
 WARNING_EVENTS = {'face_absent', 'look_away', 'tab_hidden', 'fullscreen_exit', 'window_blur',
@@ -97,17 +97,17 @@ class SelectaAttempt(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        if not self.env.context.get('selecta_engine'):
+        if not is_engine(self.env):
             raise AccessError(_("Les épreuves ne peuvent être créées que par le moteur SELECTA."))
         return super().create(vals_list)
 
     def write(self, vals):
-        if not self.env.context.get('selecta_engine'):
+        if not is_engine(self.env):
             raise AccessError(_("Les épreuves sont scellées : aucune modification manuelle n'est permise."))
         return super().write(vals)
 
     def unlink(self):
-        if not self.env.context.get('selecta_engine'):
+        if not is_engine(self.env):
             raise AccessError(_("Les épreuves ne peuvent pas être supprimées."))
         return super().unlink()
 
@@ -536,6 +536,7 @@ class SelectaAttemptAnswer(models.Model):
 
     attempt_id = fields.Many2one('selecta.attempt', required=True, ondelete='cascade', index=True)
     concours_id = fields.Many2one(related='attempt_id.concours_id', store=True, index=True)
+    company_id = fields.Many2one(related='attempt_id.company_id', store=True, index=True)
     question_id = fields.Many2one('selecta.question', required=True, ondelete='restrict', index=True)
     page = fields.Integer()
     choice_ids = fields.Many2many('selecta.choice', 'selecta_answer_choice_rel', 'answer_id', 'choice_id')
@@ -549,7 +550,7 @@ class SelectaAttemptAnswer(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        if not self.env.context.get('selecta_engine'):
+        if not is_engine(self.env):
             raise AccessError(_("Réponses enregistrables uniquement par le moteur d'épreuve."))
         return super().create(vals_list)
 
@@ -557,6 +558,6 @@ class SelectaAttemptAnswer(models.Model):
         raise AccessError(_("Une réponse validée est définitive."))
 
     def unlink(self):
-        if not self.env.context.get('selecta_engine'):
+        if not is_engine(self.env):
             raise AccessError(_("Une réponse validée ne peut être supprimée."))
         return super().unlink()

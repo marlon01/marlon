@@ -5,8 +5,10 @@ import re
 import secrets
 
 from odoo import api, fields, models, _
-from odoo.exceptions import UserError
+from odoo.exceptions import AccessError, UserError
 
+# Changer de concours, d'état, de code ou de photo d'identité relève du seul moteur.
+ENGINE_FIELDS = {'concours_id', 'state', 'code_hash', 'code_generated_at', 'photo_reference'}
 CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'  # sans 0/O/1/I : aucune confusion visuelle
 CODE_GROUPS, CODE_GROUP_LEN = 3, 4                 # 12 caractères ≈ 60 bits d'entropie
 
@@ -19,8 +21,9 @@ class SelectaCandidate(models.Model):
     _name = 'selecta.candidate'
     _description = 'Candidat'
     _order = 'concours_id, name'
+    _check_company_auto = True
 
-    concours_id = fields.Many2one('selecta.concours', required=True, ondelete='cascade', index=True)
+    concours_id = fields.Many2one('selecta.concours', required=True, ondelete='cascade', index=True, check_company=True)
     company_id = fields.Many2one(related='concours_id.company_id', store=True, index=True)
     name = fields.Char(string="Nom complet", required=True)
     reference = fields.Char(string="N° d'inscription", required=True, index=True)
@@ -44,8 +47,15 @@ class SelectaCandidate(models.Model):
         ('ref_unique', 'unique(concours_id, reference)', "Ce numéro d'inscription existe déjà pour ce concours."),
     ]
 
+    def write(self, vals):
+        if not self.env.su and ENGINE_FIELDS & set(vals):
+            raise AccessError(_("Ces informations sont gérées par le moteur SELECTA."))
+        return super().write(vals)
+
     @api.model_create_multi
     def create(self, vals_list):
+        if not self.env.su and any((ENGINE_FIELDS - {'concours_id'}) & set(vals) for vals in vals_list):
+            raise AccessError(_("Ces informations sont gérées par le moteur SELECTA."))
         per_company = {}
         for vals in vals_list:
             company = self.env['selecta.concours'].browse(vals.get('concours_id')).sudo().company_id

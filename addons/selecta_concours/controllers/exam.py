@@ -16,7 +16,9 @@ VERSION = '18.0.1.1.0'
 
 
 def _ip():
-    return request.httprequest.headers.get('X-Forwarded-For', request.httprequest.remote_addr or '').split(',')[0].strip()
+    # Jamais l'en-tête X-Forwarded-For brut (falsifiable) : derrière un proxy, activer ``proxy_mode``
+    # et Odoo remplace remote_addr par l'adresse transmise par ce proxy de confiance.
+    return request.httprequest.remote_addr or ''
 
 
 def _company_branding(company):

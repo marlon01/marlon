@@ -10,11 +10,23 @@ G_DESIGN = 'selecta_concours.group_selecta_concepteur'
 G_JURY = 'selecta_concours.group_selecta_jury'
 G_PROCTOR = 'selecta_concours.group_selecta_surveillant'
 
+# Champs tenus exclusivement par le moteur (cycle de vie, scellés) ; l'ORM n'applique pas
+# ``readonly`` aux appels RPC, d'où ce verrou explicite.
+ENGINE_FIELDS = {
+    'state', 'reference', 'company_id', 'opened_date', 'closed_date', 'published_date', 'published_by',
+    'results_hash', 'analysis_json', 'analysis_date',
+}
 FROZEN_FIELDS = {
     'duration_minutes', 'questions_per_page', 'question_ids', 'nb_questions_drawn', 'shuffle_questions',
     'shuffle_choices', 'pass_threshold', 'places', 'scoring_multi', 'negative_marking', 'negative_ratio',
     'require_all_answers',
 }
+
+
+def is_engine(env):
+    """Opération interne du moteur. Le contexte d'un appel RPC est contrôlé par le client :
+    le drapeau seul ne suffit pas, il doit accompagner un environnement superutilisateur."""
+    return bool(env.su and env.context.get('selecta_engine'))
 
 
 def require_group(env, *xmlids):
@@ -120,6 +132,8 @@ class SelectaConcours(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
+            if not self.env.su and (ENGINE_FIELDS - {'company_id'}) & set(vals):
+                raise AccessError(_("Ces informations sont gérées par le moteur SELECTA."))
             company = self.env['res.company'].browse(vals.get('company_id')) if vals.get('company_id') else self.env.company
             company._selecta_guard('concours.create')
             if not vals.get('reference'):
@@ -133,13 +147,15 @@ class SelectaConcours(models.Model):
         return records
 
     def write(self, vals):
-        if not self.env.context.get('selecta_engine'):
+        if not self.env.su and ENGINE_FIELDS & set(vals):
+            raise AccessError(_("Ces informations sont gérées par le moteur SELECTA (cycle de vie, scellés)."))
+        if not is_engine(self.env):
             if FROZEN_FIELDS & set(vals):
                 for c in self:
                     if c.state not in ('draft', 'ready'):
                         raise UserError(_("Les règles d'un concours ouvert ou clôturé sont figées."))
         res = super().write(vals)
-        if not self.env.context.get('selecta_engine') and (FROZEN_FIELDS & set(vals)):
+        if not is_engine(self.env) and (FROZEN_FIELDS & set(vals)):
             for c in self:
                 self.env['selecta.audit.log']._log('concours.rules', _("Modification des règles"),
                                                    {k: str(v) for k, v in vals.items() if k in FROZEN_FIELDS},

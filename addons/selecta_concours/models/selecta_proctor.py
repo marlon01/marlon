@@ -3,6 +3,7 @@ from odoo import api, fields, models, _
 from odoo.exceptions import AccessError
 
 from .selecta_attempt import EVENT_LABELS
+from .selecta_concours import is_engine
 
 
 class SelectaProctorEvent(models.Model):
@@ -28,6 +29,6 @@ class SelectaProctorEvent(models.Model):
         raise AccessError(_("Les preuves de surveillance sont immuables."))
 
     def unlink(self):
-        if not self.env.context.get('selecta_engine'):
+        if not is_engine(self.env):
             raise AccessError(_("Les preuves de surveillance ne peuvent être supprimées."))
         return super().unlink()

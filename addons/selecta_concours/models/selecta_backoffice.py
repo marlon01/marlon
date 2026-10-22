@@ -277,7 +277,7 @@ class SelectaBackoffice(models.AbstractModel):
     def question_duplicate(self, question_id):
         require_group(self.env, G_ADMIN, G_DESIGN)
         q = self.env['selecta.question'].browse(int(question_id))
-        new = q.with_context(selecta_engine=True).copy({'name': q.name + ' (v2)'})
+        new = q.copy({'name': q.name + ' (v2)', 'concours_ids': [(6, 0, [])]})
         return self._question_dict(new)
 
     @api.model
@@ -644,8 +644,11 @@ class SelectaBackoffice(models.AbstractModel):
         icp = self.env['ir.config_parameter'].sudo()
         company = self.env.company.sudo()
         cvals = {}
-        if vals.get('company_name'):
-            cvals['name'] = vals['company_name']
+        if vals.get('company_name') and vals['company_name'].strip() != company.name:
+            name = vals['company_name'].strip()
+            if self.env['res.company'].sudo().search_count([('name', '=ilike', name), ('id', '!=', company.id)]):
+                raise UserError(_("Une autre structure porte déjà ce nom."))
+            cvals['name'] = name
         if not company._selecta_feature('branding'):
             vals = {k: v for k, v in vals.items() if k not in ('brand_color', 'tagline', 'logo_data')}
         if 'brand_color' in vals:

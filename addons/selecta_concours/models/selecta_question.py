@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models, _
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import AccessError, UserError, ValidationError
+
+from .selecta_concours import is_engine
 
 LOCKED_STATES = ('open', 'closed', 'published')
 _DESIGN_GROUPS = 'selecta_concours.group_selecta_concepteur,selecta_concours.group_selecta_jury'
@@ -16,6 +18,11 @@ class SelectaQuestionCategory(models.Model):
     color = fields.Char(default='#0B5FFF')
     company_id = fields.Many2one('res.company', default=lambda s: s.env.company, required=True)
     question_count = fields.Integer(compute='_compute_question_count')
+
+    def write(self, vals):
+        if 'company_id' in vals and not self.env.su:
+            raise AccessError(_("Une matière ne peut pas changer de structure."))
+        return super().write(vals)
 
     def _compute_question_count(self):
         data = self.env['selecta.question']._read_group(
@@ -69,7 +76,7 @@ class SelectaQuestion(models.Model):
         return problems
 
     def _check_not_locked(self):
-        if self.env.context.get('selecta_engine'):
+        if is_engine(self.env):
             return
         for q in self:
             locked = q.sudo().concours_ids.filtered(lambda c: c.state in LOCKED_STATES)
@@ -87,6 +94,8 @@ class SelectaQuestion(models.Model):
         return super().create(vals_list)
 
     def write(self, vals):
+        if 'company_id' in vals and not self.env.su:
+            raise AccessError(_("Une question ne peut pas changer de structure."))
         content_fields = {'name', 'qtype', 'points', 'choice_ids', 'image'}
         if content_fields & set(vals):
             self._check_not_locked()
@@ -103,18 +112,19 @@ class SelectaChoice(models.Model):
     _order = 'sequence, id'
 
     question_id = fields.Many2one('selecta.question', required=True, ondelete='cascade', index=True)
+    company_id = fields.Many2one(related='question_id.company_id', store=True, index=True)
     sequence = fields.Integer(default=10)
     name = fields.Char(string="Proposition", required=True)
     # La clé de correction n'est jamais lisible par les surveillants ni exposée aux candidats.
     is_correct = fields.Boolean(string="Bonne réponse", groups=_DESIGN_GROUPS)
 
     def write(self, vals):
-        if not self.env.context.get('selecta_engine'):
+        if not is_engine(self.env):
             self.mapped('question_id')._check_not_locked()
         return super().write(vals)
 
     def unlink(self):
-        if not self.env.context.get('selecta_engine'):
+        if not is_engine(self.env):
             self.mapped('question_id')._check_not_locked()
         return super().unlink()
 

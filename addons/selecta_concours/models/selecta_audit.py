@@ -119,7 +119,7 @@ class SelectaAuditLog(models.Model):
     # ------------------------------------------------------------------ verrous
     @api.model_create_multi
     def create(self, vals_list):
-        if not self.env.context.get('selecta_audit_write'):
+        if not (self.env.su and self.env.context.get('selecta_audit_write')):
             raise AccessError(_("Le journal d'audit ne peut être alimenté que par le moteur SELECTA."))
         return super().create(vals_list)
 

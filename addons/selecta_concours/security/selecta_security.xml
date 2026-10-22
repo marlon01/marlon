@@ -66,6 +66,16 @@
         <field name="model_id" ref="model_selecta_audit_log"/>
         <field name="domain_force">[('company_id', 'in', company_ids)]</field>
     </record>
+    <record id="rule_choice_company" model="ir.rule">
+        <field name="name">SELECTA : propositions par structure</field>
+        <field name="model_id" ref="model_selecta_choice"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_answer_company" model="ir.rule">
+        <field name="name">SELECTA : réponses par structure</field>
+        <field name="model_id" ref="model_selecta_attempt_answer"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
     <record id="rule_event_company" model="ir.rule">
         <field name="name">SELECTA : surveillance par structure</field>
         <field name="model_id" ref="model_selecta_proctor_event"/>

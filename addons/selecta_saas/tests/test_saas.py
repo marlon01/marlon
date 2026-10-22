@@ -3,39 +3,13 @@ from datetime import timedelta
 
 from odoo import fields
 from odoo.exceptions import AccessError, UserError
-from odoo.tests import TransactionCase, tagged
+from odoo.tests import tagged
+
+from .common import SaasCommon
 
 
 @tagged('post_install', '-at_install', 'selecta_saas')
-class TestSelectaSaas(TransactionCase):
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.Tenant = cls.env['selecta.saas.tenant']
-        cls.plan_pme = cls.env.ref('selecta_saas.plan_pme')
-        cls.plan_ecole = cls.env.ref('selecta_saas.plan_ecole')
-        cls.tenant_a = cls._signup('Lycée Alpha', 'alpha@test.cd', cls.plan_pme)
-        cls.tenant_b = cls._signup('Banque Beta', 'beta@test.cd', cls.plan_ecole)
-        cls.user_a = cls.tenant_a.owner_id
-        cls.user_b = cls.tenant_b.owner_id
-
-    @classmethod
-    def _signup(cls, org, email, plan):
-        return cls.Tenant._create_space({
-            'organization': org, 'contact_name': 'Contact %s' % org, 'email': email,
-            'password': 'Motdepasse123', 'phone': '+243800000000', 'plan': plan,
-            'country': cls.env.ref('base.cd'),
-        }, ip='10.0.0.1')
-
-    def as_user(self, user, model):
-        return self.env[model].with_user(user).with_company(user.company_id)
-
-    def bo(self, user):
-        return self.as_user(user, 'selecta.backoffice')
-
-    def _concours(self, user, name='Concours test'):
-        return self.as_user(user, 'selecta.concours').create({'name': name})
+class TestSelectaSaas(SaasCommon):
 
     # ------------------------------------------------------------------ inscription
     def test_signup_creates_isolated_space_with_trial(self):
