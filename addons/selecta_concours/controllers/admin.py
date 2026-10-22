@@ -71,7 +71,7 @@ class SelectaAdminController(http.Controller):
             return {'error': _("Ce compte n'a aucun rôle SELECTA. Contactez l'administrateur.")}
         Throttle.reset(key)
         env['selecta.audit.log']._log('staff.login', _("Connexion du personnel"), {'ip': _ip()}, user=user, ip=_ip())
-        return {'ok': True, 'redirect': '/selecta/admin'}
+        return {'ok': True, 'redirect': user._selecta_home_url()}
 
     @http.route('/selecta/logout', type='http', auth='public', sitemap=False)
     def logout(self, **kw):

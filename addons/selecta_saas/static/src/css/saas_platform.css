@@ -215,6 +215,8 @@
   .pf-cards tr.is-link:hover td { background: none; }
   .ad-panel-flush:has(> .pf-cards) { overflow: visible; }
 }
-.pf-settings .ad-form { align-items: start; }
+.pf-shell .ad-form { align-items: start; }
 .pf-payments td .sl-mono:first-child { white-space: nowrap; }
 .pf-payments .pf-cell-title { display: inline-block; min-width: 12ch; }
+.pf-shell .ad-panel-flush { overflow-x: auto; }
+.pf-nowrap { white-space: nowrap; }

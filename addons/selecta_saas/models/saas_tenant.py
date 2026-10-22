@@ -87,7 +87,9 @@ class SelectaSaasTenant(models.Model):
             'name': 'Référence concours SELECTA — %s' % company.name, 'code': 'selecta.concours',
             'prefix': 'CNC-%(year)s-', 'padding': 4, 'company_id': company.id, 'implementation': 'no_gap',
         })
+        lang = 'fr_FR' if env['res.lang']._lang_get('fr_FR') else False
         user = env['res.users'].with_context(no_reset_password=True).create({
+            'lang': lang or env.lang or 'en_US',
             'name': vals['contact_name'], 'login': vals['email'], 'email': vals['email'], 'password': vals['password'],
             'company_id': company.id, 'company_ids': [(6, 0, [company.id])],
             'groups_id': [(6, 0, [env.ref('base.group_user').id, env.ref('selecta_concours.group_selecta_admin').id])],

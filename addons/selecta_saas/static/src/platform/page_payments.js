@@ -30,7 +30,7 @@ export class PaymentsPage extends Component {
                     <thead><tr>
                         <th scope="col">Structure</th><th scope="col">Facture</th><th scope="col" class="num">Montant</th>
                         <th t-if="state.tab == 'all'" scope="col">Statut</th>
-                        <th scope="col">Moyen</th><th scope="col">Référence</th><th scope="col">Téléphone</th>
+                        <th scope="col">Moyen</th><th scope="col">Référence et téléphone</th>
                         <th scope="col">Déclaré le</th><th scope="col">Justificatif</th><th scope="col" class="num"><span class="sl-sr">Actions</span></th>
                     </tr></thead>
                     <tbody>
@@ -43,8 +43,10 @@ export class PaymentsPage extends Component {
                                 <div t-if="i.reject_reason" class="ad-small ad-danger-text pf-clip" t-att-title="i.reject_reason" t-esc="i.reject_reason"/>
                             </td>
                             <td data-label="Moyen" class="ad-small" t-esc="i.payment_method_label or '—'"/>
-                            <td data-label="Référence" class="sl-mono ad-small" t-esc="i.payment_reference or '—'"/>
-                            <td data-label="Téléphone" class="ad-small"><a t-if="i.payer_phone" t-att-href="'tel:' + i.payer_phone" t-esc="i.payer_phone"/><t t-else="">—</t></td>
+                            <td data-label="Référence" class="ad-small">
+                                <div class="sl-mono" t-esc="i.payment_reference or '—'"/>
+                                <a t-if="i.payer_phone" t-att-href="'tel:' + i.payer_phone" t-esc="i.payer_phone"/>
+                            </td>
                             <td data-label="Déclaré le" class="ad-small" t-esc="i.declared_date ? dt(i.declared_date) : '—'"/>
                             <td data-label="Justificatif" class="ad-small">
                                 <a t-if="i.has_proof" t-att-href="proofUrl(i)" class="pf-proof" target="_blank" rel="noopener" t-att-title="i.proof_filename or 'Justificatif'">
@@ -57,7 +59,7 @@ export class PaymentsPage extends Component {
                                     <button class="sl-btn sl-btn-sm sl-btn-primary" t-on-click="() => this.validate(i)" t-att-disabled="state.busy == i.id"><Icon name="'check'" size="16"/>Valider</button>
                                     <button class="sl-btn sl-btn-sm pf-btn-danger-ghost" t-on-click="() => this.reject(i)" t-att-disabled="state.busy == i.id">Refuser</button>
                                 </div>
-                                <span t-elif="i.validated_date" class="sl-muted ad-small">le <t t-esc="date(i.validated_date)"/></span>
+                                <span t-elif="i.validated_date" class="sl-muted ad-small pf-nowrap">Payée le <t t-esc="date(i.validated_date)"/></span>
                             </td>
                         </tr>
                     </tbody>

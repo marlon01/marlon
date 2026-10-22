@@ -109,9 +109,9 @@ export class PlansPage extends Component {
                                 <label for="pf-p-py">Prix annuel ($)</label>
                                 <div class="pf-inline">
                                     <input id="pf-p-py" class="sl-input" type="number" min="0" step="1" t-model.number="f.price_yearly"/>
-                                    <button type="button" class="sl-btn sl-btn-sm sl-btn-ghost" t-on-click="() => f.price_yearly = (Number(f.price_monthly) || 0) * 10" title="Prix annuel = 10 × prix mensuel">10 × mensuel</button>
+                                    <button type="button" class="sl-btn sl-btn-sm sl-btn-ghost" t-on-click="yearlyFromMonthly" title="Prix annuel = 10 × prix mensuel">10 × mensuel</button>
                                 </div>
-                                <span class="sl-help" t-att-class="{'ad-danger-text': formSaving lt 0}" t-esc="savingText"/>
+                                <span class="sl-help" t-att-class="{'ad-danger-text': formSaving lt 0 or (f.price_monthly gt 0 and !(f.price_yearly gt 0))}" t-esc="savingText"/>
                             </div>
 
                             <h4 class="ad-form-title ad-span-2">Limites <span class="sl-muted ad-small">(0 = illimité)</span></h4>
@@ -178,6 +178,10 @@ export class PlansPage extends Component {
         this.state.formError = "";
         setTimeout(() => document.getElementById("pf-p-name")?.focus(), 30);
     }
+    yearlyFromMonthly() {
+        const f = this.state.form;
+        f.price_yearly = (Number(f.price_monthly) || 0) * 10;
+    }
     close() {
         this.state.form = null;
     }
@@ -199,6 +203,9 @@ export class PlansPage extends Component {
         if (!full) {
             return "Saisissez le prix mensuel pour calculer l'économie annuelle.";
         }
+        if (!(Number(f.price_yearly) > 0)) {
+            return "Indiquez le prix annuel (habituellement 10 × le prix mensuel).";
+        }
         if (s < 0) {
             return `Le prix annuel dépasse 12 mensualités (${money(full)}).`;
         }
@@ -210,7 +217,8 @@ export class PlansPage extends Component {
     get canSave() {
         const f = this.state.form;
         const nums = [f.price_monthly, f.price_yearly, f.max_active_concours, f.max_candidates_month, f.max_staff];
-        return (f.name || "").trim() && (f.code || "").trim() && !this.codeError && nums.every((n) => n !== "" && Number(n) >= 0);
+        const yearlyOk = !(Number(f.price_monthly) > 0) || Number(f.price_yearly) > 0;
+        return (f.name || "").trim() && (f.code || "").trim() && !this.codeError && yearlyOk && nums.every((n) => n !== "" && Number(n) >= 0);
     }
     async save() {
         if (!this.canSave) {

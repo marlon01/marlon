@@ -66,7 +66,8 @@ export class BarChart extends Component {
         const step = plotW / Math.max(1, d.length);
         const barW = Math.max(4, step * 0.62);
         const y = (v) => T + plotH - (v / max) * plotH;
-        const ticks = [0, max / 2, max];
+        // Graduations entières pour les comptages : pas de demi-unité affichée arrondie.
+        const ticks = this.props.integer && max % 2 ? [0, max] : [0, max / 2, max];
         let out = `<svg class="pf-chart-svg is-${this.props.tone || "ink"}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${escapeHTML(this.props.title)}" preserveAspectRatio="xMidYMid meet">`;
         for (const t of ticks) {
             const ty = y(t).toFixed(1);

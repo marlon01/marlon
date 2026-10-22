@@ -85,7 +85,7 @@ class PlatformApp extends Component {
                 <OverviewPage t-if="r.name == 'overview'"/>
                 <TenantDetailPage t-elif="r.name == 'tenants' and r.id" t-key="'t' + r.id" tenantId="r.id"/>
                 <TenantsListPage t-elif="r.name == 'tenants'" t-key="'tl' + (r.params.state or '')" route="r"/>
-                <PaymentsPage t-elif="r.name == 'payments'" route="r"/>
+                <PaymentsPage t-elif="r.name == 'payments'" t-key="'p' + (r.params.tab or '')" route="r"/>
                 <PlansPage t-elif="r.name == 'plans'"/>
                 <SettingsPage t-elif="r.name == 'settings'"/>
                 <div t-else="" class="ad-page"><h1>Page introuvable</h1><p><a href="#/overview">Revenir à la vue d'ensemble</a></p></div>

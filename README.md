@@ -6,6 +6,69 @@ Module Odoo 18 Community (`selecta_concours`) entièrement piloté par des appli
 
 ---
 
+## SELECTA SaaS — plateforme multi-structures
+
+Le module **`selecta_saas`** transforme SELECTA en service en ligne : chaque entreprise, école ou administration crée elle-même son espace, l'utilise gratuitement pendant 14 jours, puis souscrit un abonnement selon sa catégorie. Sans ce module, `selecta_concours` reste la solution installée en salle d'examen, hors ligne, décrite plus bas.
+
+### Parcours d'une structure
+1. **Découverte** : page de présentation et tarifs publique, `https://<domaine>/selecta` (la racine du site y mène).
+2. **Inscription** : `/selecta/signup`. Catégorie, nom de la structure, administrateur (e-mail = identifiant), mot de passe. L'espace est créé immédiatement et l'essai démarre : pas de carte bancaire.
+3. **Essai gratuit** : 14 jours (réglable), toutes les fonctions de la catégorie, jusqu'à 100 candidats (réglable). Un bandeau indique les jours restants.
+4. **Abonnement** : page « Abonnement » de la console. La structure choisit sa catégorie et son cycle (mensuel, ou annuel avec 2 mois offerts) ; une facture est émise ; elle paie (Mobile Money, virement, lien de paiement en ligne) puis **déclare son paiement** avec la référence de transaction et un justificatif. L'administration centrale valide : l'abonnement est prolongé, les jours d'essai restants sont conservés.
+5. **Échéance** : 3 jours de grâce (réglable), puis **consultation seule** : plus de création de concours, d'inscription de candidats ni d'ouverture d'épreuve, mais résultats, procès-verbaux et exports restent accessibles. Une épreuve déjà ouverte se termine normalement.
+6. **Suspension** (décision de la plateforme) : accès bloqué, y compris aux candidats.
+
+### Catégories (grille par défaut, modifiable dans l'administration centrale)
+
+| Catégorie | Mensuel | Annuel | Concours actifs | Candidats / mois | Personnel | Analyse IA | Assistant LLM | Personnalisation |
+|---|---|---|---|---|---|---|---|---|
+| École / ONG | 29 $ | 290 $ | 3 | 300 | 5 | oui | non | non |
+| PME | 79 $ | 790 $ | 10 | 1 500 | 15 | oui | non | oui |
+| Grande entreprise | 199 $ | 1 990 $ | illimité | 10 000 | 50 | oui | oui | oui |
+| Administration publique | 349 $ | 3 490 $ | illimité | illimité | illimité | oui | oui | oui |
+
+### Administration centrale — `/selecta/platform`
+Réservée au groupe « Administrateur de la plateforme (SaaS) » (compte `admin` à l'installation, redirigé automatiquement après connexion).
+* **Vue d'ensemble** : structures par statut, revenu mensuel et annuel récurrent (MRR / ARR), conversion essai → payant, encaissements du mois, inscriptions par semaine, encaissements par mois, répartition par catégorie, essais qui se terminent.
+* **Structures** : recherche et filtres ; fiche détaillée (consommation, factures, personnel, concours, intégrité du journal d'audit, lien de l'espace candidat, notes internes) ; actions : prolonger l'essai, activer manuellement (contrat, bon de commande), changer de catégorie, suspendre, réactiver.
+* **Paiements** : file des paiements déclarés, justificatif, validation ou refus motivé (la structure voit le motif).
+* **Catégories et tarifs** : prix, quotas, fonctions incluses, mise en avant, activation.
+* **Paramètres** : durée d'essai, délai de grâce, plafond de candidats pendant l'essai, ouverture des inscriptions, instructions de paiement, lien de paiement en ligne (https), support, émetteur des factures.
+
+### Cloisonnement des données
+Chaque structure est une société Odoo distincte ; ses comptes n'appartiennent qu'à elle.
+* Règles d'accès par structure sur toutes les données SELECTA : concours, questions et propositions (y compris les corrigés), candidats, épreuves, réponses, preuves de surveillance, journal d'audit.
+* **Un journal d'audit chaîné par structure**, vérifiable par elle seule ; le sceau des procès-verbaux est calculé sur sa propre chaîne. Numérotation des concours propre à chaque structure.
+* Liaisons inter-structures refusées (une structure ne peut ni utiliser les questions d'une autre, ni y déplacer ses données).
+* Champs du moteur (cycle de vie, scellés, codes) non modifiables par appel direct ; les drapeaux internes du moteur ne sont jamais acceptés depuis une requête.
+* Personnel limité à sa structure ; le client Odoo générique (`/odoo`) est inaccessible au personnel des structures.
+* Paramètres communs au serveur (assistant LLM, anti force brute) réservés à l'administrateur système.
+* Limitation des tentatives fondée sur l'adresse réelle de la connexion (`proxy_mode` derrière le proxy), pas sur un en-tête falsifiable.
+* Tests automatisés : `odoo-bin -d <base> -i selecta_saas --test-tags /selecta_saas --stop-after-init` (22 tests : cloisonnement, quotas, consultation seule, facturation, régressions de sécurité).
+
+### Mise en ligne (Docker, HTTPS automatique)
+```bash
+cd docker/saas
+cp .env.example .env            # domaine, e-mail de l'administrateur, mot de passe de la base
+# changer admin_passwd dans odoo-saas.conf
+docker compose up -d
+docker compose run --rm odoo odoo -d selecta -i selecta_saas --without-demo=all --load-language=fr_FR --stop-after-init
+```
+Puis `https://<domaine>/selecta/login` avec `admin / admin` : **changer ce mot de passe immédiatement**, et renseigner les instructions de paiement dans l'administration centrale. Caddy obtient le certificat HTTPS et masque le gestionnaire de bases ; Odoo n'est pas exposé directement.
+
+Exploitation : sauvegarde quotidienne de la base (`pg_dump`) et du volume `selecta-data` ; la tâche planifiée « fin d'essai et échéances d'abonnement » tourne toutes les heures (l'accès est de toute façon calculé en temps réel).
+
+### Mise à jour d'une installation existante
+`-u selecta_concours` migre le journal d'audit : l'historique existant est rattaché à la structure principale, où il reste intégralement vérifiable.
+
+### Limites actuelles
+* Pas d'envoi d'e-mails (confirmation d'inscription, rappels de fin d'essai) : aucun serveur de messagerie n'est configuré. Les rappels sont affichés dans la console.
+* Paiement en ligne automatique (Stripe, agrégateur Mobile Money) non intégré : la plateforme publie un lien de paiement et valide les déclarations. L'intégration d'un agrégateur (FlexPay, MaxiCash, CinetPay…) nécessite un compte marchand.
+* Pas de proratisation lors d'un changement de catégorie en cours de période.
+* Conditions d'utilisation et politique de confidentialité à rédiger et à publier (la case à cocher de l'inscription y fait référence).
+
+---
+
 ## 1. Ce que la solution garantit
 
 | Exigence | Réponse SELECTA |
@@ -84,6 +147,10 @@ Paramètres → Assistant : activer, point d'accès `http://127.0.0.1:11434/v1/c
 
 ## 9. Architecture technique
 ```
+selecta_saas/
+  models/      catégories, structures clientes, factures, garde (quotas, consultation seule), API plateforme
+  controllers/ présentation, inscription, administration centrale
+  static/src/  signup/ (inscription), tenant/ (abonnement dans la console), platform/ (administration centrale)
 selecta_concours/
   models/      moteur d'épreuve, audit chaîné, IA d'analyse, façade back-office
   controllers/ API candidat (jeton d'épreuve), authentification, export, vérification

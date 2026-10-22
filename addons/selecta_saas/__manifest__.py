@@ -58,6 +58,7 @@ SELECTA SaaS (by Naxoris)
             'selecta_saas/static/src/platform/**/*.js',
         ],
     },
+    'post_init_hook': '_selecta_saas_post_init',
     'installable': True,
     'application': False,
 }
