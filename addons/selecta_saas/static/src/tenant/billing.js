@@ -1,6 +1,6 @@
 /** @odoo-module */
 /* Page « Abonnement » de la console d'une structure : catégorie, consommation, offres, paiement, factures. */
-import { Component, onMounted, onWillStart, onWillUnmount, useRef, useState, xml } from "@odoo/owl";
+import { Component, onMounted, onWillStart, onWillUnmount, onWillUpdateProps, useRef, useState, xml } from "@odoo/owl";
 import { extensions, store } from "@selecta_concours/admin/store";
 import { api } from "@selecta_concours/common/rpc";
 import { confirmDialog, Icon, notify } from "@selecta_concours/common/ui";
@@ -8,7 +8,7 @@ import { fmtDateTime, fmtNum, readFileAsDataURL } from "@selecta_concours/common
 import { SubscriptionBanner } from "@selecta_saas/tenant/banner";
 import { CheckoutDialog } from "@selecta_saas/tenant/checkout_dialog";
 import {
-    CYCLE_LABELS, FEATURE_LABELS, INVOICE_BADGE, LEGAL_LINKS, TENANT_BADGE, daysLabel, fmtDate, fmtMoney, providerName,
+    CYCLE_LABELS, FEATURE_LABELS, INVOICE_BADGE, LEGAL_LINKS, TENANT_BADGE, daysLabel, fmtDate, fmtMoney, paidOnline, providerName, quoted,
     saasBus,
 } from "@selecta_saas/tenant/common";
 import { printInvoice } from "@selecta_saas/tenant/invoice_print";
@@ -36,23 +36,23 @@ export class SubscriptionPage extends Component {
                 <span class="ss-result-icon"><Icon name="payIcon" size="22"/></span>
                 <div class="ss-result-text">
                     <t t-if="state.payResult.status == 'paid'">
-                        <h2 id="ss-result-title">Paiement confirmé</h2>
-                        <p t-if="state.payResult.credit">Le montant a été couvert par l'avoir de votre abonnement en cours : aucun paiement n'est nécessaire.
-                            <t t-if="state.info.tenant.period_end">Abonnement « <t t-esc="state.info.tenant.plan.name"/> » actif jusqu'au <strong t-esc="date(state.info.tenant.period_end)"/>.</t></p>
-                        <p t-elif="state.info.tenant.period_end">Abonnement « <t t-esc="state.info.tenant.plan.name"/> » actif jusqu'au <strong t-esc="date(state.info.tenant.period_end)"/>. Un reçu vous a été envoyé par e-mail ; la facture est disponible ci-dessous.</p>
+                        <h2 id="ss-result-title" t-esc="state.payResult.credit ? 'Changement de catégorie effectué' : 'Paiement confirmé'"/>
+                        <p t-if="state.payResult.credit">Le montant a été entièrement couvert par l'avoir de votre abonnement précédent : aucun paiement n'est nécessaire.
+                            <t t-if="state.info.tenant.period_end">Abonnement <t t-esc="quoted(state.info.tenant.plan.name)"/> actif jusqu'au <strong t-esc="date(state.info.tenant.period_end)"/>.</t></p>
+                        <p t-elif="state.info.tenant.period_end">Abonnement <t t-esc="quoted(state.info.tenant.plan.name)"/> actif jusqu'au <strong t-esc="date(state.info.tenant.period_end)"/>. Un reçu vous a été envoyé par e-mail ; la facture est disponible ci-dessous.</p>
                         <p t-else="">Votre abonnement est actif. La facture acquittée est disponible ci-dessous.</p>
-                        <p t-if="lastPaid and lastPaid.deferred_plan and !lastPaid.plan_applied" class="ad-small">La catégorie « <t t-esc="lastPaid.plan"/> » s'appliquera le <t t-esc="date(lastPaid.period_start)"/>.</p>
+                        <p t-if="lastPaid and lastPaid.deferred_plan and !lastPaid.plan_applied" class="ad-small">La catégorie <t t-esc="quoted(lastPaid.plan)"/> s'appliquera le <t t-esc="date(lastPaid.period_start)"/>.</p>
                     </t>
                     <t t-elif="state.payResult.status == 'pending'">
                         <h2 id="ss-result-title">Paiement en cours de confirmation par l'opérateur…</h2>
                         <p>Certaines transactions Mobile Money sont confirmées après quelques minutes. Votre abonnement sera activé automatiquement ;
                             vous pouvez aussi vérifier maintenant. Ne payez pas une seconde fois.</p>
-                        <p t-if="onlineInvoice and onlineInvoice.online_message" class="ad-small">Réponse de l'opérateur : « <t t-esc="onlineInvoice.online_message"/> »</p>
+                        <p t-if="onlineInvoice and onlineInvoice.online_message" class="ad-small">Réponse de l'opérateur : <t t-esc="quoted(onlineInvoice.online_message)"/></p>
                     </t>
                     <t t-elif="state.payResult.status == 'failed'">
                         <h2 id="ss-result-title">Le paiement n'a pas abouti</h2>
-                        <p>Aucun montant n'a été débité pour cette tentative<t t-if="onlineInvoice and onlineInvoice.online_message"> (« <t t-esc="onlineInvoice.online_message"/> »)</t>.
-                            Vous pouvez réessayer, choisir un autre moyen de paiement ou régler hors ligne.</p>
+                        <p>L'opérateur n'a pas confirmé la transaction<t t-if="onlineInvoice and onlineInvoice.online_message"> : <t t-esc="quoted(onlineInvoice.online_message)"/></t>.
+                            Votre facture reste à régler : vous pouvez réessayer, choisir un autre moyen de paiement ou régler hors ligne.</p>
                     </t>
                     <t t-else="">
                         <h2 id="ss-result-title">Aucun paiement en ligne constaté</h2>
@@ -126,19 +126,17 @@ export class SubscriptionPage extends Component {
                     <div class="ss-pay-summary">
                         <div><div class="ss-eyebrow">Montant</div><div class="ss-amount sl-figures" t-esc="money(current.amount, current.symbol)"/></div>
                         <div><div class="ss-eyebrow">Facture</div><div class="sl-mono" t-esc="current.name"/></div>
-                        <div><div class="ss-eyebrow">Objet</div><div>Catégorie « <t t-esc="current.plan"/> », <t t-esc="cycleLabel(current.billing_cycle).toLowerCase()"/></div></div>
+                        <div><div class="ss-eyebrow">Objet</div><div>Catégorie <t t-esc="quoted(current.plan)"/>, <t t-esc="cycleLabel(current.billing_cycle).toLowerCase()"/></div></div>
                         <div class="ss-pay-print"><button class="sl-btn sl-btn-sm" t-on-click="() => this.print(current)"><Icon name="'print'" size="16"/>Facture</button></div>
                     </div>
                     <div t-if="current.credit_amount > 0 or current.deferred_plan or current.prorated" class="ss-pay-detail">
                         <p t-if="current.credit_amount > 0" class="ss-calc">
                             <span>Prix de la période <strong class="sl-figures" t-esc="money(current.gross_amount, current.symbol)"/></span>
-                            <span class="ss-calc-op" aria-hidden="true">−</span>
-                            <span><span class="sl-sr">moins l'</span>avoir sur votre abonnement en cours <strong class="sl-figures" t-esc="money(current.credit_amount, current.symbol)"/></span>
-                            <span class="ss-calc-op" aria-hidden="true">=</span>
-                            <span><strong class="sl-figures" t-esc="money(current.amount, current.symbol)"/> à régler</span>
+                            <span><span class="ss-calc-op" aria-hidden="true">−</span><span class="sl-sr">moins l'</span>avoir sur votre abonnement en cours <strong class="sl-figures" t-esc="money(current.credit_amount, current.symbol)"/></span>
+                            <span><span class="ss-calc-op" aria-hidden="true">=</span><span class="sl-sr">soit </span><strong class="sl-figures" t-esc="money(current.amount, current.symbol)"/> à régler</span>
                         </p>
                         <p t-if="current.prorated" class="sl-muted ad-small">Changement vers une catégorie supérieure : nouvelle période <t t-esc="current.billing_cycle == 'yearly' ? 'de 12 mois' : 'd’un mois'"/> à compter du paiement.</p>
-                        <p t-if="current.deferred_plan" class="sl-muted ad-small">La catégorie « <t t-esc="current.plan"/> » s'appliquera à l'échéance<t t-if="t.period_end"> du <t t-esc="date(t.period_end)"/></t> ; jusque-là vous conservez votre catégorie actuelle (« <t t-esc="t.plan.name"/> »).</p>
+                        <p t-if="current.deferred_plan" class="sl-muted ad-small">La catégorie <t t-esc="quoted(current.plan)"/> s'appliquera à l'échéance<t t-if="t.period_end"> du <t t-esc="date(t.period_end)"/></t> ; jusque-là vous conservez votre catégorie actuelle (<t t-esc="quoted(t.plan.name)"/>).</p>
                     </div>
 
                     <t t-if="current.state == 'pending'">
@@ -163,7 +161,7 @@ export class SubscriptionPage extends Component {
                     <t t-else="">
                         <div t-if="current.state == 'rejected'" class="sl-alert sl-alert-danger ad-mb" role="alert">
                             <strong>Paiement refusé par l'équipe SELECTA.</strong>
-                            <t t-if="current.reject_reason"> Motif : « <t t-esc="current.reject_reason"/> ».</t>
+                            <t t-if="current.reject_reason"> Motif : <t t-esc="quoted(current.reject_reason)"/>.</t>
                             Vérifiez la référence ou le montant, puis déclarez à nouveau votre paiement.
                         </div>
                         <div t-if="providers.length" class="ss-online" id="ss-online">
@@ -182,7 +180,7 @@ export class SubscriptionPage extends Component {
                                     <span class="ss-online-amt sl-figures" t-esc="money(current.amount, current.symbol)"/>
                                 </button>
                             </div>
-                            <p t-if="current.online_message" class="ss-online-msg" role="status"><Icon name="'alert'" size="15"/>Dernière tentative (<t t-esc="providerLabel(current.online_provider)"/>) : « <t t-esc="current.online_message"/> »</p>
+                            <p t-if="current.online_message" class="ss-online-msg" role="status"><Icon name="'alert'" size="15"/>Dernière tentative (<t t-esc="providerLabel(current.online_provider)"/>) : <t t-esc="quoted(current.online_message)"/></p>
                         </div>
                         <h3 t-if="providers.length" class="ss-offline-title"><span>Autre moyen : paiement hors ligne</span></h3>
                         <ol class="ss-steps">
@@ -327,7 +325,7 @@ export class SubscriptionPage extends Component {
                     </div>
                     <div t-else="" class="ss-table-wrap">
                         <table class="ad-table">
-                            <thead><tr><th scope="col">Numéro</th><th scope="col">Date</th><th scope="col">Catégorie</th><th scope="col">Cycle</th><th scope="col" class="num">Montant réglé</th><th scope="col">Statut</th><th scope="col">Période</th><th scope="col"><span class="sl-sr">Actions</span></th></tr></thead>
+                            <thead><tr><th scope="col">Numéro</th><th scope="col">Date</th><th scope="col">Catégorie</th><th scope="col">Cycle</th><th scope="col" class="num">Montant</th><th scope="col">Statut</th><th scope="col">Période</th><th scope="col"><span class="sl-sr">Actions</span></th></tr></thead>
                             <tbody>
                                 <tr t-foreach="state.info.invoices" t-as="inv" t-key="inv.id" t-att-class="{'is-muted': inv.state == 'cancelled'}">
                                     <td class="sl-mono" t-esc="inv.name"/>
@@ -389,6 +387,15 @@ export class SubscriptionPage extends Component {
             this.state.payResult = { status: payment };
         }
         onWillStart(() => this.load(true));
+        // Même document (lien interne vers #/subscription?payment=…) : la page n'est pas recréée.
+        onWillUpdateProps((next) => {
+            const status = next.route?.params?.payment;
+            if (status !== undefined && next.route !== this.props.route) {
+                this.state.payResult = PAYMENT_RESULTS.includes(status) ? { status } : this.state.payResult;
+                this.cleanPaymentParam();
+                this.load();
+            }
+        });
         // Retour arrière depuis la page du prestataire (cache du navigateur) : réactiver les boutons.
         const onPageShow = (ev) => {
             if (ev.persisted && this.state.redirecting) {
@@ -549,6 +556,9 @@ export class SubscriptionPage extends Component {
     cycleLabel(c) {
         return CYCLE_LABELS[c] || c || "";
     }
+    quoted(text) {
+        return quoted(text);
+    }
     money(v, s) {
         return fmtMoney(v, s);
     }
@@ -617,7 +627,7 @@ export class SubscriptionPage extends Component {
         if (inv.state !== "paid") {
             return inv.state === "open" && inv.online_message ? "Tentative en ligne non aboutie" : "";
         }
-        if (inv.online_provider) {
+        if (paidOnline(inv)) {
             return `Payée en ligne via ${providerName(inv.online_provider)}`;
         }
         if (inv.amount <= 0 && inv.credit_amount > 0) {
@@ -689,7 +699,9 @@ export class SubscriptionPage extends Component {
             if (inv.state === "paid") {
                 this.state.payResult = { status: "paid", credit: true };
                 const end = this.state.info.tenant.period_end;
-                notify(`Catégorie « ${inv.plan} » activée, couverte par votre avoir${end ? ` : abonnement actif jusqu'au ${fmtDate(end)}` : ""}.`, "ok", 6000);
+                // Pas de gabarits imbriqués : le minificateur d'Odoo en altère les espaces.
+                const until = end ? " : abonnement actif jusqu'au " + fmtDate(end) : "";
+                notify(`Catégorie ${quoted(inv.plan)} activée sans paiement, couverte par votre avoir${until}.`, "ok", 6000);
                 requestAnimationFrame(() => {
                     window.scrollTo({ top: 0, behavior: "smooth" });
                     document.getElementById("ss-result")?.focus({ preventScroll: true });

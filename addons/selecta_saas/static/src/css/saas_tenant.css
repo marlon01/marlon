@@ -80,13 +80,13 @@
 .ss-pay-detail p { margin: 0; }
 .ss-calc { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 14px; color: var(--sl-ink-soft); }
 .ss-calc strong { color: var(--sl-ink); font-weight: 650; }
-.ss-calc-op { font: 600 16px var(--sl-figures); color: var(--sl-muted); }
+.ss-calc-op { font: 600 16px var(--sl-figures); color: var(--sl-muted); margin-right: 8px; }
 
 /* Paiement en ligne (prioritaire) */
 .ss-online { border: 1px solid var(--sl-border-strong); border-radius: var(--sl-radius); padding: 16px 18px; background: #FBFCFE; margin-bottom: 22px; display: grid; gap: 12px; }
 .ss-online-head h3 { font-size: 16px; margin-bottom: 2px; }
 .ss-online-head p { margin: 0; font-size: 13.5px; max-width: 72ch; }
-.ss-online-btns { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
+.ss-online-btns { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
 .ss-online-btn {
   display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; text-align: left; cursor: pointer;
   min-height: 60px; padding: 10px 16px 10px 12px; border-radius: var(--sl-radius); font: inherit;
@@ -117,7 +117,7 @@
   border: 1px solid color-mix(in srgb, var(--tone) 30%, transparent); box-shadow: inset 4px 0 0 var(--tone);
 }
 .ss-result:focus { outline: none; }
-.ss-result:focus-visible { box-shadow: inset 4px 0 0 var(--tone), var(--sl-focus); }
+.ss-result:focus-visible { box-shadow: inset 4px 0 0 var(--tone); }
 .ss-result.is-ok { --tone: var(--sl-ok); --tone-bg: var(--sl-ok-bg); --tone-ink: #0B4A34; }
 .ss-result.is-warn { --tone: var(--sl-warn); --tone-bg: var(--sl-warn-bg); --tone-ink: #6E4408; }
 .ss-result.is-danger { --tone: var(--sl-danger); --tone-bg: var(--sl-danger-bg); --tone-ink: #7D1F18; }
@@ -136,6 +136,7 @@
 .ss-quote-lines tbody tr + tr { border-top: 1px dashed var(--sl-border); }
 .ss-quote-lines tr.is-credit td { color: var(--sl-ok); }
 .ss-quote-lines tfoot tr { border-top: 2px solid var(--sl-ink); }
+.ss-quote-lines tfoot th, .ss-quote-lines tfoot td { vertical-align: baseline; }
 .ss-quote-lines tfoot th { font-size: 15px; font-weight: 700; }
 .ss-quote-lines tfoot td { font-size: 22px; font-weight: 650; }
 .ss-quote-note { display: flex; gap: 12px; align-items: flex-start; background: #F8FAFD; border: 1px solid var(--sl-border); border-radius: var(--sl-radius-s); padding: 12px 14px; font-size: 14px; }

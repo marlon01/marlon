@@ -52,8 +52,21 @@ export function providerName(code) {
     return PROVIDER_NAMES[code] || code || "";
 }
 
+/**
+ * Facture soldée par le prestataire en ligne (et non par une déclaration validée ou une activation manuelle) :
+ * une tentative en ligne laisse `online_provider` renseigné même si la structure a finalement payé hors ligne.
+ */
+export function paidOnline(inv) {
+    return inv.state === "paid" && !!inv.online_provider && !inv.declared_date && inv.payment_method !== "manual";
+}
+
 /** Pages légales publiques (servies par le module, hors console). */
 export const LEGAL_LINKS = { terms: "/selecta/conditions", privacy: "/selecta/confidentialite" };
+
+/** « Nom » avec espaces insécables (OWL ramène les &#160; des gabarits à des espaces ordinaires). */
+export function quoted(text) {
+    return `«\u00a0${text || ""}\u00a0»`;
+}
 
 export function fmtMoney(amount, symbol = "$") {
     if (amount === null || amount === undefined) {

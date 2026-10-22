@@ -2,7 +2,7 @@
 /* Confirmation d'un choix de catégorie : détail du montant (prix, avoir, à régler) et date d'effet. */
 import { Component, onMounted, onWillUnmount, useRef, xml } from "@odoo/owl";
 import { Icon } from "@selecta_concours/common/ui";
-import { CYCLE_LABELS, fmtDate, fmtMoney } from "@selecta_saas/tenant/common";
+import { CYCLE_LABELS, fmtDate, fmtMoney, quoted } from "@selecta_saas/tenant/common";
 
 export class CheckoutDialog extends Component {
     static components = { Icon };
@@ -18,12 +18,12 @@ export class CheckoutDialog extends Component {
                         <caption class="sl-sr">Détail du montant</caption>
                         <tbody>
                             <tr>
-                                <th scope="row">Prix de la période<small>Catégorie « <t t-esc="props.plan.name"/> », <t t-esc="periodLabel"/></small></th>
+                                <th scope="row">Prix de la période<small>Catégorie <t t-esc="quoted(props.plan.name)"/>, <t t-esc="periodLabel"/></small></th>
                                 <td class="sl-figures" t-esc="money(q.gross)"/>
                             </tr>
                             <tr t-if="q.credit > 0" class="is-credit">
-                                <th scope="row">Avoir sur votre abonnement en cours<small>Part non consommée de « <t t-esc="props.tenant.plan.name"/> »<t t-if="q.period_end"> jusqu'au <t t-esc="date(q.period_end)"/></t></small></th>
-                                <td class="sl-figures">−&#160;<t t-esc="money(q.credit)"/></td>
+                                <th scope="row">Avoir sur votre abonnement en cours<small>Part non consommée de la période payée en cours (<t t-esc="quoted(props.tenant.plan.name)"/>)</small></th>
+                                <td class="sl-figures"><t t-esc="'−\u00a0' + money(q.credit)"/></td>
                             </tr>
                         </tbody>
                         <tfoot>
@@ -43,15 +43,15 @@ export class CheckoutDialog extends Component {
                         <span class="ss-quote-icon"><Icon name="noteIcon" size="18"/></span>
                         <div>
                             <p t-if="q.deferred">
-                                La catégorie « <t t-esc="props.plan.name"/> » s'appliquera à l'échéance du <strong t-esc="date(q.period_end)"/> ;
-                                jusque-là vous conservez votre catégorie actuelle (« <t t-esc="props.tenant.plan.name"/> »). La période réglée s'ajoute à la suite.
+                                La catégorie <t t-esc="quoted(props.plan.name)"/> s'appliquera à l'échéance du <strong t-esc="date(q.period_end)"/> ;
+                                jusque-là vous conservez votre catégorie actuelle (<t t-esc="quoted(props.tenant.plan.name)"/>). La période réglée s'ajoute à la suite.
                             </p>
                             <p t-elif="covered">
-                                Le montant est entièrement couvert par votre avoir : la catégorie « <t t-esc="props.plan.name"/> » est activée immédiatement,
+                                Le montant est entièrement couvert par votre avoir : la catégorie <t t-esc="quoted(props.plan.name)"/> est activée immédiatement,
                                 sans paiement, pour une nouvelle période <t t-esc="cyclePhrase"/>.
                             </p>
                             <p t-elif="q.prorated">
-                                Nouvelle période <t t-esc="cyclePhrase"/> à compter du paiement : la catégorie « <t t-esc="props.plan.name"/> » s'applique
+                                Nouvelle période <t t-esc="cyclePhrase"/> à compter du paiement : la catégorie <t t-esc="quoted(props.plan.name)"/> s'applique
                                 dès sa confirmation et remplace l'échéance actuelle<t t-if="q.period_end"> du <t t-esc="date(q.period_end)"/></t>.
                             </p>
                             <p t-else="">
@@ -126,9 +126,9 @@ export class CheckoutDialog extends Component {
     get title() {
         const t = this.props.tenant;
         if (this.props.plan.id === t.plan.id) {
-            return t.period_end ? `Renouveler « ${this.props.plan.name} »` : `Souscrire à « ${this.props.plan.name} »`;
+            return t.period_end ? `Renouveler ${quoted(this.props.plan.name)}` : `Souscrire à ${quoted(this.props.plan.name)}`;
         }
-        return t.period_end ? `Passer à « ${this.props.plan.name} »` : `Souscrire à « ${this.props.plan.name} »`;
+        return t.period_end ? `Passer à ${quoted(this.props.plan.name)}` : `Souscrire à ${quoted(this.props.plan.name)}`;
     }
     get noteIcon() {
         return this.q.deferred ? "clock" : this.covered ? "check" : "receipt";
@@ -138,6 +138,9 @@ export class CheckoutDialog extends Component {
             return "Activer sans paiement";
         }
         return `Émettre la facture (${this.money(this.q.amount)})`;
+    }
+    quoted(text) {
+        return quoted(text);
     }
     money(v) {
         return fmtMoney(v, this.props.plan.symbol);

@@ -2,7 +2,7 @@
 /* Facture imprimable (ou enregistrable en PDF depuis la boîte d'impression du navigateur). */
 import { printHTML } from "@selecta_concours/admin/print";
 import { escapeHTML as e, fmtDateTime } from "@selecta_concours/common/utils";
-import { CYCLE_LABELS, fmtDate, fmtMoney, providerName } from "@selecta_saas/tenant/common";
+import { CYCLE_LABELS, fmtDate, fmtMoney, paidOnline, providerName } from "@selecta_saas/tenant/common";
 
 const INVOICE_CSS = `
 .inv-top { display: flex; justify-content: space-between; gap: 24px; border-bottom: 2.5pt solid #14213D; padding-bottom: 12px; margin-bottom: 18px; }
@@ -60,13 +60,19 @@ export function printInvoice(inv, info) {
         creditRow = `<tr class="inv-credit"><td>Avoir sur la période en cours<div class="small muted">Part non consommée de l'abonnement précédent, déduite au prorata</div></td>
             <td></td><td class="num">−&#160;${e(fmtMoney(credit, inv.symbol))}</td></tr>`;
     }
+    // Fragments calculés à part : le minificateur d'Odoo altère les gabarits imbriqués.
+    const notesHTML = notes.map((n) => '<div class="small muted">' + n + "</div>").join("");
+    const subtotalHTML = credit > 0
+        ? '<tr class="inv-sub"><td>Prix de la période</td><td class="num">' + e(fmtMoney(gross, inv.symbol)) + "</td></tr>"
+            + '<tr class="inv-sub inv-credit"><td>Avoir sur la période en cours</td><td class="num">−&#160;' + e(fmtMoney(credit, inv.symbol)) + "</td></tr>"
+        : "";
     let note = "";
     if (inv.state === "paid") {
         const parts = [];
         if (inv.validated_date) {
             parts.push("le " + e(fmtDateTime(inv.validated_date)));
         }
-        if (inv.online_provider) {
+        if (paidOnline(inv)) {
             parts.push("— payée en ligne via " + e(providerName(inv.online_provider)));
         } else if (Number(inv.amount) <= 0 && credit > 0) {
             parts.push("— réglée intégralement par l'avoir sur la période en cours");
@@ -78,7 +84,7 @@ export function printInvoice(inv, info) {
         }
         note = '<div class="inv-note"><strong>Paiement reçu</strong> ' + parts.join(" ") + ".</div>";
     } else if (["open", "rejected"].includes(inv.state) && info.payment_instructions) {
-        note = `<div class="inv-note"><strong>Modalités de paiement</strong><div class="inv-pre">${e(info.payment_instructions)}</div>Rappelez le numéro <strong>${e(inv.name)}</strong> en motif de paiement.</div>`;
+        note = `<div class="inv-note"><strong>Modalités de paiement</strong><div class="inv-pre">${e(info.payment_instructions)}</div>Rappelez le numéro <strong>${e(inv.name)}</strong> en motif de paiement.${(info.online_providers || []).length ? "<br>Vous pouvez aussi régler en ligne (Mobile Money ou carte) depuis l'espace Abonnement de votre console." : ""}</div>`;
     }
     const contact = [info.support_email, info.support_phone].filter(Boolean).map(e).join(" · ");
     const customerLines = [c.contact, c.email, c.phone, c.country].filter(Boolean).map(e).join("<br>");
@@ -96,14 +102,13 @@ export function printInvoice(inv, info) {
             <thead><tr><th>Désignation</th><th>Cycle</th><th class="num">Montant</th></tr></thead>
             <tbody>
                 <tr><td><strong>Abonnement SELECTA — catégorie « ${e(inv.plan)} »</strong><div class="small muted">${period}</div>
-                    ${notes.map((n) => `<div class="small muted">${n}</div>`).join("")}</td>
+                    ${notesHTML}</td>
                     <td>${e(CYCLE_LABELS[inv.billing_cycle] || inv.billing_cycle)}</td><td class="num">${e(fmtMoney(gross, inv.symbol))}</td></tr>
                 ${creditRow}
             </tbody>
         </table>
         <table class="inv-meta" style="margin-top:10px">
-            ${credit > 0 ? `<tr class="inv-sub"><td>Prix de la période</td><td class="num">${e(fmtMoney(gross, inv.symbol))}</td></tr>
-            <tr class="inv-sub inv-credit"><td>Avoir sur la période en cours</td><td class="num">−&#160;${e(fmtMoney(credit, inv.symbol))}</td></tr>` : ""}
+            ${subtotalHTML}
             <tr class="inv-total"><td>${inv.state === "paid" ? "Total réglé" : "Total à régler"} (${e(inv.currency || "USD")})</td><td class="num">${amount}</td></tr>
         </table>
         ${note}
