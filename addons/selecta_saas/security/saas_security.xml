@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="group_platform_admin" model="res.groups">
+        <field name="name">Administrateur de la plateforme (SaaS)</field>
+        <field name="category_id" ref="selecta_concours.module_category_selecta"/>
+        <field name="implied_ids" eval="[(4, ref('selecta_concours.group_selecta_admin'))]"/>
+        <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
+        <field name="comment">Administration centrale : toutes les structures clientes, essais, abonnements, paiements et grille tarifaire.</field>
+    </record>
+</odoo>

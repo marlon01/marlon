@@ -49,7 +49,7 @@ class AdminApp extends Component {
                 </div>
                 <nav>
                     <t t-foreach="nav" t-as="item" t-key="item.key">
-                        <a t-att-href="'#/' + item.key" class="ad-nav-item" t-att-class="{'is-active': isActive(item.key)}" t-on-click="() => this.state.navOpen = false">
+                        <a t-att-href="item.href or ('#/' + item.key)" class="ad-nav-item" t-att-class="{'is-active': isActive(item.key)}" t-on-click="() => this.state.navOpen = false">
                             <Icon name="item.icon"/>
                             <span t-esc="item.label"/>
                         </a>
@@ -109,7 +109,7 @@ class AdminApp extends Component {
     get nav() {
         const roles = this.session.roles;
         return [...NAV, ...extensions.nav]
-            .filter((n) => n.roles.some((r) => roles[r]))
+            .filter((n) => n.roles.some((r) => roles[r]) && (!n.visible || n.visible(this.session)))
             .sort((a, b) => (a.sequence || 100) - (b.sequence || 100));
     }
     get banners() {

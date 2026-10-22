@@ -123,8 +123,9 @@ class SelectaConcours(models.Model):
             company = self.env['res.company'].browse(vals.get('company_id')) if vals.get('company_id') else self.env.company
             company._selecta_guard('concours.create')
             if not vals.get('reference'):
-                vals['reference'] = self.env['ir.sequence'].sudo().with_company(company).next_by_code(
-                    'selecta.concours') or '/'
+                Sequence = self.env['ir.sequence'].sudo()
+                own = Sequence.search([('code', '=', 'selecta.concours'), ('company_id', '=', company.id)], limit=1)
+                vals['reference'] = (own.next_by_id() if own else Sequence.next_by_code('selecta.concours')) or '/'
         records = super().create(vals_list)
         for rec in records:
             self.env['selecta.audit.log']._log('concours.create', _("Création du concours %s", rec.name),

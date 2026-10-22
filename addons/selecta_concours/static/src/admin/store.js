@@ -9,7 +9,7 @@ export function hasRole(...roles) {
 
 /**
  * Points d'extension de la console, alimentés par les modules complémentaires (abonnement…) :
- *   nav     : [{ key, label, icon, roles, sequence }] — entrées ajoutées au menu ;
+ *   nav     : [{ key, label, icon, roles, sequence, href?, visible?(session) }] — entrées ajoutées au menu ;
  *   pages   : { key: Composant } — page affichée pour la route #/key ;
  *   banners : [Composant] — bandeaux affichés en tête de toutes les pages.
  */
