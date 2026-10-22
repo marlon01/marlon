@@ -26,6 +26,9 @@ class SelectaProctorEvent(models.Model):
                                      ('disqualified', 'Disqualification')], default='none')
 
     def write(self, vals):
+        # Seule exception : l'effacement des clichés à l'échéance de la durée de conservation.
+        if is_engine(self.env) and set(vals) == {'snapshot'} and not vals['snapshot']:
+            return super().write(vals)
         raise AccessError(_("Les preuves de surveillance sont immuables."))
 
     def unlink(self):

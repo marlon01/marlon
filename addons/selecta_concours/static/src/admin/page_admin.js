@@ -215,6 +215,8 @@ export class SettingsPage extends Component {
                 <h2 class="ad-span-2">Sécurité des connexions</h2>
                 <div class="sl-field"><label>Essais infructueux avant verrouillage du poste</label><input type="number" min="3" class="sl-input" t-model.number="state.s.login_max_failures"/></div>
                 <div class="sl-field"><label>Durée du verrouillage (minutes)</label><input type="number" min="1" class="sl-input" t-model.number="state.s.login_lock_minutes"/></div>
+                <div class="sl-field"><label>Conservation des données biométriques (jours)</label><input type="number" min="0" class="sl-input" t-model.number="state.s.biometric_retention_days"/></div>
+                <p class="sl-help">Photos d'identité, gabarits faciaux et clichés probatoires sont effacés ce nombre de jours après la clôture du concours (0 = conservation illimitée). Résultats et procès-verbaux sont conservés.</p>
                 <p class="sl-help ad-span-2">S'applique aux codes candidats et aux comptes du personnel. Un code compte 60 bits d'entropie : sa découverte par essais successifs est impossible en pratique.</p>
             </section>
             <section class="ad-panel ad-form" t-if="state.s.can_edit_platform">

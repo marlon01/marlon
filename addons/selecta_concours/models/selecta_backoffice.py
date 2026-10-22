@@ -631,6 +631,7 @@ class SelectaBackoffice(models.AbstractModel):
             'llm_has_key': bool(icp.get_param('selecta.llm_api_key')),
             'login_max_failures': int(icp.get_param('selecta.login_max_failures', 8)),
             'login_lock_minutes': int(icp.get_param('selecta.login_lock_minutes', 15)),
+            'biometric_retention_days': int(icp.get_param('selecta.biometric_retention_days', 180)),
             'base_url': icp.get_param('web.base.url') or '',
         } if self.env.user.has_group('base.group_system') else {
             'company_id': company.id, 'can_edit_platform': False, 'branding': company._selecta_feature('branding'),
@@ -664,7 +665,8 @@ class SelectaBackoffice(models.AbstractModel):
         if self.env.user.has_group('base.group_system'):
             mapping = {'llm_enabled': 'selecta.llm_enabled', 'llm_endpoint': 'selecta.llm_endpoint',
                        'llm_model': 'selecta.llm_model', 'login_max_failures': 'selecta.login_max_failures',
-                       'login_lock_minutes': 'selecta.login_lock_minutes'}
+                       'login_lock_minutes': 'selecta.login_lock_minutes',
+                       'biometric_retention_days': 'selecta.biometric_retention_days'}
             for k, p in mapping.items():
                 if k in vals:
                     icp.set_param(p, str(vals[k]))

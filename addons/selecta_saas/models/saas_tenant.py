@@ -16,6 +16,22 @@ from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
+
+def monogram_logo(name, color):
+    """Logo par défaut : monogramme (initiales) sur la couleur de marque, au format SVG."""
+    import base64
+    from markupsafe import escape
+    words = [w for w in (name or '?').replace('-', ' ').split() if w[:1].isalnum()]
+    initials = ''.join(w[0] for w in words[:2]).upper() or '?'
+    color = color if (color or '').startswith('#') and len(color) in (4, 7) else '#0B5FFF'
+    svg = ('<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">'
+           '<rect width="256" height="256" rx="56" fill="%s"/>'
+           '<circle cx="128" cy="128" r="98" fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="4"/>'
+           '<text x="128" y="128" dy=".35em" text-anchor="middle" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif" '
+           'font-size="%d" font-weight="700" fill="#fff">%s</text></svg>') % (color, 104 if len(initials) == 1 else 92,
+                                                                            escape(initials))
+    return base64.b64encode(svg.encode())
+
 STATES = [
     ('trial', "Essai gratuit"), ('active', "Abonné"), ('past_due', "Paiement en retard"),
     ('expired', "Expiré"), ('suspended', "Suspendu"),
@@ -56,6 +72,8 @@ class SelectaSaasTenant(models.Model):
     signup_ip = fields.Char()
     suspended_reason = fields.Char()
     notes = fields.Text(string="Notes internes (plateforme)")
+    terms_accepted_date = fields.Datetime(string="Conditions acceptées le", readonly=True)
+    terms_version = fields.Char(string="Version des conditions acceptée", readonly=True)
     invoice_ids = fields.One2many('selecta.saas.invoice', 'tenant_id')
 
     _sql_constraints = [('company_unique', 'unique(company_id)', "Cette structure a déjà un dossier client.")]
@@ -96,6 +114,10 @@ class SelectaSaasTenant(models.Model):
         })
         user.partner_id.write({'company_id': company.id, 'phone': vals.get('phone') or False})
         company.partner_id.company_id = company
+        # Odoo réserve les fichiers SVG aux administrateurs, contrôle refait à l'écriture en base :
+        # le logo est donc enregistré et immédiatement écrit en mode superutilisateur.
+        company.logo = monogram_logo(company.name, company.selecta_brand_color or '#0B5FFF')
+        env.flush_all()
         tenant = env['selecta.saas.tenant'].create({
             'company_id': company.id, 'plan_id': vals['plan'].id, 'owner_id': user.id,
             'contact_name': vals['contact_name'], 'email': vals['email'], 'phone': vals.get('phone') or False,
@@ -106,6 +128,11 @@ class SelectaSaasTenant(models.Model):
                                       company=company, user=user, ip=ip)
         _logger.info("SELECTA SaaS : nouvelle structure %s (#%s), essai jusqu'au %s",
                      company.name, company.id, tenant.trial_end)
+        Mail = env['selecta.saas.mail']
+        Mail._queue('signup_welcome', tenant=tenant, values={
+            'subject': _("Bienvenue sur SELECTA — votre essai gratuit a commencé")})
+        Mail._notify_platform('platform_new_signup', tenant=tenant, values={
+            'subject': _("Nouvelle structure : %(c)s (%(p)s)", c=company.name, p=vals['plan'].name)})
         return tenant
 
     def _grace_end(self):
@@ -142,13 +169,46 @@ class SelectaSaasTenant(models.Model):
 
     @api.model
     def _cron_lifecycle(self):
-        """Aligne l'état enregistré (listes, filtres, statistiques) sur l'état calculé."""
+        """Aligne l'état enregistré sur l'état calculé et envoie les rappels d'échéance."""
+        self.env['selecta.saas.invoice']._cron_apply_deferred_plans()
         for tenant in self.sudo().search([('state', '!=', 'suspended')]):
             state = tenant._effective_state()
-            if state != tenant.state:
+            previous = tenant.state
+            if state != previous:
                 tenant.state = state
                 self.env['selecta.audit.log']._log('saas.state', _("Abonnement : %s", dict(STATES)[state]),
                                                    {'state': state}, company=tenant.company_id)
+            tenant._send_reminders(state, previous)
+
+    def _send_reminders(self, state, previous):
+        """Rappels idempotents (clé de déduplication par échéance)."""
+        self.ensure_one()
+        Mail = self.env['selecta.saas.mail']
+        days = self._days_left()
+        if state == 'trial':
+            stamp = fields.Date.to_string(self.trial_end.date())
+            for threshold in (1, 3):
+                if days <= threshold:
+                    Mail._queue('trial_reminder', tenant=self, values={'days': days, 'subject': _(
+                        "Votre essai SELECTA se termine %s", _("demain") if days <= 1 else _("dans %s jours", days))},
+                        dedupe_key='trial%s:%s:%s' % (threshold, self.id, stamp))
+                    break
+        elif state == 'active' and self.period_end:
+            stamp = fields.Date.to_string(self.period_end.date())
+            for threshold in (1, 7):
+                if days <= threshold:
+                    Mail._queue('renewal_reminder', tenant=self, values={'days': days, 'subject': _(
+                        "Votre abonnement SELECTA arrive à échéance le %s", stamp)},
+                        dedupe_key='renew%s:%s:%s' % (threshold, self.id, stamp))
+                    break
+        elif state == 'expired' and previous != 'expired':
+            if self.period_end:
+                Mail._queue('subscription_expired', tenant=self, values={'subject': _(
+                    "Abonnement SELECTA échu : console en consultation seule")},
+                    dedupe_key='expired:%s:%s' % (self.id, fields.Date.to_string(self.period_end.date())))
+            else:
+                Mail._queue('trial_expired', tenant=self, values={'subject': _(
+                    "Votre essai SELECTA est terminé")}, dedupe_key='trialend:%s' % self.id)
 
     def _extend_period(self, cycle):
         """Prolonge l'abonnement d'un cycle à partir de l'échéance en cours (ou de maintenant)."""
@@ -165,6 +225,45 @@ class SelectaSaasTenant(models.Model):
             vals['state'] = 'active'
         self.write(vals)
         return start, end
+
+    def _start_new_period(self, cycle):
+        """Nouvelle période démarrant maintenant (changement vers une catégorie supérieure, avoir déduit)."""
+        self.ensure_one()
+        start = fields.Datetime.now()
+        end = start + (relativedelta(years=1) if cycle == 'yearly' else relativedelta(months=1))
+        vals = {'period_end': end, 'billing_cycle': cycle}
+        if self.state != 'suspended':
+            vals['state'] = 'active'
+        self.write(vals)
+        return start, end
+
+    def _current_paid_invoice(self):
+        """Facture couvrant la période en cours (base de calcul de l'avoir)."""
+        self.ensure_one()
+        now = fields.Datetime.now()
+        return self.env['selecta.saas.invoice'].sudo().search([
+            ('tenant_id', '=', self.id), ('state', '=', 'paid'), ('period_start', '<=', now),
+            ('period_end', '>', now)], order='period_end desc', limit=1)
+
+    def _quote(self, plan, cycle):
+        """Montant à facturer pour ``plan``/``cycle`` en tenant compte de la période payée en cours."""
+        self.ensure_one()
+        gross = plan.price_for(cycle)
+        quote = {'gross': gross, 'credit': 0.0, 'amount': gross, 'prorated': False, 'deferred': False}
+        state = self._effective_state()
+        if state not in ('active', 'past_due') or plan == self.plan_id or not self.period_end:
+            return quote
+        if plan.price_monthly < self.plan_id.price_monthly:
+            quote['deferred'] = True  # catégorie inférieure : effet à l'échéance, période ajoutée
+            return quote
+        current = self._current_paid_invoice()
+        if current and current.period_end and current.period_start:
+            total = (current.period_end - current.period_start).total_seconds()
+            remaining = max(0.0, (current.period_end - fields.Datetime.now()).total_seconds())
+            # Avoir arrondi au dollar inférieur : montants entiers, compatibles avec tous les prestataires.
+            credit = float(int(current.amount * remaining / total)) if total > 0 else 0.0
+            quote.update(credit=min(credit, gross), amount=max(0.0, gross - credit), prorated=True)
+        return quote
 
     # ------------------------------------------------------------------ usage et quotas
     def _month_start(self):

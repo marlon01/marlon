@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Gabarit commun des courriels : tableaux et styles en ligne (rendu fiable dans les messageries). -->
+    <template id="mail_layout" name="SELECTA — courriel">
+        <html lang="fr">
+            <head><meta charset="utf-8"/><meta name="viewport" content="width=device-width"/><title t-out="subject"/></head>
+            <body style="margin:0;padding:0;background:#EEF1F7;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#14213D;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#EEF1F7;padding:24px 12px;">
+                    <tr><td align="center">
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#FFFFFF;border:1px solid #DCE2EE;border-radius:12px;overflow:hidden;">
+                            <tr><td style="background:#14213D;padding:18px 28px;">
+                                <span style="display:inline-block;width:28px;height:28px;line-height:28px;text-align:center;border-radius:50%;background:#0B5FFF;color:#fff;font-weight:700;font-size:15px;vertical-align:middle;">S</span>
+                                <span style="color:#fff;font-weight:700;letter-spacing:.14em;font-size:15px;vertical-align:middle;margin-left:8px;">SELECTA</span>
+                            </td></tr>
+                            <tr><td style="padding:28px 28px 8px;font-size:15px;line-height:1.6;">
+                                <t t-out="body"/>
+                            </td></tr>
+                            <tr><td style="padding:18px 28px 26px;border-top:1px solid #DCE2EE;font-size:12.5px;line-height:1.6;color:#6B7896;">
+                                <t t-out="platform"/> — SELECTA, la culture de l'excellence.<br/>
+                                <t t-if="support_email or support_phone">Support :
+                                    <a t-if="support_email" t-att-href="'mailto:' + support_email" style="color:#0B5FFF;" t-out="support_email"/>
+                                    <t t-if="support_email and support_phone"> · </t><t t-out="support_phone"/><br/>
+                                </t>
+                                <a t-att-href="base_url + '/selecta/conditions'" style="color:#6B7896;">Conditions d'utilisation</a> ·
+                                <a t-att-href="base_url + '/selecta/confidentialite'" style="color:#6B7896;">Confidentialité</a>
+                            </td></tr>
+                        </table>
+                    </td></tr>
+                </table>
+            </body>
+        </html>
+    </template>
+
+    <template id="mail_button" name="SELECTA — bouton de courriel">
+        <table role="presentation" cellpadding="0" cellspacing="0" style="margin:22px 0;"><tr>
+            <td style="background:#0B5FFF;border-radius:8px;">
+                <a t-att-href="href" style="display:inline-block;padding:12px 22px;color:#ffffff;font-weight:600;text-decoration:none;" t-out="label"/>
+            </td>
+        </tr></table>
+    </template>
+
+    <template id="mail_signup_welcome" name="Courriel : bienvenue">
+        <h1 style="font-size:22px;margin:0 0 14px;">Bienvenue, <t t-out="tenant.contact_name"/></h1>
+        <p>L'espace SELECTA de <strong t-out="company.name"/> est prêt. Votre essai gratuit de la catégorie
+            <strong t-out="tenant.plan_id.name"/> court jusqu'au <strong t-out="fmt_date(tenant.trial_end)"/>, sans engagement.</p>
+        <p style="margin-bottom:6px;">Pour organiser votre premier concours :</p>
+        <ol style="margin:0 0 6px 18px;padding:0;">
+            <li>composez votre banque de questions (saisie ou import CSV) ;</li>
+            <li>créez le concours : durée, seuil, places, niveau de surveillance ;</li>
+            <li>inscrivez vos candidats et imprimez leurs convocations avec code d'accès ;</li>
+            <li>ouvrez l'épreuve le jour J, puis publiez le procès-verbal scellé.</li>
+        </ol>
+        <t t-call="selecta_saas.mail_button"><t t-set="href" t-value="base_url + '/selecta/login'"/><t t-set="label">Ouvrir ma console</t></t>
+        <p style="font-size:13.5px;color:#4A587A;">Identifiant : <strong t-out="tenant.owner_id.login"/><br/>
+            Espace candidat de votre structure : <a t-att-href="base_url + '/selecta/exam?org=%s' % company.id" style="color:#0B5FFF;" t-out="base_url + '/selecta/exam?org=%s' % company.id"/></p>
+    </template>
+
+    <template id="mail_platform_new_signup" name="Courriel : nouvelle inscription (plateforme)">
+        <h1 style="font-size:20px;margin:0 0 14px;">Nouvelle structure : <t t-out="company.name"/></h1>
+        <p>Catégorie <strong t-out="tenant.plan_id.name"/>, essai jusqu'au <t t-out="fmt_date(tenant.trial_end)"/>.<br/>
+            Contact : <t t-out="tenant.contact_name"/> — <t t-out="tenant.email"/><t t-if="tenant.phone"> — <t t-out="tenant.phone"/></t></p>
+        <t t-call="selecta_saas.mail_button"><t t-set="href" t-value="base_url + '/selecta/platform#/tenants/%s' % tenant.id"/><t t-set="label">Voir la fiche</t></t>
+    </template>
+
+    <template id="mail_trial_reminder" name="Courriel : rappel de fin d'essai">
+        <h1 style="font-size:22px;margin:0 0 14px;">Votre essai se termine <t t-out="'demain' if days == 1 else 'dans %s jours' % days"/></h1>
+        <p>L'essai gratuit de <strong t-out="company.name"/> prend fin le <strong t-out="fmt_date(tenant.trial_end)"/>.
+            Pour continuer à créer des concours et inscrire des candidats, choisissez votre abonnement :
+            les jours d'essai restants s'ajoutent à votre première période.</p>
+        <p>Sans abonnement, votre console passera en consultation seule : vos résultats et procès-verbaux resteront accessibles.</p>
+        <t t-call="selecta_saas.mail_button"><t t-set="href" t-value="base_url + '/selecta/admin#/subscription'"/><t t-set="label">Choisir mon abonnement</t></t>
+    </template>
+
+    <template id="mail_trial_expired" name="Courriel : fin d'essai">
+        <h1 style="font-size:22px;margin:0 0 14px;">Votre essai gratuit est terminé</h1>
+        <p>La console de <strong t-out="company.name"/> est désormais en consultation seule. Vos concours, candidats,
+            résultats et procès-verbaux restent consultables et exportables.</p>
+        <p>Souscrivez un abonnement pour reprendre l'organisation de vos concours : l'accès complet est rétabli dès la validation du paiement.</p>
+        <t t-call="selecta_saas.mail_button"><t t-set="href" t-value="base_url + '/selecta/admin#/subscription'"/><t t-set="label">Souscrire un abonnement</t></t>
+    </template>
+
+    <template id="mail_renewal_reminder" name="Courriel : rappel de renouvellement">
+        <h1 style="font-size:22px;margin:0 0 14px;">Votre abonnement arrive à échéance</h1>
+        <p>L'abonnement <strong t-out="tenant.plan_id.name"/> de <strong t-out="company.name"/> est payé jusqu'au
+            <strong t-out="fmt_date(tenant.period_end)"/><t t-if="days"> (dans <t t-out="days"/> jour<t t-if="days > 1">s</t>)</t>.
+            Renouvelez-le pour éviter toute interruption : la nouvelle période s'ajoute à la période en cours.</p>
+        <t t-call="selecta_saas.mail_button"><t t-set="href" t-value="base_url + '/selecta/admin#/subscription'"/><t t-set="label">Renouveler</t></t>
+    </template>
+
+    <template id="mail_subscription_expired" name="Courriel : abonnement échu">
+        <h1 style="font-size:22px;margin:0 0 14px;">Votre abonnement est échu</h1>
+        <p>Le délai de grâce est écoulé : la console de <strong t-out="company.name"/> est en consultation seule.
+            Vos données sont conservées et restent consultables.</p>
+        <t t-call="selecta_saas.mail_button"><t t-set="href" t-value="base_url + '/selecta/admin#/subscription'"/><t t-set="label">Régulariser mon abonnement</t></t>
+    </template>
+
+    <template id="mail_invoice_issued" name="Courriel : facture émise">
+        <h1 style="font-size:22px;margin:0 0 14px;">Facture <t t-out="invoice.name"/></h1>
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="font-size:14.5px;border-collapse:collapse;margin:0 0 14px;">
+            <tr><td style="padding:6px 0;color:#6B7896;">Catégorie</td><td align="right"><t t-out="invoice.plan_id.name"/> (<t t-out="'annuel' if invoice.billing_cycle == 'yearly' else 'mensuel'"/>)</td></tr>
+            <tr t-if="invoice.credit_amount"><td style="padding:6px 0;color:#6B7896;">Avoir sur la période en cours</td><td align="right">−<t t-out="fmt_amount(invoice.credit_amount)"/></td></tr>
+            <tr><td style="padding:8px 0;border-top:1px solid #DCE2EE;font-weight:700;">Montant à régler</td><td align="right" style="border-top:1px solid #DCE2EE;font-weight:700;font-size:18px;" t-out="fmt_amount(invoice.amount)"/></tr>
+        </table>
+        <p t-if="online">Réglez en ligne par Mobile Money ou carte bancaire depuis votre page « Abonnement » : l'activation est immédiate.</p>
+        <p t-if="instructions" style="white-space:pre-line;background:#F4F6FB;border:1px solid #DCE2EE;border-radius:8px;padding:12px 14px;font-size:14px;" t-out="instructions"/>
+        <p style="font-size:14px;">Après un paiement hors ligne, déclarez-le avec la référence de transaction : nous le validons rapidement.</p>
+        <t t-call="selecta_saas.mail_button"><t t-set="href" t-value="base_url + '/selecta/admin#/subscription'"/><t t-set="label">Payer ou déclarer mon paiement</t></t>
+    </template>
+
+    <template id="mail_payment_declared" name="Courriel : paiement déclaré (plateforme)">
+        <h1 style="font-size:20px;margin:0 0 14px;">Paiement à valider : <t t-out="company.name"/></h1>
+        <p>Facture <strong t-out="invoice.name"/> — <t t-out="fmt_amount(invoice.amount)"/><br/>
+            Moyen : <t t-out="method_label"/> — référence <strong t-out="invoice.payment_reference"/>
+            <t t-if="invoice.payer_phone"><br/>Téléphone du payeur : <t t-out="invoice.payer_phone"/></t></p>
+        <t t-call="selecta_saas.mail_button"><t t-set="href" t-value="base_url + '/selecta/platform#/payments'"/><t t-set="label">Valider ou refuser</t></t>
+    </template>
+
+    <template id="mail_payment_validated" name="Courriel : paiement validé">
+        <h1 style="font-size:22px;margin:0 0 14px;">Paiement reçu, merci</h1>
+        <p>Nous avons bien reçu le règlement de la facture <strong t-out="invoice.name"/> (<t t-out="fmt_amount(invoice.amount)"/>).
+            L'abonnement <strong t-out="invoice.plan_id.name"/> de <strong t-out="company.name"/> est actif du
+            <t t-out="fmt_date(invoice.period_start)"/> au <strong t-out="fmt_date(invoice.period_end)"/>.</p>
+        <p>Votre facture acquittée est disponible sur la page « Abonnement ».</p>
+        <t t-call="selecta_saas.mail_button"><t t-set="href" t-value="base_url + '/selecta/admin#/subscription'"/><t t-set="label">Voir mon abonnement</t></t>
+    </template>
+
+    <template id="mail_payment_rejected" name="Courriel : paiement refusé">
+        <h1 style="font-size:22px;margin:0 0 14px;">Paiement non validé</h1>
+        <p>Le paiement déclaré pour la facture <strong t-out="invoice.name"/> n'a pas pu être validé :</p>
+        <p style="background:#FBE7E5;border-left:4px solid #C2352B;padding:10px 14px;border-radius:4px;" t-out="invoice.reject_reason"/>
+        <p>Vérifiez la référence ou le montant, puis déclarez à nouveau votre paiement.</p>
+        <t t-call="selecta_saas.mail_button"><t t-set="href" t-value="base_url + '/selecta/admin#/subscription'"/><t t-set="label">Corriger ma déclaration</t></t>
+    </template>
+
+    <template id="mail_account_suspended" name="Courriel : suspension">
+        <h1 style="font-size:22px;margin:0 0 14px;">Compte suspendu</h1>
+        <p>L'accès à l'espace SELECTA de <strong t-out="company.name"/> est suspendu.</p>
+        <p t-if="tenant.suspended_reason">Motif : <t t-out="tenant.suspended_reason"/></p>
+        <p>Vos données sont conservées. Contactez le support pour rétablir l'accès.</p>
+    </template>
+
+    <template id="mail_account_reactivated" name="Courriel : réactivation">
+        <h1 style="font-size:22px;margin:0 0 14px;">Accès rétabli</h1>
+        <p>L'espace SELECTA de <strong t-out="company.name"/> est de nouveau accessible.</p>
+        <t t-call="selecta_saas.mail_button"><t t-set="href" t-value="base_url + '/selecta/login'"/><t t-set="label">Ouvrir ma console</t></t>
+    </template>
+
+    <template id="mail_test" name="Courriel : test">
+        <h1 style="font-size:20px;margin:0 0 14px;">La messagerie fonctionne</h1>
+        <p>Ce message confirme que la plateforme peut envoyer des courriels aux structures (inscription, rappels d'échéance, factures, paiements).</p>
+    </template>
+</odoo>

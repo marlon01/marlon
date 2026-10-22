@@ -8,6 +8,7 @@ from odoo.exceptions import UserError
 
 from odoo.addons.selecta_concours.models.selecta_concours import G_ADMIN, require_group
 
+from .payment_providers import enabled_providers
 from .saas_invoice import PAYMENT_METHODS
 
 PROOF_MAX_BYTES = 5 * 1024 * 1024
@@ -44,6 +45,7 @@ class SelectaBackoffice(models.AbstractModel):
             'plans': [p._public_dict() for p in self.env['selecta.saas.plan'].sudo().search([])],
             'invoices': [i._as_dict() for i in Invoice.search([('tenant_id', '=', tenant.id)], limit=50)],
             'methods': [{'key': k, 'label': v} for k, v in PAYMENT_METHODS if k != 'manual'],
+            'online_providers': [{'code': p.code, 'label': p.label} for p in enabled_providers(self.env)],
             'payment_instructions': icp.get_param('selecta_saas.payment_instructions') or '',
             'payment_link': icp.get_param('selecta_saas.payment_link') or '',
             'support_email': icp.get_param('selecta_saas.support_email') or '',
@@ -71,15 +73,55 @@ class SelectaBackoffice(models.AbstractModel):
         if Invoice.search_count([('tenant_id', '=', tenant.id), ('state', '=', 'pending')]):
             raise UserError(_("Un paiement est déjà en cours de validation. Patientez ou annulez-le avant d'en "
                               "déclarer un autre."))
+        quote = tenant._quote(plan, cycle)
+        if quote['prorated'] and quote['credit'] >= quote['gross'] and cycle == 'monthly':
+            raise UserError(_("La valeur restante de votre abonnement dépasse le prix d'un mois de cette catégorie : "
+                              "choisissez le cycle annuel pour en bénéficier pleinement."))
         Invoice.search([('tenant_id', '=', tenant.id), ('state', 'in', ('open', 'rejected'))])._cancel()
         inv = Invoice.create({
             'tenant_id': tenant.id, 'plan_id': plan.id, 'billing_cycle': cycle,
-            'currency_id': plan.currency_id.id, 'amount': plan.price_for(cycle),
+            'currency_id': plan.currency_id.id, 'amount': quote['amount'], 'gross_amount': quote['gross'],
+            'credit_amount': quote['credit'], 'prorated': quote['prorated'], 'deferred_plan': quote['deferred'],
         })
+        if inv.amount <= 0:
+            inv._validate(method='manual', reference=_("Avoir sur la période en cours"))
+            return inv._as_dict()
+        icp = self.env['ir.config_parameter'].sudo()
+        self.env['selecta.saas.mail']._queue('invoice_issued', tenant=tenant, values={
+            'invoice': inv, 'online': bool(enabled_providers(self.env)),
+            'instructions': icp.get_param('selecta_saas.payment_instructions') or '',
+            'subject': _("Facture %(n)s — %(a)s $", n=inv.name, a=inv.amount)})
         self.env['selecta.audit.log']._log('saas.checkout', _("Facture %(n)s : %(p)s (%(c)s)", n=inv.name, p=plan.name,
                                                                c=dict(inv._fields['billing_cycle'].selection)[cycle]),
                                            {'invoice': inv.name, 'amount': inv.amount})
         return inv._as_dict()
+
+    @api.model
+    def billing_quote(self, plan_id, cycle):
+        """Prévisualisation du montant (avoir déduit, report d'une catégorie inférieure)."""
+        require_group(self.env, G_ADMIN)
+        tenant = self._tenant()
+        plan = self.env['selecta.saas.plan'].sudo().browse(int(plan_id)).exists()
+        if not plan or cycle not in ('monthly', 'yearly'):
+            raise UserError(_("Catégorie ou cycle invalide."))
+        quote = tenant._quote(plan, cycle)
+        quote['period_end'] = fields.Datetime.to_string(tenant.period_end) if tenant.period_end else False
+        return quote
+
+    @api.model
+    def billing_pay_online(self, invoice_id, provider):
+        """Ouvre une transaction chez le prestataire ; le navigateur est ensuite redirigé vers sa page."""
+        require_group(self.env, G_ADMIN)
+        inv = self._own_invoice(invoice_id)
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url', '').rstrip('/')
+        return {'url': inv._online_start(provider, base_url)}
+
+    @api.model
+    def billing_check_online(self, invoice_id):
+        require_group(self.env, G_ADMIN)
+        inv = self._own_invoice(invoice_id)
+        status = inv._online_check()
+        return {'status': status, 'info': self.billing_info()}
 
     def _own_invoice(self, invoice_id):
         inv = self.env['selecta.saas.invoice'].sudo().browse(int(invoice_id)).exists()

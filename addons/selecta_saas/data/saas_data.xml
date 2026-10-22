@@ -88,6 +88,26 @@ Indiquez le numéro de facture en motif, puis déclarez votre paiement avec la r
         </record>
     </data>
 
+    <record id="cron_saas_mail" model="ir.cron">
+        <field name="name">SELECTA SaaS : envoi des courriels</field>
+        <field name="model_id" ref="model_selecta_saas_mail"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_send()</field>
+        <field name="interval_number">5</field>
+        <field name="interval_type">minutes</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="cron_saas_online_payments" model="ir.cron">
+        <field name="name">SELECTA SaaS : vérification des paiements en ligne</field>
+        <field name="model_id" ref="model_selecta_saas_invoice"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_check_online()</field>
+        <field name="interval_number">15</field>
+        <field name="interval_type">minutes</field>
+        <field name="active" eval="True"/>
+    </record>
+
     <record id="cron_saas_lifecycle" model="ir.cron">
         <field name="name">SELECTA SaaS : fin d'essai et échéances d'abonnement</field>
         <field name="model_id" ref="model_selecta_saas_tenant"/>

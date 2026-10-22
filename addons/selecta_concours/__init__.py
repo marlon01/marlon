@@ -12,6 +12,7 @@ def _selecta_post_init(env):
         'selecta.llm_model': 'llama3.1:8b',
         'selecta.login_max_failures': '8',
         'selecta.login_lock_minutes': '15',
+        'selecta.biometric_retention_days': '180',
     }
     for key, value in defaults.items():
         if not params.get_param(key):

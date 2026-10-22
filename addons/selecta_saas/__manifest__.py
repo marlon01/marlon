@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': "SELECTA SaaS — abonnements et administration centrale",
-    'version': '18.0.1.0.0',
+    'version': '18.0.1.1.0',
     'summary': "Transforme SELECTA en plateforme SaaS : inscription en libre-service, essai gratuit de 14 jours, "
                "abonnements par catégorie, quotas, paiements et administration centrale.",
     'description': """
@@ -25,6 +25,8 @@ SELECTA SaaS (by Naxoris)
         'security/ir.model.access.csv',
         'data/saas_data.xml',
         'views/saas_templates.xml',
+        'views/mail_templates.xml',
+        'views/legal_templates.xml',
     ],
     'assets': {
         # Espace « Abonnement » et bandeau d'échéance, ajoutés à la console de chaque structure.

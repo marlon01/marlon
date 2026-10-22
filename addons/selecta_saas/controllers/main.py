@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """Pages publiques du SaaS (présentation, tarifs, inscription) et console de la plateforme."""
+import logging
 import re
 from datetime import timedelta
 
-from markupsafe import Markup
+from markupsafe import Markup, escape
 
 from odoo import fields, http, _
 from odoo.exceptions import AccessDenied, UserError, ValidationError
@@ -14,12 +15,42 @@ from odoo.addons.selecta_concours.controllers.exam import SelectaExamController,
 
 from ..models.saas_platform import G_PLATFORM, read_setting
 
+_logger = logging.getLogger(__name__)
 EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$')
 SIGNUPS_PER_IP_PER_DAY = 5
 
 
 def _plans():
     return request.env['selecta.saas.plan'].sudo().search([])
+
+
+def render_legal_text(text):
+    """Texte juridique saisi dans l'administration centrale → HTML sûr.
+
+    Syntaxe minimale : « # Titre », « ## Sous-titre », « - élément de liste », lignes vides entre paragraphes.
+    Tout le reste est échappé : aucun balisage n'est interprété.
+    """
+    out, items = [], []
+
+    def flush():
+        if items:
+            out.append(Markup('<ul>%s</ul>') % Markup('').join(Markup('<li>%s</li>') % i for i in items))
+            items.clear()
+    for block in re.split(r'\n\s*\n', (text or '').strip()):
+        for line in block.split('\n'):
+            line = line.rstrip()
+            if line.startswith('- '):
+                items.append(line[2:].strip())
+                continue
+            flush()
+            if line.startswith('## '):
+                out.append(Markup('<h2>%s</h2>') % line[3:].strip())
+            elif line.startswith('# '):
+                out.append(Markup('<h1>%s</h1>') % line[2:].strip())
+            elif line.strip():
+                out.append(Markup('<p>%s</p>') % line.strip())
+        flush()
+    return Markup('').join(out)
 
 
 class SelectaSaasHome(SelectaHome):
@@ -64,7 +95,10 @@ class SelectaSaasController(SelectaExamController):
         if request.session.uid:
             return request.redirect('/selecta/admin')
         # Noms des pays en français lorsque la langue est chargée (--load-language=fr_FR).
-        countries = request.env['res.country'].sudo().with_context(lang='fr_FR').search([]).sorted('name')
+        Country = request.env['res.country'].sudo()
+        if request.env['res.lang']._lang_get('fr_FR'):
+            Country = Country.with_context(lang='fr_FR')
+        countries = Country.search([]).sorted('name')
         return render_app('signup', "SELECTA — Créer votre espace", {
             'plans': [p._public_dict() for p in _plans()],
             'plan': plan or '',
@@ -74,6 +108,7 @@ class SelectaSaasController(SelectaExamController):
             'countries': [{'code': c.code, 'name': c.name} for c in countries],
             'default_country': 'CD',
             'support_email': read_setting(request.env, 'support_email'),
+            'terms_url': '/selecta/conditions', 'privacy_url': '/selecta/confidentialite',
         })
 
     @http.route('/selecta/saas/signup', type='json', auth='public', csrf=False)
@@ -94,8 +129,11 @@ class SelectaSaasController(SelectaExamController):
             return {'error': exc.args[0], 'field': getattr(exc, 'selecta_field', None)}
         try:
             with env.cr.savepoint():
-                env['selecta.saas.tenant'].sudo()._create_space(vals, ip)
+                tenant = env['selecta.saas.tenant'].sudo()._create_space(vals, ip)
+                tenant.write({'terms_accepted_date': fields.Datetime.now(),
+                              'terms_version': read_setting(env, 'legal_updated') or 'initiale'})
         except (UserError, ValidationError) as exc:
+            _logger.warning("SELECTA SaaS : inscription refusée : %s", exc, exc_info=True)
             return {'error': exc.args[0]}
         # L'authentification ouvre son propre curseur : le compte doit être enregistré avant.
         env.cr.commit()
@@ -137,6 +175,69 @@ class SelectaSaasController(SelectaExamController):
         country = env['res.country'].sudo().search([('code', '=', (data.get('country') or '').upper())], limit=1)
         return {'organization': org, 'contact_name': contact, 'email': email, 'phone': phone[:40],
                 'password': password, 'plan': plan, 'country': country}
+
+    # ------------------------------------------------------------------ documents juridiques
+    @http.route(['/selecta/conditions', '/selecta/confidentialite'], type='http', auth='public', sitemap=True)
+    def legal(self, **kw):
+        kind = 'terms' if request.httprequest.path.endswith('/conditions') else 'privacy'
+        custom = read_setting(request.env, '%s_text' % kind)
+        values = {
+            'kind': kind, 'custom': render_legal_text(custom) if custom else False,
+            'issuer': read_setting(request.env, 'issuer_name'),
+            'issuer_details': read_setting(request.env, 'issuer_details'),
+            'support_email': read_setting(request.env, 'support_email'),
+            'support_phone': read_setting(request.env, 'support_phone'),
+            'trial_days': read_setting(request.env, 'trial_days'),
+            'grace_days': read_setting(request.env, 'grace_days'),
+            'retention_days': read_setting(request.env, 'biometric_retention_days'),
+            'updated': read_setting(request.env, 'legal_updated'),
+            'year': fields.Date.today().year,
+        }
+        html = request.env['ir.qweb']._render('selecta_saas.legal_page', values)
+        return request.make_response(Markup('<!DOCTYPE html>\n') + html, [
+            ('Content-Type', 'text/html; charset=utf-8'), ('X-Content-Type-Options', 'nosniff')])
+
+    # ------------------------------------------------------------------ paiement en ligne
+    @http.route('/selecta/saas/pay/return', type='http', auth='public', sitemap=False)
+    def pay_return(self, ref='', **kw):
+        """Retour du client depuis la page du prestataire : on vérifie auprès du prestataire, jamais sur parole."""
+        inv = request.env['selecta.saas.invoice'].sudo().search([('online_reference', '=', ref)], limit=1) if ref else None
+        status = 'none'
+        if inv:
+            if kw.get('session_id') and inv.online_provider == 'stripe' and not inv.online_session:
+                inv.online_session = kw['session_id']
+            try:
+                status = inv._online_check()
+            except Exception as exc:  # noqa: BLE001 - la page de retour ne doit jamais échouer
+                _logger.warning("SELECTA SaaS : vérification au retour de %s impossible : %s", ref, exc)
+                status = 'pending'
+        return request.redirect('/selecta/admin#/subscription?payment=%s' % status, 303)
+
+    @http.route('/selecta/saas/pay/notify/<string:provider>', type='http', auth='public', methods=['POST'],
+                csrf=False, sitemap=False)
+    def pay_notify(self, provider, **kw):
+        """Notification serveur à serveur. Le contenu ne sert qu'à identifier la transaction."""
+        ref = False
+        if provider == 'cinetpay':
+            ref = kw.get('cpm_trans_id') or kw.get('transaction_id')
+        elif provider == 'stripe':
+            try:
+                event = request.get_json_data()
+                obj = ((event or {}).get('data') or {}).get('object') or {}
+                ref = obj.get('client_reference_id')
+                session = obj.get('id')
+            except Exception:  # noqa: BLE001
+                event, session = None, None
+        inv = request.env['selecta.saas.invoice'].sudo().search(
+            [('online_reference', '=', ref), ('online_provider', '=', provider)], limit=1) if ref else None
+        if inv:
+            if provider == 'stripe' and session and not inv.online_session:
+                inv.online_session = session
+            try:
+                inv._online_check()
+            except Exception as exc:  # noqa: BLE001
+                _logger.warning("SELECTA SaaS : notification %s pour %s non traitée : %s", provider, ref, exc)
+        return request.make_response('OK', [('Content-Type', 'text/plain')])
 
     # ------------------------------------------------------------------ administration centrale
     @http.route('/selecta/platform', type='http', auth='public', sitemap=False)

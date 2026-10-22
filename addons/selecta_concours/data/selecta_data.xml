@@ -20,6 +20,16 @@
         <field name="active" eval="True"/>
     </record>
 
+    <record id="cron_selecta_purge_biometrics" model="ir.cron">
+        <field name="name">SELECTA : effacement des données biométriques échues</field>
+        <field name="model_id" ref="model_selecta_concours"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_purge_biometrics()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+    </record>
+
     <record id="cron_selecta_throttle_cleanup" model="ir.cron">
         <field name="name">SELECTA : purge des verrous de connexion</field>
         <field name="model_id" ref="model_selecta_login_throttle"/>

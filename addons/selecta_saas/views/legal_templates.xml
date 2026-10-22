@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="legal_page" name="SELECTA — documents juridiques">
+        <t t-set="title" t-value="'Conditions générales d\'utilisation' if kind == 'terms' else 'Politique de confidentialité'"/>
+        <html lang="fr">
+            <head>
+                <meta charset="utf-8"/>
+                <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <title t-out="title + ' — SELECTA'"/>
+                <meta name="description" t-att-content="title + ' de la plateforme SELECTA, éditée par ' + issuer + '.'"/>
+                <link rel="icon" href="/selecta_concours/static/description/icon.png"/>
+                <link rel="stylesheet" href="/selecta_concours/static/src/css/selecta_base.css"/>
+                <style>
+                    body{background:var(--sl-paper)}
+                    .lg-top{border-bottom:1px solid var(--sl-border);background:#fff}
+                    .lg-top div,.lg-doc,.lg-foot div{max-width:820px;margin:0 auto;padding:0 20px}
+                    .lg-top div{display:flex;align-items:center;justify-content:space-between;height:64px;gap:12px}
+                    .lg-mark{display:inline-flex;align-items:center;gap:10px;color:var(--sl-ink);text-decoration:none;font-weight:700;letter-spacing:.14em}
+                    .lg-mark span{width:30px;height:30px;border-radius:50%;background:var(--sl-ink);color:#fff;display:grid;place-items:center;letter-spacing:0;box-shadow:0 0 0 2px #fff,0 0 0 3px var(--brand)}
+                    .lg-tabs{display:flex;gap:6px;flex-wrap:wrap}
+                    .lg-tabs a{font-size:14px;text-decoration:none;color:var(--sl-ink-soft);padding:6px 10px;border-radius:6px}
+                    .lg-tabs a[aria-current]{background:var(--sl-info-bg);color:var(--sl-ink);font-weight:600}
+                    .lg-doc{padding-top:40px;padding-bottom:64px;line-height:1.7}
+                    .lg-doc h1{font-size:32px;letter-spacing:-.02em;margin-bottom:6px}
+                    .lg-doc h2{font-size:19px;margin:34px 0 8px;padding-top:14px;border-top:1px solid var(--sl-border)}
+                    .lg-doc p,.lg-doc li{color:var(--sl-ink-2);max-width:72ch}
+                    .lg-doc ul{padding-left:20px;margin:0 0 .75em}
+                    .lg-meta{color:var(--sl-muted);font-size:14px;margin-bottom:28px}
+                    .lg-foot{border-top:1px solid var(--sl-border);padding:22px 0;color:var(--sl-muted);font-size:13.5px}
+                    .lg-pre{white-space:pre-line}
+                    @media print{.lg-top,.lg-foot{display:none}}
+                </style>
+            </head>
+            <body>
+                <header class="lg-top"><div>
+                    <a class="lg-mark" href="/selecta"><span>S</span>SELECTA</a>
+                    <nav class="lg-tabs" aria-label="Documents juridiques">
+                        <a href="/selecta/conditions" t-att-aria-current="'page' if kind == 'terms' else None">Conditions d'utilisation</a>
+                        <a href="/selecta/confidentialite" t-att-aria-current="'page' if kind == 'privacy' else None">Confidentialité</a>
+                    </nav>
+                </div></header>
+                <main class="lg-doc" id="contenu">
+                    <t t-if="custom">
+                        <t t-out="custom"/>
+                        <p class="lg-meta" t-if="updated">Dernière mise à jour : <t t-out="updated"/></p>
+                    </t>
+                    <t t-elif="kind == 'terms'"><t t-call="selecta_saas.legal_terms_default"/></t>
+                    <t t-else=""><t t-call="selecta_saas.legal_privacy_default"/></t>
+                </main>
+                <footer class="lg-foot"><div>
+                    © <t t-out="year"/> <t t-out="issuer"/> · <a href="/selecta">SELECTA</a>
+                    <t t-if="support_email"> · <a t-att-href="'mailto:' + support_email" t-out="support_email"/></t>
+                </div></footer>
+            </body>
+        </html>
+    </template>
+
+    <template id="legal_terms_default" name="SELECTA — CGU par défaut">
+        <h1>Conditions générales d'utilisation</h1>
+        <p class="lg-meta">Service SELECTA, édité par <t t-out="issuer"/><t t-if="updated"> · dernière mise à jour : <t t-out="updated"/></t></p>
+
+        <h2>1. Objet</h2>
+        <p>Les présentes conditions régissent l'accès à la plateforme SELECTA (le « Service ») par les organisations qui s'y inscrivent (la « Structure ») : entreprises, écoles, associations, administrations. Le Service permet d'organiser des concours et tests de sélection en ligne : banque de questions, convocation des candidats, épreuves chronométrées, surveillance par webcam, correction automatique, analyse des résultats et procès-verbaux scellés.</p>
+        <p>L'inscription vaut acceptation des présentes conditions par la personne qui la réalise, au nom de sa Structure, qu'elle déclare représenter valablement.</p>
+
+        <h2>2. Compte et accès</h2>
+        <ul>
+            <li>La Structure dispose d'un espace qui lui est propre, cloisonné des autres organisations, et d'un compte administrateur qui peut créer les comptes de son personnel (concepteurs, jury, surveillants).</li>
+            <li>Les identifiants sont personnels. La Structure est responsable des actions réalisées avec les comptes de son personnel et informe sans délai l'éditeur de tout usage non autorisé.</li>
+            <li>Les candidats accèdent aux épreuves avec un code individuel remis par la Structure ; ils n'ont pas de compte sur la plateforme.</li>
+        </ul>
+
+        <h2>3. Essai gratuit</h2>
+        <p>Toute nouvelle Structure bénéficie d'un essai gratuit de <t t-out="trial_days"/> jours, sans moyen de paiement, avec les fonctions de la catégorie choisie et dans la limite de candidats indiquée lors de l'inscription. À son terme, sans abonnement, l'espace passe en consultation seule : les données restent consultables et exportables, mais aucun concours ne peut être créé ni ouvert.</p>
+
+        <h2>4. Abonnement, prix et paiement</h2>
+        <ul>
+            <li>L'abonnement est souscrit pour une catégorie (École / ONG, PME, Grande entreprise, Administration publique ou toute catégorie publiée) et un cycle mensuel ou annuel, aux prix en vigueur affichés sur la page « Tarifs ». Chaque catégorie comporte des limites (concours actifs simultanés, candidats inscrits par mois, comptes du personnel) et des fonctions incluses.</li>
+            <li>Le paiement s'effectue en ligne (Mobile Money, carte bancaire) ou par les moyens indiqués dans l'espace « Abonnement » (Mobile Money, virement). Un paiement hors ligne est activé après vérification par l'éditeur ; un paiement déclaré inexact peut être refusé avec indication du motif.</li>
+            <li>La période payée s'ajoute à la période en cours ou aux jours d'essai restants. Le passage à une catégorie supérieure prend effet à la validation du paiement, déduction faite de la valeur non consommée de la période en cours ; le passage à une catégorie inférieure prend effet à l'échéance.</li>
+            <li>Sauf disposition légale contraire, les sommes versées ne sont pas remboursables ; une période commencée est due.</li>
+        </ul>
+
+        <h2>5. Échéance, suspension et résiliation</h2>
+        <ul>
+            <li>À l'échéance non renouvelée, l'accès complet est maintenu pendant un délai de grâce de <t t-out="grace_days"/> jours, puis l'espace passe en consultation seule. Une épreuve déjà ouverte se termine normalement.</li>
+            <li>L'éditeur peut suspendre un espace en cas de manquement grave aux présentes conditions (fraude, usage illicite, atteinte à la sécurité du Service, impayé persistant), après information de la Structure sauf urgence.</li>
+            <li>La Structure peut cesser d'utiliser le Service à tout moment ; elle peut demander l'export puis la suppression de ses données au support.</li>
+        </ul>
+
+        <h2>6. Obligations de la Structure</h2>
+        <ul>
+            <li>Utiliser le Service conformément aux lois applicables, notamment en matière de recrutement, d'examens, de non-discrimination et de protection des données personnelles.</li>
+            <li>Informer les candidats, avant l'épreuve, de la surveillance par webcam, du contrôle d'identité, des données collectées et de leurs droits, et recueillir les accords requis.</li>
+            <li>Ne pas importer de contenu illicite ni porter atteinte aux droits de tiers ; la Structure reste propriétaire de ses questionnaires et seule responsable de leur contenu et des décisions prises sur la base des résultats.</li>
+        </ul>
+
+        <h2>7. Engagements de l'éditeur</h2>
+        <ul>
+            <li>Mettre en œuvre des moyens raisonnables pour assurer la disponibilité, la sécurité et l'intégrité du Service : cloisonnement des données par Structure, codes d'accès non stockés en clair, journal d'audit chaîné, procès-verbaux scellés et vérifiables, sauvegardes.</li>
+            <li>Des interruptions peuvent intervenir pour maintenance ; l'éditeur s'efforce de les planifier en dehors des épreuves annoncées.</li>
+            <li>La surveillance automatisée réduit fortement la fraude sans la supprimer totalement ; ses alertes sont des aides à la décision. L'éditeur n'est pas responsable des décisions prises par la Structure.</li>
+        </ul>
+
+        <h2>8. Responsabilité</h2>
+        <p>La responsabilité de l'éditeur, toutes causes confondues, est limitée au montant payé par la Structure au titre des douze derniers mois. L'éditeur n'est pas responsable des dommages indirects, ni des défaillances des réseaux, des équipements des candidats ou des prestataires de paiement.</p>
+
+        <h2>9. Données personnelles</h2>
+        <p>Le traitement des données est décrit dans la <a href="/selecta/confidentialite">politique de confidentialité</a>, qui fait partie des présentes conditions.</p>
+
+        <h2>10. Évolution des conditions et droit applicable</h2>
+        <p>L'éditeur peut faire évoluer les présentes conditions ; la version en vigueur est publiée sur cette page avec sa date. Les modifications substantielles sont notifiées aux Structures. Les présentes conditions sont soumises au droit du pays d'établissement de l'éditeur ; à défaut d'accord amiable, les tribunaux compétents de ce ressort sont seuls compétents.</p>
+
+        <h2>11. Contact</h2>
+        <p class="lg-pre"><strong t-out="issuer"/><t t-if="issuer_details"><br/><t t-out="issuer_details"/></t><t t-if="support_email"><br/><t t-out="support_email"/></t><t t-if="support_phone"><br/><t t-out="support_phone"/></t></p>
+    </template>
+
+    <template id="legal_privacy_default" name="SELECTA — confidentialité par défaut">
+        <h1>Politique de confidentialité</h1>
+        <p class="lg-meta">Service SELECTA, édité par <t t-out="issuer"/><t t-if="updated"> · dernière mise à jour : <t t-out="updated"/></t></p>
+
+        <h2>1. Qui est responsable de quoi</h2>
+        <ul>
+            <li><strong>Données des Structures</strong> (comptes du personnel, coordonnées, facturation) : l'éditeur, <t t-out="issuer"/>, est responsable du traitement.</li>
+            <li><strong>Données des candidats</strong> (identité, réponses, résultats, données de surveillance) : la Structure qui organise le concours est responsable du traitement ; l'éditeur agit pour son compte, comme sous-traitant, uniquement sur ses instructions et pour fournir le Service.</li>
+        </ul>
+
+        <h2>2. Données traitées</h2>
+        <ul>
+            <li><strong>Structures</strong> : nom de l'organisation, nom, e-mail et téléphone des utilisateurs, journaux de connexion, factures et références de paiement (aucune donnée de carte bancaire n'est stockée : elles sont traitées directement par le prestataire de paiement).</li>
+            <li><strong>Candidats</strong> : nom, numéro d'inscription, coordonnées et pièce d'identité fournies par la Structure ; réponses, durée, score et décision ; adresse IP et navigateur du poste ; événements de surveillance.</li>
+            <li><strong>Données biométriques des candidats</strong> : lorsque la Structure active le contrôle d'identité, une photo est prise au début de l'épreuve et un gabarit facial (suite de nombres décrivant le visage) en est calculé sur le poste du candidat. Le flux vidéo de la webcam est analysé localement, sur le poste : <strong>il n'est jamais transmis ni enregistré</strong>. Seuls sont conservés la photo de contrôle, le gabarit et, en cas d'incident (absence, personne supplémentaire, regard détourné…), un cliché horodaté servant de preuve.</li>
+        </ul>
+
+        <h2>3. Finalités et bases légales</h2>
+        <ul>
+            <li>Fournir le Service, sécuriser les comptes, facturer : exécution du contrat avec la Structure.</li>
+            <li>Garantir l'équité et l'intégrité des épreuves (identité du candidat, prévention de la fraude), produire des résultats vérifiables : intérêt légitime ou obligation de la Structure organisatrice, qui informe les candidats et recueille, lorsque la loi l'exige, leur consentement explicite au traitement biométrique.</li>
+            <li>Informer les Structures (rappels d'échéance, factures, alertes de sécurité) : exécution du contrat.</li>
+        </ul>
+
+        <h2>4. Durées de conservation</h2>
+        <ul>
+            <li>Photos de contrôle, gabarits faciaux et clichés d'incident : effacés automatiquement <strong><t t-if="retention_days"><t t-out="retention_days"/> jours</t><t t-else="">à la demande de la Structure</t></strong> après la clôture du concours. Les résultats, procès-verbaux et motifs d'incident sont conservés.</li>
+            <li>Résultats et procès-verbaux : pendant toute la durée de l'abonnement de la Structure, puis supprimés à sa demande ou à la fermeture de son espace, sous réserve des obligations légales d'archivage de la Structure.</li>
+            <li>Factures : durée légale de conservation des pièces comptables.</li>
+        </ul>
+
+        <h2>5. Destinataires</h2>
+        <p>Les données d'une Structure ne sont accessibles qu'à son personnel, selon son rôle (les surveillants ne voient jamais les questions ni les corrigés), et aux personnes de l'éditeur habilitées pour le support et l'exploitation. Elles ne sont ni vendues ni utilisées à des fins publicitaires. Prestataires : hébergement, envoi de courriels et prestataires de paiement (pour les seules transactions). Si l'assistant de rédaction (LLM) est activé, seules des statistiques anonymisées lui sont transmises.</p>
+
+        <h2>6. Sécurité</h2>
+        <p>Cloisonnement des données par Structure, connexions chiffrées (HTTPS), codes candidats non stockés en clair, limitation des tentatives de connexion, journal d'audit chaîné dont toute altération est détectable, sauvegardes régulières.</p>
+
+        <h2>7. Vos droits</h2>
+        <p>Toute personne dispose, dans les conditions prévues par la réglementation applicable, d'un droit d'accès, de rectification, d'effacement, de limitation et d'opposition. <strong>Candidats</strong> : adressez votre demande à la Structure qui organise le concours ; l'éditeur l'assiste pour y répondre. <strong>Utilisateurs des Structures</strong> : contactez le support<t t-if="support_email"> (<a t-att-href="'mailto:' + support_email" t-out="support_email"/>)</t>. Vous pouvez également saisir l'autorité de protection des données compétente.</p>
+
+        <h2>8. Cookies</h2>
+        <p>Le Service n'utilise qu'un cookie de session, strictement nécessaire à la connexion. Aucun cookie publicitaire ni de mesure d'audience tierce n'est déposé.</p>
+
+        <h2>9. Contact</h2>
+        <p class="lg-pre"><strong t-out="issuer"/><t t-if="issuer_details"><br/><t t-out="issuer_details"/></t><t t-if="support_email"><br/><t t-out="support_email"/></t><t t-if="support_phone"><br/><t t-out="support_phone"/></t></p>
+    </template>
+</odoo>

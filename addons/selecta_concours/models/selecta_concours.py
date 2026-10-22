@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import hashlib
 import json
+from datetime import timedelta
 
 from odoo import api, fields, models, _
 from odoo.exceptions import AccessError, UserError, ValidationError
@@ -14,7 +15,7 @@ G_PROCTOR = 'selecta_concours.group_selecta_surveillant'
 # ``readonly`` aux appels RPC, d'où ce verrou explicite.
 ENGINE_FIELDS = {
     'state', 'reference', 'company_id', 'opened_date', 'closed_date', 'published_date', 'published_by',
-    'results_hash', 'analysis_json', 'analysis_date',
+    'results_hash', 'analysis_json', 'analysis_date', 'biometrics_purged_date',
 }
 FROZEN_FIELDS = {
     'duration_minutes', 'questions_per_page', 'question_ids', 'nb_questions_drawn', 'shuffle_questions',
@@ -104,6 +105,8 @@ class SelectaConcours(models.Model):
     results_hash = fields.Char(readonly=True, copy=False, index=True)
     analysis_json = fields.Text(readonly=True, copy=False)
     analysis_date = fields.Datetime(readonly=True, copy=False)
+    biometrics_purged_date = fields.Datetime(readonly=True, copy=False,
+                                             string="Données biométriques effacées le")
 
     _sql_constraints = [
         ('duration_pos', 'CHECK(duration_minutes > 0)', "La durée doit être positive."),
@@ -304,6 +307,36 @@ class SelectaConcours(models.Model):
                 c.action_ready()
             if c.state == 'ready':
                 c.action_open()
+
+    # ------------------------------------------------------------------ conservation des données
+    @api.model
+    def _cron_purge_biometrics(self):
+        """Efface photos d'identité, gabarits faciaux et clichés probatoires des concours clôturés
+        depuis plus de ``selecta.biometric_retention_days`` jours (0 = conservation illimitée).
+        Les résultats, procès-verbaux, journaux et motifs d'incident sont conservés."""
+        try:
+            days = int(self.env['ir.config_parameter'].sudo().get_param('selecta.biometric_retention_days', 180))
+        except ValueError:
+            days = 180
+        if days <= 0:
+            return
+        limit = fields.Datetime.now() - timedelta(days=days)
+        for c in self.sudo().search([('state', 'in', ('closed', 'published')), ('closed_date', '<', limit),
+                                     ('biometrics_purged_date', '=', False)], limit=50):
+            c._purge_biometrics()
+
+    def _purge_biometrics(self):
+        self.ensure_one()
+        engine = {'selecta_engine': True}
+        cands = self.env['selecta.candidate'].sudo().search([('concours_id', '=', self.id)])
+        cands.filtered('photo_reference').write({'photo_reference': False})
+        attempts = self.env['selecta.attempt'].sudo().search([('concours_id', '=', self.id)])
+        attempts.filtered('identity_descriptor').with_context(**engine).write({'identity_descriptor': False})
+        events = self.env['selecta.proctor.event'].sudo().search([('concours_id', '=', self.id)])
+        events.filtered('snapshot').with_context(**engine).write({'snapshot': False})
+        self._engine().write({'biometrics_purged_date': fields.Datetime.now()})
+        self.env['selecta.audit.log']._log('privacy.purge', _("Effacement des données biométriques (durée de conservation échue)"),
+                                           {'photos': len(cands), 'snapshots': len(events)}, concours=self)
 
     @api.model
     def _cron_housekeeping(self):
