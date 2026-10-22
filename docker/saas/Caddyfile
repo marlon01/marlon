@@ -1,0 +1,17 @@
+{
+	email {$SELECTA_ADMIN_EMAIL}
+}
+
+{$SELECTA_DOMAIN} {
+	encode gzip
+	# Le gestionnaire de bases de données d'Odoo n'est jamais exposé sur Internet.
+	@dbmanager path /web/database/*
+	respond @dbmanager 404
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		-Server
+	}
+	# Caddy transmet l'adresse réelle du client (X-Forwarded-For) ; Odoo la lit grâce à proxy_mode.
+	reverse_proxy odoo:8069
+}

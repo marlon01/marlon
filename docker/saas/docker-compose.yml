@@ -1,0 +1,57 @@
+# SELECTA SaaS — hébergement Internet (plateforme multi-structures, HTTPS automatique)
+#
+#   1. Pointez le DNS de votre domaine (ex. app.selecta.africa) vers ce serveur.
+#   2. cp .env.example .env  puis renseignez SELECTA_DOMAIN, SELECTA_DB_PASSWORD et SELECTA_ADMIN_EMAIL.
+#   3. Changez admin_passwd dans odoo-saas.conf (mot de passe maître).
+#   4. docker compose up -d
+#   5. Une seule fois :
+#        docker compose run --rm odoo odoo -d selecta -i selecta_saas --without-demo=all --stop-after-init
+#   6. https://<domaine>/selecta/login avec admin / admin : changez immédiatement ce mot de passe,
+#      puis ouvrez l'administration centrale : https://<domaine>/selecta/platform
+#
+# Pages publiques : https://<domaine>/selecta (présentation et tarifs), /selecta/signup (inscription).
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: ${SELECTA_DB_PASSWORD:?Renseignez SELECTA_DB_PASSWORD dans .env}
+    volumes:
+      - selecta-db:/var/lib/postgresql/data
+
+  odoo:
+    image: odoo:18
+    restart: unless-stopped
+    depends_on: [db]
+    # Aucun port publié : seul le proxy HTTPS est exposé à Internet.
+    environment:
+      HOST: db
+      USER: odoo
+      PASSWORD: ${SELECTA_DB_PASSWORD}
+    volumes:
+      - ../../addons:/mnt/extra-addons:ro
+      - ./odoo-saas.conf:/etc/odoo/odoo.conf:ro
+      - selecta-data:/var/lib/odoo
+
+  proxy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on: [odoo]
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SELECTA_DOMAIN: ${SELECTA_DOMAIN:?Renseignez SELECTA_DOMAIN dans .env}
+      SELECTA_ADMIN_EMAIL: ${SELECTA_ADMIN_EMAIL:-}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  selecta-db:
+  selecta-data:
+  caddy-data:
+  caddy-config:
