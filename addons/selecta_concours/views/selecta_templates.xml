@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Gabarit HTML minimal commun : aucune dépendance au client web Odoo ni à Internet. -->
+    <template id="selecta_layout" name="SELECTA layout">
+        <html lang="fr" t-att-data-app="app">
+            <head>
+                <meta charset="utf-8"/>
+                <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+                <meta name="theme-color" t-att-content="brand_color or '#0B5FFF'"/>
+                <meta name="robots" content="noindex, nofollow"/>
+                <meta name="referrer" content="no-referrer"/>
+                <title t-out="title or 'SELECTA'"/>
+                <link rel="icon" href="/selecta_concours/static/description/icon.png"/>
+                <t t-if="app == 'exam'">
+                    <link rel="manifest" href="/selecta/manifest.webmanifest"/>
+                    <link rel="apple-touch-icon" href="/selecta_concours/static/description/icon.png"/>
+                </t>
+                <style t-out="'html{--brand:%s}' % (brand_color or '#0B5FFF')"/>
+                <t t-if="app == 'exam'"><t t-call-assets="selecta_concours.assets_exam" t-js="false"/></t><t t-if="app == 'admin'"><t t-call-assets="selecta_concours.assets_admin" t-js="false"/></t><t t-if="app == 'login'"><t t-call-assets="selecta_concours.assets_login" t-js="false"/></t>
+                <script type="application/json" id="selecta-config" t-out="config_json"/>
+                <t t-if="app == 'exam'"><t t-call-assets="selecta_concours.assets_exam" t-css="false"/></t><t t-if="app == 'admin'"><t t-call-assets="selecta_concours.assets_admin" t-css="false"/></t><t t-if="app == 'login'"><t t-call-assets="selecta_concours.assets_login" t-css="false"/></t>
+            </head>
+            <body t-att-class="'sl-app sl-app-%s' % app">
+                <div id="selecta-root">
+                    <div class="sl-boot">
+                        <div class="sl-boot-logo">S</div>
+                        <div class="sl-boot-text">Chargement sécurisé…</div>
+                        <noscript>JavaScript est requis pour utiliser SELECTA.</noscript>
+                    </div>
+                </div>
+            </body>
+        </html>
+    </template>
+
+    <template id="selecta_verify" name="SELECTA vérification">
+        <html lang="fr">
+            <head>
+                <meta charset="utf-8"/>
+                <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <title>Vérification d'authenticité — SELECTA</title>
+                <link rel="stylesheet" href="/selecta_concours/static/src/css/selecta_base.css"/>
+                <style>
+                    body{background:var(--sl-bg);display:flex;min-height:100vh;align-items:center;justify-content:center;padding:24px}
+                    .v-card{max-width:720px;width:100%;background:var(--sl-surface);border-radius:20px;box-shadow:var(--sl-shadow-lg);overflow:hidden}
+                    .v-head{padding:28px 32px;color:#fff}
+                    .v-ok{background:linear-gradient(135deg,#047857,#10B981)}
+                    .v-ko{background:linear-gradient(135deg,#991B1B,#EF4444)}
+                    .v-body{padding:28px 32px}
+                    .v-body table{width:100%;border-collapse:collapse;margin-top:16px}
+                    .v-body td,.v-body th{padding:8px 10px;border-bottom:1px solid var(--sl-border);text-align:left;font-size:14px}
+                    .v-hash{font-family:var(--sl-mono);font-size:12px;word-break:break-all;background:var(--sl-bg);padding:10px;border-radius:8px}
+                </style>
+            </head>
+            <body>
+                <div class="v-card">
+                    <t t-if="concours">
+                        <div class="v-head v-ok">
+                            <div style="font-size:13px;opacity:.85;letter-spacing:.08em;text-transform:uppercase">Document authentique</div>
+                            <h1 style="margin:6px 0 0;font-size:26px" t-out="concours.name"/>
+                            <div style="opacity:.9;margin-top:4px"><t t-out="concours.company_id.name"/> · <t t-out="concours.reference"/></div>
+                        </div>
+                        <div class="v-body">
+                            <p>Ce procès-verbal a été scellé par SELECTA le
+                                <strong t-out="concours.published_date" t-options="{'widget': 'datetime'}"/>.
+                                La liste ci-dessous est celle enregistrée au moment de la publication ; toute version divergente est un faux.</p>
+                            <div class="v-hash">SHA-256 : <t t-out="concours.results_hash"/></div>
+                            <table>
+                                <thead><tr><th>Rang</th><th>N° d'inscription</th><th>Nom</th><th>Résultat</th></tr></thead>
+                                <tbody>
+                                    <tr t-foreach="rows" t-as="r">
+                                        <td t-out="r['rank']"/><td t-out="r['reference']"/><td t-out="r['name']"/>
+                                        <td><t t-out="'%.2f' % r['percentage']"/> %</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </t>
+                    <t t-else="">
+                        <div class="v-head v-ko">
+                            <div style="font-size:13px;opacity:.85;letter-spacing:.08em;text-transform:uppercase">Vérification échouée</div>
+                            <h1 style="margin:6px 0 0;font-size:26px">Aucun procès-verbal ne correspond à cette empreinte</h1>
+                        </div>
+                        <div class="v-body"><p>Le document présenté n'a pas été émis par SELECTA ou a été altéré.</p></div>
+                    </t>
+                </div>
+            </body>
+        </html>
+    </template>
+</odoo>

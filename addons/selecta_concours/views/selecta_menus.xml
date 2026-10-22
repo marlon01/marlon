@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Point d'entrée depuis le client Odoo standard : aucune vue native, on ouvre l'application OWL autonome. -->
+    <record id="action_selecta_open_app" model="ir.actions.act_url">
+        <field name="name">SELECTA — Console des concours</field>
+        <field name="url">/selecta/admin</field>
+        <field name="target">self</field>
+    </record>
+
+    <menuitem id="menu_selecta_root"
+              name="SELECTA Concours"
+              action="action_selecta_open_app"
+              web_icon="selecta_concours,static/description/icon.png"
+              groups="group_selecta_surveillant,group_selecta_concepteur"
+              sequence="5"/>
+</odoo>

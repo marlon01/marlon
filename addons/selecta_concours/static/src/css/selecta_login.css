@@ -1,0 +1,20 @@
+/* SELECTA — connexion du personnel */
+.sl-app-login { background: var(--sl-bg); }
+.lg-wrap { min-height: 100vh; display: grid; grid-template-columns: minmax(360px, 520px) 1fr; }
+.lg-card { background: #fff; padding: 56px 52px; display: flex; flex-direction: column; gap: 18px; justify-content: center; box-shadow: var(--sl-shadow); z-index: 1; }
+.lg-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.lg-brand img { width: 46px; height: 46px; object-fit: contain; }
+.lg-org { font-weight: 650; }
+.lg-card h1 { font-size: 28px; letter-spacing: -.02em; }
+.lg-pass { position: relative; }
+.lg-pass .sl-btn { position: absolute; right: 2px; top: 2px; }
+.lg-foot { font-size: 13px; margin: 6px 0 0; }
+.lg-cand { display: inline-flex; gap: 8px; align-items: center; font-size: 14px; text-decoration: none; }
+.lg-side {
+  background: var(--sl-ink); color: #C9D3EA; display: grid; place-content: center; justify-items: center; gap: 22px; text-align: center; padding: 40px;
+  background-image: radial-gradient(circle at 50% 46%, transparent 0 150px, rgba(255,255,255,.035) 151px 152px, transparent 153px 210px, rgba(255,255,255,.03) 211px 212px, transparent 213px);
+}
+.lg-seal { width: 150px; height: 150px; border-radius: 50%; border: 2px dashed rgba(255,255,255,.25); display: grid; place-items: center; color: color-mix(in srgb, var(--brand) 60%, #fff); }
+.lg-side p { max-width: 30ch; font-size: 22px; color: #fff; font-weight: 600; margin: 0; }
+.lg-side .lg-side-small { font-size: 15px; font-weight: 400; color: #C9D3EA; }
+@media (max-width: 860px) { .lg-wrap { grid-template-columns: 1fr; } .lg-side { display: none; } .lg-card { padding: 36px 24px; } }

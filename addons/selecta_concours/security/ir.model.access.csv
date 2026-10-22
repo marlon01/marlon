@@ -1,0 +1,19 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_concours_surveillant,concours surveillant,model_selecta_concours,group_selecta_surveillant,1,0,0,0
+access_concours_concepteur,concours concepteur,model_selecta_concours,group_selecta_concepteur,1,1,0,0
+access_concours_jury,concours jury,model_selecta_concours,group_selecta_jury,1,0,0,0
+access_concours_admin,concours admin,model_selecta_concours,group_selecta_admin,1,1,1,1
+access_category_concepteur,category concepteur,model_selecta_question_category,group_selecta_concepteur,1,1,1,1
+access_category_jury,category jury,model_selecta_question_category,group_selecta_jury,1,0,0,0
+access_question_concepteur,question concepteur,model_selecta_question,group_selecta_concepteur,1,1,1,1
+access_question_jury,question jury,model_selecta_question,group_selecta_jury,1,0,0,0
+access_choice_concepteur,choice concepteur,model_selecta_choice,group_selecta_concepteur,1,1,1,1
+access_choice_jury,choice jury,model_selecta_choice,group_selecta_jury,1,0,0,0
+access_candidate_surveillant,candidate surveillant,model_selecta_candidate,group_selecta_surveillant,1,0,0,0
+access_candidate_concepteur,candidate concepteur,model_selecta_candidate,group_selecta_concepteur,1,0,0,0
+access_candidate_admin,candidate admin,model_selecta_candidate,group_selecta_admin,1,1,1,1
+access_attempt_surveillant,attempt surveillant,model_selecta_attempt,group_selecta_surveillant,1,0,0,0
+access_answer_jury,answer jury,model_selecta_attempt_answer,group_selecta_jury,1,0,0,0
+access_event_surveillant,event surveillant,model_selecta_proctor_event,group_selecta_surveillant,1,0,0,0
+access_audit_jury,audit jury,model_selecta_audit_log,group_selecta_jury,1,0,0,0
+access_throttle_system,throttle system,model_selecta_login_throttle,base.group_system,1,0,0,0

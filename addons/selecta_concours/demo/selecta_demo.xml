@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="cat_logic" model="selecta.question.category"><field name="name">Raisonnement logique</field><field name="color">#7C3AED</field></record>
+    <record id="cat_fr" model="selecta.question.category"><field name="name">Français</field><field name="color">#0EA5E9</field></record>
+    <record id="cat_cg" model="selecta.question.category"><field name="name">Culture générale</field><field name="color">#F59E0B</field></record>
+    <record id="cat_it" model="selecta.question.category"><field name="name">Informatique</field><field name="color">#10B981</field></record>
+    <record id="cat_math" model="selecta.question.category"><field name="name">Mathématiques</field><field name="color">#EF4444</field></record>
+    <record id="q1" model="selecta.question">
+        <field name="name">Quel nombre complète la suite : 2, 6, 12, 20, 30, … ?</field><field name="qtype">single</field><field name="category_id" ref="cat_logic"/>
+        <field name="choice_ids" eval="[(0, 0, {'name': '40', 'is_correct': False, 'sequence': 0}), (0, 0, {'name': '42', 'is_correct': True, 'sequence': 1}), (0, 0, {'name': '44', 'is_correct': False, 'sequence': 2}), (0, 0, {'name': '36', 'is_correct': False, 'sequence': 3})]"/>
+    </record>
+    <record id="q2" model="selecta.question">
+        <field name="name">Si tous les agents sont ponctuels et que Paul est un agent, alors :</field><field name="qtype">single</field><field name="category_id" ref="cat_logic"/>
+        <field name="choice_ids" eval="[(0, 0, {'name': 'Paul est ponctuel', 'is_correct': True, 'sequence': 0}), (0, 0, {'name': &quot;Paul n'est pas ponctuel&quot;, 'is_correct': False, 'sequence': 1}), (0, 0, {'name': 'On ne peut rien conclure', 'is_correct': False, 'sequence': 2}), (0, 0, {'name': 'Paul est retardataire', 'is_correct': False, 'sequence': 3})]"/>
+    </record>
+    <record id="q3" model="selecta.question">
+        <field name="name">Un train part à 9 h 40 et arrive à 13 h 15. Quelle est la durée du trajet ?</field><field name="qtype">single</field><field name="category_id" ref="cat_logic"/>
+        <field name="choice_ids" eval="[(0, 0, {'name': '3 h 25', 'is_correct': False, 'sequence': 0}), (0, 0, {'name': '3 h 35', 'is_correct': True, 'sequence': 1}), (0, 0, {'name': '3 h 45', 'is_correct': False, 'sequence': 2}), (0, 0, {'name': '4 h 35', 'is_correct': False, 'sequence': 3})]"/>
+    </record>
+    <record id="q4" model="selecta.question">
+        <field name="name">Parmi ces nombres, lesquels sont premiers ?</field><field name="qtype">multiple</field><field name="category_id" ref="cat_logic"/>
+        <field name="choice_ids" eval="[(0, 0, {'name': '17', 'is_correct': True, 'sequence': 0}), (0, 0, {'name': '21', 'is_correct': False, 'sequence': 1}), (0, 0, {'name': '29', 'is_correct': True, 'sequence': 2}), (0, 0, {'name': '39', 'is_correct': False, 'sequence': 3})]"/>
+    </record>
+    <record id="q5" model="selecta.question">
+        <field name="name">Quelle phrase est correctement orthographiée ?</field><field name="qtype">single</field><field name="category_id" ref="cat_fr"/>
+        <field name="choice_ids" eval="[(0, 0, {'name': &quot;Les dossiers qu'il a envoyé&quot;, 'is_correct': False, 'sequence': 0}), (0, 0, {'name': &quot;Les dossiers qu'il a envoyés&quot;, 'is_correct': True, 'sequence': 1}), (0, 0, {'name': &quot;Les dossiers qu'il à envoyés&quot;, 'is_correct': False, 'sequence': 2}), (0, 0, {'name': &quot;Les dossier qu'il a envoyés&quot;, 'is_correct': False, 'sequence': 3})]"/>
+    </record>
+    <record id="q6" model="selecta.question">
+        <field name="name">Le synonyme de « pérenne » est :</field><field name="qtype">single</field><field name="category_id" ref="cat_fr"/>
+        <field name="choice_ids" eval="[(0, 0, {'name': 'Éphémère', 'is_correct': False, 'sequence': 0}), (0, 0, {'name': 'Durable', 'is_correct': True, 'sequence': 1}), (0, 0, {'name': 'Fragile', 'is_correct': False, 'sequence': 2}), (0, 0, {'name': 'Rapide', 'is_correct': False, 'sequence': 3})]"/>
+    </record>
+    <record id="q7" model="selecta.question">
+        <field name="name">Dans « Il faut que vous ___ à l'heure », le verbe correct est :</field><field name="qtype">single</field><field name="category_id" ref="cat_fr"/>
+        <field name="choice_ids" eval="[(0, 0, {'name': 'êtes', 'is_correct': False, 'sequence': 0}), (0, 0, {'name': 'serez', 'is_correct': False, 'sequence': 1}), (0, 0, {'name': 'soyez', 'is_correct': True, 'sequence': 2}), (0, 0, {'name': 'seriez', 'is_correct': False, 'sequence': 3})]"/>
+    </record>
+    <record id="q8" model="selecta.question">
+        <field name="name">Quelle organisation regroupe 55 États du continent africain ?</field><field name="qtype">single</field><field name="category_id" ref="cat_cg"/>
+        <field name="choice_ids" eval="[(0, 0, {'name': 'La CEDEAO', 'is_correct': False, 'sequence': 0}), (0, 0, {'name': &quot;L'Union africaine&quot;, 'is_correct': True, 'sequence': 1}), (0, 0, {'name': 'La SADC', 'is_correct': False, 'sequence': 2}), (0, 0, {'name': 'La CEEAC', 'is_correct': False, 'sequence': 3})]"/>
+    </record>
+    <record id="q9" model="selecta.question">
+        <field name="name">Quel est le plus long fleuve d'Afrique ?</field><field name="qtype">single</field><field name="category_id" ref="cat_cg"/>
+        <field name="choice_ids" eval="[(0, 0, {'name': 'Le Congo', 'is_correct': False, 'sequence': 0}), (0, 0, {'name': 'Le Niger', 'is_correct': False, 'sequence': 1}), (0, 0, {'name': 'Le Nil', 'is_correct': True, 'sequence': 2}), (0, 0, {'name': 'Le Zambèze', 'is_correct': False, 'sequence': 3})]"/>
+    </record>
+    <record id="q10" model="selecta.question">
+        <field name="name">Lesquels de ces pays ont le français comme langue officielle ?</field><field name="qtype">multiple</field><field name="category_id" ref="cat_cg"/>
+        <field name="choice_ids" eval="[(0, 0, {'name': 'Sénégal', 'is_correct': True, 'sequence': 0}), (0, 0, {'name': 'Ghana', 'is_correct': False, 'sequence': 1}), (0, 0, {'name': &quot;Côte d'Ivoire&quot;, 'is_correct': True, 'sequence': 2}), (0, 0, {'name': 'RD Congo', 'is_correct': True, 'sequence': 3})]"/>
+    </record>
+    <record id="q11" model="selecta.question">
+        <field name="name">Que signifie l'acronyme « PDF » ?</field><field name="qtype">single</field><field name="category_id" ref="cat_it"/>
+        <field name="choice_ids" eval="[(0, 0, {'name': 'Portable Document Format', 'is_correct': True, 'sequence': 0}), (0, 0, {'name': 'Printed Data File', 'is_correct': False, 'sequence': 1}), (0, 0, {'name': 'Public Document Folder', 'is_correct': False, 'sequence': 2}), (0, 0, {'name': 'Personal Digital Form', 'is_correct': False, 'sequence': 3})]"/>
+    </record>
+    <record id="q12" model="selecta.question">
+        <field name="name">Quel raccourci permet généralement d'annuler la dernière action ?</field><field name="qtype">single</field><field name="category_id" ref="cat_it"/>
+        <field name="choice_ids" eval="[(0, 0, {'name': 'Ctrl + Y', 'is_correct': False, 'sequence': 0}), (0, 0, {'name': 'Ctrl + Z', 'is_correct': True, 'sequence': 1}), (0, 0, {'name': 'Ctrl + S', 'is_correct': False, 'sequence': 2}), (0, 0, {'name': 'Ctrl + P', 'is_correct': False, 'sequence': 3})]"/>
+    </record>
+    <record id="q13" model="selecta.question">
+        <field name="name">Quelles pratiques renforcent la sécurité d'un compte ?</field><field name="qtype">multiple</field><field name="category_id" ref="cat_it"/>
+        <field name="choice_ids" eval="[(0, 0, {'name': 'Mot de passe long et unique', 'is_correct': True, 'sequence': 0}), (0, 0, {'name': 'Authentification à deux facteurs', 'is_correct': True, 'sequence': 1}), (0, 0, {'name': 'Partager son mot de passe avec un collègue', 'is_correct': False, 'sequence': 2}), (0, 0, {'name': &quot;Noter le mot de passe sur l'écran&quot;, 'is_correct': False, 'sequence': 3})]"/>
+    </record>
+    <record id="q14" model="selecta.question">
+        <field name="name">Un article coûte 80 000 FC. Après une remise de 15 %, son prix est :</field><field name="qtype">single</field><field name="category_id" ref="cat_math"/>
+        <field name="choice_ids" eval="[(0, 0, {'name': '65 000 FC', 'is_correct': False, 'sequence': 0}), (0, 0, {'name': '68 000 FC', 'is_correct': True, 'sequence': 1}), (0, 0, {'name': '70 000 FC', 'is_correct': False, 'sequence': 2}), (0, 0, {'name': '72 000 FC', 'is_correct': False, 'sequence': 3})]"/>
+    </record>
+    <record id="q15" model="selecta.question">
+        <field name="name">Quelle est la moyenne de 12, 15 et 18 ?</field><field name="qtype">single</field><field name="category_id" ref="cat_math"/>
+        <field name="choice_ids" eval="[(0, 0, {'name': '14', 'is_correct': False, 'sequence': 0}), (0, 0, {'name': '15', 'is_correct': True, 'sequence': 1}), (0, 0, {'name': '16', 'is_correct': False, 'sequence': 2}), (0, 0, {'name': '45', 'is_correct': False, 'sequence': 3})]"/>
+    </record>
+    <record id="q16" model="selecta.question">
+        <field name="name">Combien font 3/4 de 240 ?</field><field name="qtype">single</field><field name="category_id" ref="cat_math"/>
+        <field name="choice_ids" eval="[(0, 0, {'name': '160', 'is_correct': False, 'sequence': 0}), (0, 0, {'name': '180', 'is_correct': True, 'sequence': 1}), (0, 0, {'name': '200', 'is_correct': False, 'sequence': 2}), (0, 0, {'name': '60', 'is_correct': False, 'sequence': 3})]"/>
+    </record>
+    <record id="demo_concours" model="selecta.concours">
+        <field name="name">Recrutement — Agents administratifs 2026 (démonstration)</field>
+        <field name="description">Concours de démonstration livré avec SELECTA.</field>
+        <field name="duration_minutes">20</field>
+        <field name="questions_per_page">4</field>
+        <field name="pass_threshold">50</field>
+        <field name="places">3</field>
+        <field name="question_ids" eval="[(6, 0, [ref('q1'), ref('q2'), ref('q3'), ref('q4'), ref('q5'), ref('q6'), ref('q7'), ref('q8'), ref('q9'), ref('q10'), ref('q11'), ref('q12'), ref('q13'), ref('q14'), ref('q15'), ref('q16')])]"/>
+    </record>
+    <record id="demo_cand_1" model="selecta.candidate"><field name="concours_id" ref="demo_concours"/><field name="name">Amani Kabila Mbuyi</field><field name="reference">DEMO-001</field><field name="room">Salle A</field></record>
+    <record id="demo_cand_2" model="selecta.candidate"><field name="concours_id" ref="demo_concours"/><field name="name">Grâce Ilunga Tshibanda</field><field name="reference">DEMO-002</field><field name="room">Salle A</field></record>
+    <record id="demo_cand_3" model="selecta.candidate"><field name="concours_id" ref="demo_concours"/><field name="name">Josué Mukendi Ngoy</field><field name="reference">DEMO-003</field><field name="room">Salle B</field></record>
+    <record id="demo_cand_4" model="selecta.candidate"><field name="concours_id" ref="demo_concours"/><field name="name">Sarah Lukusa Kalala</field><field name="reference">DEMO-004</field><field name="room">Salle B</field></record>
+    <record id="demo_cand_5" model="selecta.candidate"><field name="concours_id" ref="demo_concours"/><field name="name">Daniel Kasongo Mwamba</field><field name="reference">DEMO-005</field><field name="room">Salle A</field></record>
+    <function model="selecta.candidate" name="_demo_set_codes" eval="[[]]"/>
+    <function model="selecta.concours" name="_demo_open" eval="[[ref('demo_concours')]]"/>
+</odoo>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="module_category_selecta" model="ir.module.category">
+        <field name="name">SELECTA Concours</field>
+        <field name="description">Rôles de la plateforme de concours sécurisés</field>
+        <field name="sequence">40</field>
+    </record>
+
+    <record id="group_selecta_surveillant" model="res.groups">
+        <field name="name">Surveillant de salle</field>
+        <field name="category_id" ref="module_category_selecta"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">Supervision en direct, autorisation de reprise, disqualification motivée. N'a jamais accès aux questions ni aux corrigés.</field>
+    </record>
+
+    <record id="group_selecta_concepteur" model="res.groups">
+        <field name="name">Concepteur de questionnaires</field>
+        <field name="category_id" ref="module_category_selecta"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">Gestion de la banque de questions et du paramétrage pédagogique des concours.</field>
+    </record>
+
+    <record id="group_selecta_jury" model="res.groups">
+        <field name="name">Jury / délibération</field>
+        <field name="category_id" ref="module_category_selecta"/>
+        <field name="implied_ids" eval="[(4, ref('group_selecta_surveillant'))]"/>
+        <field name="comment">Résultats, analyse IA, clôture et publication officielle.</field>
+    </record>
+
+    <record id="group_selecta_admin" model="res.groups">
+        <field name="name">Administrateur concours</field>
+        <field name="category_id" ref="module_category_selecta"/>
+        <field name="implied_ids" eval="[(4, ref('group_selecta_jury')), (4, ref('group_selecta_concepteur'))]"/>
+        <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
+        <field name="comment">Contrôle total : concours, candidats, codes d'accès, personnel, paramètres.</field>
+    </record>
+
+    <!-- Cloisonnement multi-structures -->
+    <record id="rule_concours_company" model="ir.rule">
+        <field name="name">SELECTA : concours par structure</field>
+        <field name="model_id" ref="model_selecta_concours"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_question_company" model="ir.rule">
+        <field name="name">SELECTA : questions par structure</field>
+        <field name="model_id" ref="model_selecta_question"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_category_company" model="ir.rule">
+        <field name="name">SELECTA : matières par structure</field>
+        <field name="model_id" ref="model_selecta_question_category"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_candidate_company" model="ir.rule">
+        <field name="name">SELECTA : candidats par structure</field>
+        <field name="model_id" ref="model_selecta_candidate"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_attempt_company" model="ir.rule">
+        <field name="name">SELECTA : épreuves par structure</field>
+        <field name="model_id" ref="model_selecta_attempt"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_event_company" model="ir.rule">
+        <field name="name">SELECTA : surveillance par structure</field>
+        <field name="model_id" ref="model_selecta_proctor_event"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+</odoo>

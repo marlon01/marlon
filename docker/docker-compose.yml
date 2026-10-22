@@ -1,0 +1,33 @@
+# SELECTA — déploiement conteneurisé (Windows, macOS ou Linux avec Docker Desktop / Docker Engine)
+#   docker compose up -d
+#   puis, une seule fois : docker compose run --rm odoo odoo -d selecta -i selecta_concours --without-demo=all --stop-after-init
+#   Console : http://<ip-du-serveur>:8069/selecta/login   Candidats : http://<ip-du-serveur>:8069/selecta/exam
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: ${SELECTA_DB_PASSWORD:-change-moi-selecta}
+    volumes:
+      - selecta-db:/var/lib/postgresql/data
+
+  odoo:
+    image: odoo:18
+    restart: unless-stopped
+    depends_on: [db]
+    ports:
+      - "8069:8069"
+    environment:
+      HOST: db
+      USER: odoo
+      PASSWORD: ${SELECTA_DB_PASSWORD:-change-moi-selecta}
+    volumes:
+      - ../addons:/mnt/extra-addons:ro
+      - ./odoo.conf:/etc/odoo/odoo.conf:ro
+      - selecta-data:/var/lib/odoo
+
+volumes:
+  selecta-db:
+  selecta-data:
