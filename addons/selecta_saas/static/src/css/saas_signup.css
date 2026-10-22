@@ -38,6 +38,7 @@
 /* Champs */
 .su-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 14px; }
 .su-col-2 { grid-column: 1 / -1; }
+.su-grid > .sl-field { align-content: start; }
 .su-opt { font-weight: 400; color: var(--sl-muted); }
 .su-invalid .sl-input { border-color: var(--sl-danger); }
 .su-invalid .sl-input:focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--sl-danger) 25%, transparent); }

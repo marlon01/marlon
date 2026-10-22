@@ -7,9 +7,9 @@ import { fmtNum, readConfig } from "@selecta_concours/common/utils";
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$/;
 const FIELD_ORDER = ["plan", "organization", "contact_name", "email", "phone", "country", "password", "accept_terms"];
 const FEATURE_LABELS = {
-    ai_analysis: "Analyse IA (psychométrie, fraude)",
-    llm: "Assistant de rédaction (LLM)",
-    branding: "Logo, couleur et slogan",
+    ai_analysis: "analyse IA (psychométrie, fraude)",
+    llm: "assistant de rédaction (LLM)",
+    branding: "personnalisation (logo, couleur, slogan)",
 };
 
 /** Indication de robustesse du mot de passe (purement indicative : la règle est vérifiée par le serveur). */
@@ -222,7 +222,7 @@ class Signup extends Component {
     }
     get planFeatures() {
         const features = this.plan?.features || {};
-        return Object.keys(FEATURE_LABELS).filter((k) => features[k]).map((k) => FEATURE_LABELS[k].toLowerCase());
+        return Object.keys(FEATURE_LABELS).filter((k) => features[k]).map((k) => FEATURE_LABELS[k]);
     }
     get strength() {
         return passwordStrength(this.state.password);
