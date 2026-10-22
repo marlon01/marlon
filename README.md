@@ -44,7 +44,7 @@ Chaque structure est une société Odoo distincte ; ses comptes n'appartiennent 
 * Personnel limité à sa structure ; le client Odoo générique (`/odoo`) est inaccessible au personnel des structures.
 * Paramètres communs au serveur (assistant LLM, anti force brute) réservés à l'administrateur système.
 * Limitation des tentatives fondée sur l'adresse réelle de la connexion (`proxy_mode` derrière le proxy), pas sur un en-tête falsifiable.
-* Tests automatisés : `odoo-bin -d <base> -i selecta_saas --test-tags /selecta_saas --stop-after-init` (22 tests : cloisonnement, quotas, consultation seule, facturation, régressions de sécurité).
+* Tests automatisés : `odoo-bin -d <base> -i selecta_saas --test-tags /selecta_saas --stop-after-init` (36 tests : cloisonnement, quotas, consultation seule, facturation, proratisation, paiement en ligne simulé, courriels, conservation des données, régressions de sécurité).
 
 ### Mise en ligne (Docker, HTTPS automatique)
 ```bash
@@ -61,11 +61,34 @@ Exploitation : sauvegarde quotidienne de la base (`pg_dump`) et du volume `selec
 ### Mise à jour d'une installation existante
 `-u selecta_concours` migre le journal d'audit : l'historique existant est rattaché à la structure principale, où il reste intégralement vérifiable.
 
+### Courriels
+Les courriels sont mis en file puis envoyés toutes les 5 minutes : une panne du serveur de messagerie ne bloque jamais une inscription ou un paiement, et chaque envoi est tracé (fiche de la structure, onglet « Courriels »).
+* **Structures** : bienvenue à l'inscription, rappels de fin d'essai (J-3, J-1), fin d'essai, rappels de renouvellement (J-7, J-1), abonnement échu, facture émise, paiement validé ou refusé, suspension et réactivation.
+* **Plateforme** : nouvelle inscription, paiement déclaré à valider.
+* Configuration : administration centrale → Paramètres → Messagerie (serveur SMTP, expéditeur, e-mail d'alerte, envoi de test), puis activer l'envoi. Chaque rappel n'est envoyé qu'une fois par échéance.
+
+### Paiement en ligne
+* **CinetPay** : Mobile Money (M-Pesa, Airtel Money, Orange Money) et cartes, Afrique francophone dont la RDC. Renseigner le Site ID et la clé API, activer les paiements en USD sur le compte CinetPay et déclarer l'URL de notification affichée dans les paramètres.
+* **Stripe** : cartes bancaires internationales (clé secrète `sk_live_…`).
+* Sécurité : un retour navigateur ou une notification ne valide jamais un paiement à eux seuls ; le serveur interroge le prestataire et vérifie statut, montant et devise avant d'activer l'abonnement. Une vérification automatique toutes les 15 minutes rattrape les notifications perdues (48 h).
+* Les paiements hors ligne (instructions Mobile Money, virement, lien externe) restent possibles, avec déclaration et validation centrale.
+* **Prérequis** : l'adresse publique du site doit être exacte pour les retours de paiement et les liens des courriels. Dans Odoo (mode développeur → Paramètres techniques → Paramètres système), fixer `web.base.url` à `https://<domaine>` et créer `web.base.url.freeze` = `True`.
+
+### Changement de catégorie
+* **Vers une catégorie supérieure** : la valeur non consommée de la période payée est déduite (avoir arrondi au dollar inférieur) et une nouvelle période démarre au paiement.
+* **Vers une catégorie inférieure** : elle s'applique à l'échéance de la période en cours ; la structure conserve sa catégorie actuelle jusque-là.
+* Un renouvellement dans la même catégorie s'ajoute à la période en cours ; un abonnement souscrit pendant l'essai conserve les jours d'essai restants.
+
+### Données personnelles et documents juridiques
+* Pages publiques `/selecta/conditions` (conditions d'utilisation) et `/selecta/confidentialite` (politique de confidentialité), liées depuis l'inscription, la page de présentation et chaque courriel. L'acceptation (date et version) est enregistrée à l'inscription.
+* Les textes par défaut reprennent automatiquement les paramètres en vigueur (durée d'essai, délai de grâce, durée de conservation). Ils peuvent être remplacés depuis Paramètres → Documents juridiques. **Ce sont des modèles : faites-les relire par un juriste avant la mise en production.**
+* **Conservation des données biométriques** : photos d'identité, gabarits faciaux et clichés probatoires sont effacés automatiquement N jours après la clôture du concours (180 par défaut, réglable ; 0 = conservation illimitée). Résultats, procès-verbaux et motifs d'incident sont conservés ; chaque effacement est consigné dans le journal d'audit.
+* Logo par défaut : un monogramme aux initiales de la structure, remplaçable dans ses paramètres (catégories avec personnalisation).
+
 ### Limites actuelles
-* Pas d'envoi d'e-mails (confirmation d'inscription, rappels de fin d'essai) : aucun serveur de messagerie n'est configuré. Les rappels sont affichés dans la console.
-* Paiement en ligne automatique (Stripe, agrégateur Mobile Money) non intégré : la plateforme publie un lien de paiement et valide les déclarations. L'intégration d'un agrégateur (FlexPay, MaxiCash, CinetPay…) nécessite un compte marchand.
-* Pas de proratisation lors d'un changement de catégorie en cours de période.
-* Conditions d'utilisation et politique de confidentialité à rédiger et à publier (la case à cocher de l'inscription y fait référence).
+* Paiement en ligne non testé contre les API réelles de CinetPay et Stripe (aucun compte marchand disponible pendant le développement) : les échanges sont couverts par des tests simulés. À valider avec un compte de test de chaque prestataire avant l'ouverture.
+* Pas de proratisation pour un passage à une catégorie inférieure (il prend effet à l'échéance, sans avoir).
+* Les courriels sont en français uniquement.
 
 ---
 

@@ -6,6 +6,9 @@
 #   4. docker compose up -d
 #   5. Une seule fois :
 #        docker compose run --rm odoo odoo -d selecta -i selecta_saas --without-demo=all --load-language=fr_FR --stop-after-init
+#      Adresse publique (retours de paiement, liens des courriels) — remplacer <domaine> :
+#        echo "env['ir.config_parameter'].set_param('web.base.url', 'https://<domaine>'); env['ir.config_parameter'].set_param('web.base.url.freeze', 'True'); env.cr.commit()" \
+#          | docker compose run --rm -T odoo odoo shell -d selecta --no-http
 #   6. https://<domaine>/selecta/login avec admin / admin : changez immédiatement ce mot de passe,
 #      puis ouvrez l'administration centrale : https://<domaine>/selecta/platform
 #
