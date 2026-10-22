@@ -43,12 +43,12 @@ export class SubscriptionPage extends Component {
                         <h2 id="ss-status-title" class="ss-plan-name" t-esc="t.plan.name"/>
                         <div class="ss-status-line">
                             <span t-attf-class="sl-badge {{tenantBadge(t.state)}}" t-esc="t.state_label"/>
-                            <span class="sl-muted" t-if="t.state != 'trial'">Facturation <t t-esc="cycleLabel(t.billing_cycle).toLowerCase()"/></span>
+                            <span class="sl-muted" t-if="t.period_end" t-esc="t.billing_cycle == 'yearly' ? 'Facturation annuelle' : 'Facturation mensuelle'"/>
                             <span class="sl-muted" t-if="t.plan.audience" t-esc="t.plan.audience"/>
                         </div>
                     </div>
                     <dl class="ss-dates">
-                        <div t-if="t.trial_end"><dt>Fin de l'essai</dt><dd t-esc="date(t.trial_end)"/></div>
+                        <div t-if="t.trial_end and !t.period_end"><dt>Fin de l'essai</dt><dd t-esc="date(t.trial_end)"/></div>
                         <div t-if="t.period_end"><dt>Payé jusqu'au</dt><dd t-esc="date(t.period_end)"/></div>
                         <div t-if="t.state == 'past_due'"><dt>Fin du délai de grâce</dt><dd class="ad-danger-text" t-esc="date(t.grace_end)"/></div>
                     </dl>
@@ -136,7 +136,7 @@ export class SubscriptionPage extends Component {
                                     </div>
                                     <div class="sl-field">
                                         <label for="ss-ref">Référence de la transaction <span class="ss-req" aria-hidden="true">*</span></label>
-                                        <input id="ss-ref" class="sl-input" t-model="form.reference" required="" maxlength="120" autocomplete="off"
+                                        <input id="ss-ref" class="sl-input" t-model="form.reference" t-on-input="() => this.form.errors.reference = ''" required="" maxlength="120" autocomplete="off"
                                                placeholder="Ex. : MP241022.1530.A12345" t-att-aria-invalid="form.errors.reference ? 'true' : 'false'"
                                                aria-describedby="ss-ref-help"/>
                                         <span id="ss-ref-help" t-attf-class="sl-help {{form.errors.reference ? 'ad-danger-text' : ''}}"
@@ -438,7 +438,7 @@ export class SubscriptionPage extends Component {
     chooseLabel(p) {
         const t = this.state.info.tenant;
         if (p.id === t.plan.id) {
-            return t.state === "trial" ? "Souscrire à cette catégorie" : "Renouveler";
+            return t.period_end ? "Renouveler" : "Souscrire à cette catégorie";
         }
         return "Choisir";
     }

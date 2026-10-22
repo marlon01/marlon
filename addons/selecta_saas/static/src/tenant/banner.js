@@ -26,13 +26,13 @@ export class SubscriptionBanner extends Component {
                 <strong t-esc="b.title"/>
                 <span t-if="b.detail" class="ss-banner-detail" t-esc="b.detail"/>
             </p>
-            <div class="ss-banner-actions">
-                <a t-if="b.cta and !onSubscriptionPage" href="#/subscription" class="sl-btn sl-btn-sm" t-att-class="b.critical ? 'sl-btn-ink' : ''" t-esc="b.cta"/>
-                <button t-if="!b.critical" type="button" class="sl-btn sl-btn-ghost sl-btn-icon ss-banner-close"
-                        title="Masquer jusqu'à la prochaine connexion" aria-label="Masquer ce bandeau" t-on-click="dismiss">
-                    <Icon name="'x'" size="16"/>
-                </button>
+            <div t-if="b.cta and !onSubscriptionPage" class="ss-banner-actions">
+                <a href="#/subscription" class="sl-btn sl-btn-sm" t-att-class="b.critical ? 'sl-btn-ink' : ''" t-esc="b.cta"/>
             </div>
+            <button t-if="!b.critical" type="button" class="sl-btn sl-btn-ghost sl-btn-icon ss-banner-close"
+                    title="Masquer jusqu'à la prochaine connexion" aria-label="Masquer ce bandeau" t-on-click="dismiss">
+                <Icon name="'x'" size="16"/>
+            </button>
         </div>`;
     static props = {};
 
@@ -103,9 +103,7 @@ export class SubscriptionBanner extends Component {
                 critical: true,
                 icon: "lock",
                 title: `${what} : console en consultation seule`,
-                detail: admin
-                    ? "Vos concours et résultats restent consultables ; souscrivez pour reprendre la création et les inscriptions."
-                    : "Vos concours et résultats restent consultables. Votre administrateur peut souscrire un abonnement.",
+                detail: admin ? "Vos résultats restent consultables." : "Vos résultats restent consultables ; votre administrateur peut souscrire un abonnement.",
                 cta: admin ? "Souscrire un abonnement" : "",
             };
         } else if (s.state === "suspended") {

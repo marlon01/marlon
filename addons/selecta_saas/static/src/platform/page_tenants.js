@@ -50,7 +50,7 @@ export class TenantsListPage extends Component {
                     <tbody>
                         <tr t-foreach="rows" t-as="t" t-key="t.id" class="is-link" t-on-click="() => this.open(t)">
                             <td>
-                                <a t-att-href="'#/tenants/' + t.id" class="pf-cell-title" t-esc="t.name" t-on-click.stop=""/>
+                                <a t-att-href="'#/tenants/' + t.id" class="pf-cell-title" t-esc="t.name"/>
                                 <div class="sl-muted ad-small"><t t-esc="t.contact_name"/><t t-if="t.contact_name and t.email"> · </t><t t-esc="t.email"/></div>
                             </td>
                             <td><t t-esc="t.plan_name"/><div t-if="t.state == 'active' or t.state == 'past_due'" class="sl-muted ad-small" t-esc="cycle[t.billing_cycle]"/></td>
@@ -226,7 +226,7 @@ export class TenantDetailPage extends Component {
                 <div class="ad-tabs" role="tablist" aria-label="Dossier de la structure">
                     <button t-foreach="tabs" t-as="tb" t-key="tb.key" role="tab" class="ad-tab" t-att-class="{'is-active': state.tab == tb.key}"
                             t-att-aria-selected="state.tab == tb.key ? 'true' : 'false'" t-att-id="'pf-tab-' + tb.key" t-on-click="() => this.state.tab = tb.key">
-                        <t t-esc="tb.label"/><span t-if="tb.count !== undefined" class="ad-tab-count" t-esc="tb.count"/>
+                        <t t-esc="tb.label"/><span t-if="tb.hasCount" class="ad-tab-count" t-esc="tb.count"/>
                     </button>
                 </div>
                 <section class="ad-panel ad-panel-flush" role="tabpanel" t-att-aria-labelledby="'pf-tab-' + state.tab">
@@ -325,9 +325,9 @@ export class TenantDetailPage extends Component {
     get tabs() {
         const t = this.state.t;
         return [
-            { key: "invoices", label: "Factures", count: t.invoices.length },
-            { key: "staff", label: "Personnel", count: t.staff.length },
-            { key: "concours", label: "Concours", count: t.concours.length },
+            { key: "invoices", label: "Factures", count: t.invoices.length, hasCount: true },
+            { key: "staff", label: "Personnel", count: t.staff.length, hasCount: true },
+            { key: "concours", label: "Concours", count: t.concours.length, hasCount: true },
             { key: "audit", label: "Intégrité du journal d'audit" },
         ];
     }

@@ -39,10 +39,21 @@ export function printInvoice(inv, info) {
     const amount = e(fmtMoney(inv.amount, inv.symbol));
     let note = "";
     if (inv.state === "paid") {
-        note = `<div class="inv-note"><strong>Paiement reçu</strong>${inv.validated_date ? ` le ${e(fmtDateTime(inv.validated_date))}` : ""}${inv.payment_method_label ? ` — ${e(inv.payment_method_label)}` : ""}${inv.payment_reference ? `, référence ${e(inv.payment_reference)}` : ""}.</div>`;
+        const parts = [];
+        if (inv.validated_date) {
+            parts.push("le " + e(fmtDateTime(inv.validated_date)));
+        }
+        if (inv.payment_method_label) {
+            parts.push("— " + e(inv.payment_method_label));
+        }
+        if (inv.payment_reference) {
+            parts.push("(référence " + e(inv.payment_reference) + ")");
+        }
+        note = '<div class="inv-note"><strong>Paiement reçu</strong> ' + parts.join(" ") + ".</div>";
     } else if (["open", "rejected"].includes(inv.state) && info.payment_instructions) {
         note = `<div class="inv-note"><strong>Modalités de paiement</strong><div class="inv-pre">${e(info.payment_instructions)}</div>Rappelez le numéro <strong>${e(inv.name)}</strong> en motif de paiement.</div>`;
     }
+    const contact = [info.support_email, info.support_phone].filter(Boolean).map(e).join(" · ");
     const customerLines = [c.contact, c.email, c.phone, c.country].filter(Boolean).map(e).join("<br>");
     const body = `
         <div class="inv-top">
@@ -65,6 +76,6 @@ export function printInvoice(inv, info) {
             <tr class="inv-total"><td>Total à régler (${e(inv.currency || "USD")})</td><td class="num">${amount}</td></tr>
         </table>
         ${note}
-        <div class="inv-foot">Document généré par SELECTA by Naxoris le ${e(fmtDateTime(new Date()))}.${info.support_email ? ` Contact : ${e(info.support_email)}` : ""}${info.support_phone ? ` · ${e(info.support_phone)}` : ""}</div>`;
+        <div class="inv-foot">Document généré par SELECTA by Naxoris le ${e(fmtDateTime(new Date()))}.${contact ? " Contact : " + contact : ""}</div>`;
     printHTML(`Facture ${inv.name}`, `<style>${INVOICE_CSS}</style>${body}`);
 }

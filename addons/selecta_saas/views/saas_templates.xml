@@ -105,9 +105,9 @@
                                 <p class="lp-hero-note" t-if="signup_enabled">Sans carte bancaire · Votre espace est créé immédiatement</p>
                                 <p class="lp-hero-note" t-else="">Les inscriptions en ligne sont momentanément fermées : écrivez-nous, nous ouvrons votre espace.</p>
                                 <ul class="lp-proof">
-                                    <li><strong>Chronomètre</strong> sous l’autorité du serveur</li>
-                                    <li><strong>Vision 100&#160;% locale</strong>, aucun flux vidéo transmis</li>
-                                    <li><strong>Empreinte SHA-256</strong> et QR code de vérification</li>
+                                    <li><strong>Chronomètre</strong>sous l’autorité du serveur</li>
+                                    <li><strong>Vision 100&#160;% locale</strong>aucun flux vidéo transmis</li>
+                                    <li><strong>Empreinte SHA-256</strong>et QR code de vérification</li>
                                 </ul>
                             </div>
 
@@ -142,7 +142,7 @@
                                         <defs><path id="lp-seal-arc" d="M60 60m-44 0a44 44 0 1 1 88 0a44 44 0 1 1-88 0"/></defs>
                                         <circle cx="60" cy="60" r="56" fill="none" stroke="currentColor" stroke-width="2.5"/>
                                         <circle cx="60" cy="60" r="34" fill="none" stroke="currentColor" stroke-width="1.5"/>
-                                        <text font-size="10.5" font-weight="700" letter-spacing="2.6" fill="currentColor"><textPath href="#lp-seal-arc">SCELLÉ · SELECTA · VÉRIFIABLE ·</textPath></text>
+                                        <text font-size="10.5" font-weight="700" fill="currentColor"><textPath href="#lp-seal-arc" textLength="272" lengthAdjust="spacing">SCELLÉ · SELECTA · VÉRIFIABLE ·</textPath></text>
                                         <path d="M47 61l9 9 18-19" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
                                     </svg>
                                 </div>
@@ -242,8 +242,11 @@
                                     <t t-set="symbol" t-value="plan.currency_id.symbol or '$'"/>
                                     <t t-set="saving" t-value="max(0.0, plan.price_monthly * 12 - plan.price_yearly)"/>
                                     <div class="lp-plan-flag" t-if="plan.highlight">Recommandé</div>
+                                    <div class="lp-plan-head">
                                     <h3 class="lp-plan-name" t-out="plan.name"/>
-                                    <p class="lp-plan-aud" t-out="plan.audience or ' '"/>
+                                    <p class="lp-plan-aud" t-if="plan.audience" t-out="plan.audience"/>
+                                    </div>
+                                    <div class="lp-plan-pricing">
                                     <div class="lp-price lp-price-m">
                                         <span class="lp-price-amt sl-figures"><t t-call="selecta_saas.lp_amount"><t t-set="amount" t-value="plan.price_monthly"/></t></span>
                                         <span class="lp-price-cur"><t t-out="symbol"/></span>
@@ -256,7 +259,8 @@
                                     </div>
                                     <p class="lp-price-sub lp-price-m">ou <t t-call="selecta_saas.lp_amount"><t t-set="amount" t-value="plan.price_yearly"/></t>&#160;<t t-out="symbol"/> par an<t t-if="saving"> — <t t-call="selecta_saas.lp_amount"><t t-set="amount" t-value="saving"/></t>&#160;<t t-out="symbol"/> d’économie</t></p>
                                     <p class="lp-price-sub lp-price-y">soit <t t-call="selecta_saas.lp_amount"><t t-set="amount" t-value="plan.price_yearly / 12.0"/></t>&#160;<t t-out="symbol"/> par mois<t t-if="saving"> · <strong>économisez <t t-call="selecta_saas.lp_amount"><t t-set="amount" t-value="saving"/></t>&#160;<t t-out="symbol"/></strong></t></p>
-                                    <p class="lp-plan-desc" t-if="plan.description" t-out="plan.description"/>
+                                    </div>
+                                    <p class="lp-plan-desc" t-out="plan.description or ''"/>
                                     <t t-call="selecta_saas.lp_cta">
                                         <t t-set="cta_class" t-value="'sl-btn lp-plan-cta ' + ('sl-btn-primary' if plan.highlight else 'sl-btn-ink')"/>
                                         <t t-set="cta_href" t-value="'/selecta/signup?plan=%s' % plan.code"/>

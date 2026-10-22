@@ -49,7 +49,7 @@ export function fmtMoney(amount, symbol = "$") {
     }
     const n = Number(amount);
     const digits = Number.isInteger(n) ? 0 : 2;
-    return `${n.toLocaleString("fr-FR", { minimumFractionDigits: digits, maximumFractionDigits: 2 })} ${symbol || "$"}`;
+    return `${n.toLocaleString("fr-FR", { minimumFractionDigits: digits, maximumFractionDigits: 2 })}\u00a0${symbol || "$"}`;
 }
 
 export function fmtDate(value, style = "long") {
