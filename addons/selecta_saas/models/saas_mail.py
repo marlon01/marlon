@@ -33,6 +33,14 @@ TEMPLATES = {
 }
 
 
+def fmt_amount(amount, symbol='$'):
+    """Montant à la française : 1 990 $, 160,50 $."""
+    text = '{:,.2f}'.format(amount or 0).replace(',', '\u202f').replace('.', ',')
+    if text.endswith(',00'):
+        text = text[:-3]
+    return '%s\u00a0%s' % (text, symbol)
+
+
 class SelectaSaasMail(models.Model):
     _name = 'selecta.saas.mail'
     _description = "Courriel de la plateforme SELECTA"
@@ -65,8 +73,7 @@ class SelectaSaasMail(models.Model):
                     base_url=base_url, platform=self._setting('issuer_name', 'Naxoris'),
                     support_email=self._setting('support_email'), support_phone=self._setting('support_phone'),
                     fmt_date=lambda d: d and tools.format_date(self.env, d, lang_code='fr_FR', date_format='d MMMM y') or '',
-                    fmt_amount=lambda a, cur='$': ('{:,.2f}'.format(a or 0).replace(',', ' ').replace('.', ',')
-                                                   .replace(',00', '') + ' ' + cur))
+                    fmt_amount=fmt_amount)
 
     @api.model
     def _queue(self, template, tenant=None, to=None, values=None, dedupe_key=None):

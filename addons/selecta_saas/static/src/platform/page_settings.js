@@ -341,7 +341,7 @@ export class SettingsPage extends Component {
                         <div class="pf-legal-fields">
                             <div class="sl-field">
                                 <div class="pf-label-row pf-label-split">
-                                    <label for="pf-s-terms">Conditions d'utilisation</label>
+                                    <label for="pf-s-terms" class="sl-label">Conditions d'utilisation</label>
                                     <a href="/selecta/conditions" target="_blank" rel="noopener" class="ad-link ad-small pf-inline">Aperçu <Icon name="'external'" size="13"/><span class="sl-sr">(nouvel onglet)</span></a>
                                 </div>
                                 <textarea id="pf-s-terms" class="sl-textarea pf-legal-text" rows="12" t-model="f.terms_text" placeholder="Laisser vide pour utiliser le texte par défaut." spellcheck="true"/>
@@ -349,7 +349,7 @@ export class SettingsPage extends Component {
                             </div>
                             <div class="sl-field">
                                 <div class="pf-label-row pf-label-split">
-                                    <label for="pf-s-privacy">Politique de confidentialité</label>
+                                    <label for="pf-s-privacy" class="sl-label">Politique de confidentialité</label>
                                     <a href="/selecta/confidentialite" target="_blank" rel="noopener" class="ad-link ad-small pf-inline">Aperçu <Icon name="'external'" size="13"/><span class="sl-sr">(nouvel onglet)</span></a>
                                 </div>
                                 <textarea id="pf-s-privacy" class="sl-textarea pf-legal-text" rows="12" t-model="f.privacy_text" placeholder="Laisser vide pour utiliser le texte par défaut." spellcheck="true"/>

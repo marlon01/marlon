@@ -10,6 +10,7 @@ from odoo.addons.selecta_concours.models.selecta_concours import G_ADMIN, requir
 
 from .payment_providers import enabled_providers
 from .saas_invoice import PAYMENT_METHODS
+from .saas_mail import fmt_amount
 
 PROOF_MAX_BYTES = 5 * 1024 * 1024
 PROOF_TYPES = (b'%PDF', b'\x89PNG', b'\xff\xd8\xff', b'RIFF')  # PDF, PNG, JPEG, WebP
@@ -90,7 +91,7 @@ class SelectaBackoffice(models.AbstractModel):
         self.env['selecta.saas.mail']._queue('invoice_issued', tenant=tenant, values={
             'invoice': inv, 'online': bool(enabled_providers(self.env)),
             'instructions': icp.get_param('selecta_saas.payment_instructions') or '',
-            'subject': _("Facture %(n)s — %(a)s $", n=inv.name, a=inv.amount)})
+            'subject': _("Facture %(n)s — %(a)s", n=inv.name, a=fmt_amount(inv.amount))})
         self.env['selecta.audit.log']._log('saas.checkout', _("Facture %(n)s : %(p)s (%(c)s)", n=inv.name, p=plan.name,
                                                                c=dict(inv._fields['billing_cycle'].selection)[cycle]),
                                            {'invoice': inv.name, 'amount': inv.amount})

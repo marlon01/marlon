@@ -365,8 +365,11 @@ class SelectaSaasPlatform(models.AbstractModel):
     def settings_save(self, vals):
         self._require()
         icp = self.env['ir.config_parameter'].sudo()
-        if 'terms_text' in vals or 'privacy_text' in vals:
+        # La date (version acceptée à l'inscription) ne change que si un texte change réellement.
+        if any(k in vals and (vals[k] or '') != (read_setting(self.env, k) or '') for k in ('terms_text', 'privacy_text')):
             vals = dict(vals, legal_updated=fields.Date.to_string(fields.Date.today()))
+        else:
+            vals = {k: v for k, v in vals.items() if k != 'legal_updated'}
         for key, param in SECRETS.items():
             if vals.get(key):
                 icp.set_param(param, str(vals[key]).strip())

@@ -274,7 +274,7 @@ export class TenantDetailPage extends Component {
                                         <div t-if="m.sent_date" class="sl-muted ad-small pf-nowrap">le <t t-esc="dt(m.sent_date)"/></div>
                                     </td>
                                     <td data-label="Tentatives" class="ad-small">
-                                        <span class="sl-figures" t-esc="m.attempts"/><t t-if="m.attempts"> tentative(s)</t>
+                                        <t t-if="m.attempts"><span class="sl-figures" t-esc="m.attempts"/> tentative(s)</t><span t-else="" class="sl-muted">—</span>
                                         <div t-if="m.last_error" class="pf-mail-error" t-esc="m.last_error"/>
                                     </td>
                                     <td class="num">
