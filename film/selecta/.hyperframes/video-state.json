@@ -2002,11 +2002,11 @@
   },
   "renders": {
     "latest": {
-      "id": "f5f90de3-71b2-4cd2-981e-70b770af8ec6",
-      "completedAt": 1792743907863,
-      "output": "/home/user/marlon/film/selecta/renders/selecta-resultats-incontestables.mp4",
+      "id": "56aa467b-fbd2-4aaa-8d47-78e2e6246f12",
+      "completedAt": 1792747515555,
+      "output": "/home/user/marlon/film/selecta/renders/brut.mp4",
       "status": "completed",
-      "revision": "3ac05faf-645e-4315-883e-7af2d2cdcb70"
+      "revision": null
     },
     "retainedRevisions": [
       "3ac05faf-645e-4315-883e-7af2d2cdcb70"
