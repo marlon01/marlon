@@ -68,6 +68,13 @@ Réglages du serveur : HTTPS (installation de l'espace candidat, webcam), `proxy
 * **Épreuve en ligne, à distance** : chaque candidat compose où il se trouve ; surveillance par webcam et contrôle continu d'identité obligatoires.
 * Le mode et les réseaux sont figés à l'ouverture du concours.
 
+### Envoi des codes par SMS ou WhatsApp
+
+Après « Générer les codes », la console ouvre le panneau **Remise des codes** : convocations imprimées, **envoi par SMS**, **envoi par WhatsApp**, ou **WhatsApp depuis ce poste** (un message prêt par candidat, envoyé depuis le téléphone ou WhatsApp Web du personnel, sans aucun service à configurer). Le message reprend la structure, le concours, le code, la date, et le lieu (présentiel) ou l'adresse de l'épreuve (à distance). Les numéros locaux reçoivent l'indicatif du pays de la structure (0812345678 → +243812345678).
+
+* Les codes restent hachés : le clair n'existe que dans le panneau, le temps de la remise. Le serveur n'envoie un code que s'il correspond au candidat, puis l'oublie ; il garde la date et le canal de l'envoi (colonne « Code » de la liste), et le journal d'audit compte les envois sans jamais contenir de code.
+* Service d'envoi automatique : administration centrale › Paramètres › SMS et WhatsApp. **Africa's Talking** (SMS, nom d'utilisateur et clé d'API) ou **Twilio** (SMS et WhatsApp, Account SID, jeton, expéditeur SMS, numéro WhatsApp Business). WhatsApp par Twilio : numéro validé par Meta ; hors fenêtre de conversation de 24 h, WhatsApp n'accepte que des modèles de message approuvés, à faire valider chez Twilio. Sans service, l'envoi WhatsApp depuis le poste reste disponible.
+
 ### Mise en ligne (Docker, HTTPS automatique)
 ```bash
 cd docker/saas

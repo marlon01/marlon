@@ -301,3 +301,10 @@
   .ad-qcard-choices { grid-template-columns: 1fr; }
 }
 .ad-inline-label { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--sl-muted, #5B6478); }
+/* Remise des codes : impression, SMS, WhatsApp. */
+.ad-issued { margin-bottom: 14px; padding: 14px 16px; border: 1px solid #C9D8FF; border-radius: 10px; background: #F3F7FF; }
+.ad-issued-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+.ad-issued-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.ad-wa-list { list-style: none; margin: 12px 0 0; padding: 0; max-height: 320px; overflow: auto; }
+.ad-wa-list li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 6px 0; border-top: 1px solid #DDE5F5; }
+.ad-ml { margin-left: 4px; }

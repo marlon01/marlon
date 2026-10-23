@@ -11,16 +11,17 @@ const FROM_RE = /^(?:[^<>]+<\s*([^<>\s]+)\s*>|([^<>\s]+))$/;
 const STRIPE_RE = /^(sk_live_|sk_test_|rk_live_|rk_test_)[A-Za-z0-9_]{8,}$/;
 
 /** Informations renvoyées par settings_get qui ne sont pas des paramètres modifiables. */
-const INFO_KEYS = ["providers", "notify_urls", "mail_stats", "legal_updated", "smtp_password_set", "cinetpay_api_key_set", "stripe_secret_key_set", "flexpay_token_set"];
+const INFO_KEYS = ["providers", "notify_urls", "mail_stats", "legal_updated", "smtp_password_set", "cinetpay_api_key_set", "stripe_secret_key_set", "flexpay_token_set", "msg_api_key_set", "msg_channels"];
 /** Secrets en écriture seule : jamais préremplis, envoyés uniquement s'ils sont saisis. */
-const SECRET_KEYS = ["smtp_password", "cinetpay_api_key", "stripe_secret_key", "flexpay_token"];
+const SECRET_KEYS = ["smtp_password", "cinetpay_api_key", "stripe_secret_key", "flexpay_token", "msg_api_key"];
 const TRIM_KEYS = ["payment_link", "support_email", "support_phone", "issuer_name", "mail_from", "platform_notify_email",
-    "smtp_host", "smtp_user", "cinetpay_site_id"];
+    "smtp_host", "smtp_user", "cinetpay_site_id", "msg_username", "msg_account_sid", "msg_sms_from", "msg_whatsapp_from"];
 
 const SECTIONS = [
     { id: "essai", label: "Essai et inscriptions", keys: ["signup_enabled", "trial_days", "grace_days", "trial_max_candidates"] },
     { id: "messagerie", label: "Messagerie", keys: ["mail_enabled", "mail_from", "platform_notify_email", "smtp_host", "smtp_port", "smtp_user", "smtp_encryption", "smtp_password"] },
     { id: "en-ligne", label: "Paiement en ligne", keys: ["flexpay_enabled", "flexpay_merchant", "flexpay_token", "flexpay_environment", "cinetpay_enabled", "cinetpay_site_id", "cinetpay_api_key", "stripe_enabled", "stripe_secret_key"] },
+    { id: "codes", label: "SMS et WhatsApp", keys: ["msg_provider", "msg_username", "msg_account_sid", "msg_api_key", "msg_sms_from", "msg_whatsapp_from"] },
     { id: "hors-ligne", label: "Paiement hors ligne", keys: ["payment_instructions", "payment_link"] },
     { id: "support", label: "Support et facturation", keys: ["support_email", "support_phone", "issuer_name", "issuer_details"] },
     { id: "donnees", label: "Données personnelles", keys: ["biometric_retention_days"] },
@@ -303,6 +304,34 @@ export class SettingsPage extends Component {
                     <p t-if="localUrls" class="sl-alert sl-alert-warn pf-alert-tight pf-mt" role="note">
                         Les adresses ci-dessus ne sont pas joignables depuis Internet (<span class="sl-mono" t-esc="baseHost"/>). Renseignez l'adresse publique en https de la plateforme (paramètre système <span class="sl-mono">web.base.url</span>) avant de les communiquer aux prestataires.
                     </p>
+                </section>
+
+                <!-- ============================================================ envoi des codes -->
+                <section class="ad-panel pf-section" id="pf-sec-codes" aria-labelledby="pf-sec-codes-h">
+                    <div class="ad-panel-head"><h2 id="pf-sec-codes-h" tabindex="-1">Envoi des codes par SMS et WhatsApp</h2>
+                        <span t-if="info.msg_channels and info.msg_channels.length" class="sl-badge sl-badge-ok" t-esc="'Actif : ' + info.msg_channels.map((c) => c === 'sms' ? 'SMS' : 'WhatsApp').join(', ')"/>
+                        <span t-else="" class="sl-badge">Inactif</span></div>
+                    <p class="sl-muted pf-section-intro">Après la génération des codes, les structures les envoient à leurs candidats en un clic. Sans service configuré, elles disposent toujours de l'envoi WhatsApp depuis leur poste (un message prêt par candidat).</p>
+                    <div class="ad-form">
+                        <div class="sl-field ad-span-2">
+                            <label for="pf-s-msgp">Service</label>
+                            <select id="pf-s-msgp" class="sl-select" t-model="f.msg_provider">
+                                <option value="none">Aucun (envoi WhatsApp depuis le poste seulement)</option>
+                                <option value="africastalking">Africa's Talking (SMS)</option>
+                                <option value="twilio">Twilio (SMS et WhatsApp)</option>
+                            </select>
+                        </div>
+                        <div t-if="f.msg_provider == 'africastalking'" class="sl-field"><label for="pf-s-msgu">Nom d'utilisateur de l'application</label><input id="pf-s-msgu" class="sl-input sl-mono" t-model="f.msg_username" autocomplete="off" spellcheck="false"/><span class="sl-help">« sandbox » pour les essais.</span></div>
+                        <div t-if="f.msg_provider == 'twilio'" class="sl-field"><label for="pf-s-msgsid">Identifiant du compte (Account SID)</label><input id="pf-s-msgsid" class="sl-input sl-mono" t-model="f.msg_account_sid" autocomplete="off" spellcheck="false"/></div>
+                        <div t-if="f.msg_provider != 'none'" class="sl-field">
+                            <label for="pf-s-msgkey" class="pf-label-row"><t t-if="f.msg_provider == 'twilio'">Jeton d’authentification</t><t t-else="">Clé d’API</t> <span t-if="info.msg_api_key_set" class="sl-badge sl-badge-ok pf-badge-sm">enregistré</span></label>
+                            <input id="pf-s-msgkey" class="sl-input sl-mono" type="password" autocomplete="new-password" spellcheck="false" t-model="f.msg_api_key"
+                                   t-att-placeholder="info.msg_api_key_set ? '•••••••• — saisir pour remplacer' : ''"/>
+                            <span class="sl-help">Jamais réaffiché.</span>
+                        </div>
+                        <div t-if="f.msg_provider != 'none'" class="sl-field"><label for="pf-s-msgfrom">Expéditeur SMS</label><input id="pf-s-msgfrom" class="sl-input" t-model="f.msg_sms_from" placeholder="Ex. : SELECTA ou +243…"/><span class="sl-help">Nom (11 caractères au plus) ou numéro, selon votre contrat.</span></div>
+                        <div t-if="f.msg_provider == 'twilio'" class="sl-field"><label for="pf-s-msgwa">Numéro WhatsApp Business</label><input id="pf-s-msgwa" class="sl-input sl-mono" t-model="f.msg_whatsapp_from" placeholder="+14155238886"/><span class="sl-help">Numéro WhatsApp validé chez Twilio. Vide : pas d'envoi WhatsApp automatique.</span></div>
+                    </div>
                 </section>
 
                 <!-- ============================================================ paiement hors ligne -->

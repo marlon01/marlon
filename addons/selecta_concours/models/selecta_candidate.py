@@ -8,7 +8,8 @@ from odoo import api, fields, models, _
 from odoo.exceptions import AccessError, UserError
 
 # Changer de concours, d'état, de code ou de photo d'identité relève du seul moteur.
-ENGINE_FIELDS = {'concours_id', 'state', 'code_hash', 'code_generated_at', 'photo_reference'}
+ENGINE_FIELDS = {'concours_id', 'state', 'code_hash', 'code_generated_at', 'photo_reference',
+                 'code_sent_at', 'code_sent_via'}
 CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'  # sans 0/O/1/I : aucune confusion visuelle
 CODE_GROUPS, CODE_GROUP_LEN = 3, 4                 # 12 caractères ≈ 60 bits d'entropie
 
@@ -38,6 +39,10 @@ class SelectaCandidate(models.Model):
                                help="Date du dépôt physique du dossier de candidature par le candidat.")
     dossier_received_by = fields.Many2one('res.users', string="Dossier reçu par", readonly=True,
                                           default=lambda self: self.env.user, ondelete='set null')
+    # Envoi du code par SMS ou WhatsApp : la date et le canal seulement, jamais le code.
+    code_sent_at = fields.Datetime(string="Code envoyé le", readonly=True, copy=False)
+    code_sent_via = fields.Selection([('sms', 'SMS'), ('whatsapp', 'WhatsApp')], string="Code envoyé par",
+                                     readonly=True, copy=False)
     code_hash = fields.Char(copy=False, index=True, groups='base.group_system')
     has_code = fields.Boolean(compute='_compute_has_code')
     code_generated_at = fields.Datetime(readonly=True, copy=False)

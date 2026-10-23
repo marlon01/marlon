@@ -38,6 +38,12 @@ SETTINGS = {
     'flexpay_merchant': ('selecta_saas.flexpay_merchant', str, ''),
     'flexpay_environment': ('selecta_saas.flexpay_environment', str, 'prod'),
     'biometric_retention_days': ('selecta.biometric_retention_days', int, 180),
+    # Envoi des codes d'accès aux candidats (SMS, WhatsApp) : lus par selecta.messaging.
+    'msg_provider': ('selecta.msg.provider', str, 'none'),
+    'msg_username': ('selecta.msg.username', str, ''),
+    'msg_account_sid': ('selecta.msg.account_sid', str, ''),
+    'msg_sms_from': ('selecta.msg.sms_from', str, ''),
+    'msg_whatsapp_from': ('selecta.msg.whatsapp_from', str, ''),
     'terms_text': ('selecta_saas.terms_text', str, ''),
     'privacy_text': ('selecta_saas.privacy_text', str, ''),
     'legal_updated': ('selecta_saas.legal_updated', str, ''),
@@ -47,6 +53,7 @@ SECRETS = {
     'cinetpay_api_key': 'selecta_saas.cinetpay_api_key',
     'stripe_secret_key': 'selecta_saas.stripe_secret_key',
     'flexpay_token': 'selecta_saas.flexpay_token',
+    'msg_api_key': 'selecta.msg.api_key',
 }
 SMTP_FIELDS = ('smtp_host', 'smtp_port', 'smtp_user', 'smtp_encryption')
 PLAN_FIELDS = ['name', 'code', 'sequence', 'active', 'audience', 'description', 'highlight', 'price_monthly',
@@ -318,6 +325,7 @@ class SelectaSaasPlatform(models.AbstractModel):
                              for code, cls in PROVIDERS.items()}
         base_url = (icp.get_param('web.base.url') or '').rstrip('/')
         data['notify_urls'] = {code: '%s/selecta/saas/pay/notify/%s' % (base_url, code) for code in PROVIDERS}
+        data['msg_channels'] = self.env['selecta.messaging'].channels()
         data['mail_stats'] = {state: self.env['selecta.saas.mail'].sudo().search_count([('state', '=', state)])
                               for state in ('queued', 'sent', 'failed')}
         return data
@@ -387,6 +395,8 @@ class SelectaSaasPlatform(models.AbstractModel):
                 if value < 0 or (key == 'trial_days' and not 1 <= value <= 90) or \
                         (key == 'biometric_retention_days' and value > 3650):
                     raise UserError(_("Valeur invalide pour %s.", key))
+            if key == 'msg_provider' and value not in ('none', 'africastalking', 'twilio'):
+                raise UserError(_("Service d'envoi inconnu."))
             if key == 'flexpay_environment' and value not in ('prod', 'dev'):
                 raise UserError(_("Environnement FlexPay invalide (prod ou dev)."))
             if key == 'payment_link' and value and not str(value).startswith('https://'):

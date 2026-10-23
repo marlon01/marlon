@@ -263,7 +263,29 @@ export class ConcoursEditPage extends Component {
                         <button class="sl-btn sl-btn-sm" t-on-click="() => this.generateCodes(false)" t-att-disabled="!state.selected.length"><Icon name="'refresh'"/>Régénérer la sélection</button>
                     </t>
                 </div>
-                <p class="sl-help ad-mb">Les candidatures se déposent physiquement : inscrivez chaque candidat à la réception de son dossier. Format CSV : <span class="sl-mono">reference;nom;email;telephone;salle;piece_identite;date_depot</span>. Les codes d'accès sont hachés : ils ne sont affichés qu'une fois, au moment de l'impression des convocations.</p>
+                <section t-if="state.issued" class="ad-issued">
+                    <div class="ad-issued-head">
+                        <div><strong>Remise des codes</strong> : <t t-esc="state.issued.codes.length"/> code(s) générés.
+                            <span class="sl-help">Ils ne sont affichés que tant que ce panneau est ouvert : remettez-les maintenant.</span></div>
+                        <button class="sl-btn sl-btn-sm sl-btn-ghost" t-on-click="closeIssued">Fermer</button>
+                    </div>
+                    <div class="ad-issued-actions">
+                        <button class="sl-btn sl-btn-sm" t-on-click="printIssued"><Icon name="'print'"/>Imprimer les convocations</button>
+                        <button t-if="state.channels.includes('sms')" class="sl-btn sl-btn-sm sl-btn-primary" t-att-disabled="state.sending" t-on-click="() => this.sendIssued('sms')">Envoyer par SMS</button>
+                        <button t-if="state.channels.includes('whatsapp')" class="sl-btn sl-btn-sm sl-btn-primary" t-att-disabled="state.sending" t-on-click="() => this.sendIssued('whatsapp')">Envoyer par WhatsApp</button>
+                        <button class="sl-btn sl-btn-sm" t-on-click="whatsappLinks">WhatsApp depuis ce poste</button>
+                    </div>
+                    <p t-if="!state.channels.length" class="sl-help">Envoi automatique par SMS ou WhatsApp : à activer par l'administration de la plateforme. En attendant, « WhatsApp depuis ce poste » prépare chaque message ; il suffit de l'envoyer.</p>
+                    <p t-if="state.sendReport" class="sl-help" t-esc="state.sendReport"/>
+                    <ul t-if="state.waLinks" class="ad-wa-list">
+                        <li t-foreach="state.waLinks" t-as="l" t-key="l.id">
+                            <span><strong t-esc="l.name"/> <span class="sl-muted sl-mono" t-esc="l.reference"/></span>
+                            <a t-if="l.url" class="sl-btn sl-btn-sm" t-att-href="l.url" target="_blank" rel="noopener">Ouvrir WhatsApp</a>
+                            <span t-else="" class="sl-badge">Pas de téléphone</span>
+                        </li>
+                    </ul>
+                </section>
+                <p class="sl-help ad-mb">Les candidatures se déposent physiquement : inscrivez chaque candidat à la réception de son dossier. Format CSV : <span class="sl-mono">reference;nom;email;telephone;salle;piece_identite;date_depot</span>. Les codes d'accès sont hachés : ils ne sont affichés qu'une fois, au moment de leur remise (convocations imprimées, SMS ou WhatsApp).</p>
                 <div t-if="state.editCand" class="ad-inline-form">
                     <input class="sl-input" placeholder="N° d'inscription" t-model="state.editCand.reference"/>
                     <input class="sl-input" placeholder="Nom complet" t-model="state.editCand.name"/>
@@ -285,8 +307,8 @@ export class ConcoursEditPage extends Component {
                             <td class="sl-mono" t-esc="x.reference"/>
                             <td><strong t-esc="x.name"/><div class="sl-muted ad-small" t-esc="x.email"/></td>
                             <td t-esc="x.room"/>
-                            <td class="ad-small" t-att-title="x.dossier_received_by ? 'Reçu par ' + x.dossier_received_by : ''" t-esc="x.dossier_date ? date(x.dossier_date) : '—'"/>
-                            <td><span t-if="x.has_code" class="sl-badge sl-badge-ok" t-att-title="'Généré le ' + date(x.code_generated_at)">Émis</span><span t-else="" class="sl-badge">À générer</span></td>
+                            <td class="ad-small" t-att-title="x.dossier_received_by ? 'Reçu par ' + x.dossier_received_by : ''" t-esc="x.dossier_date ? x.dossier_date.split('-').reverse().join('/') : '—'"/>
+                            <td><span t-if="x.has_code" class="sl-badge sl-badge-ok" t-att-title="'Généré le ' + date(x.code_generated_at)">Émis</span><span t-else="" class="sl-badge">À générer</span><span t-if="x.code_sent_via" class="sl-badge ad-ml" t-att-title="'Envoyé le ' + date(x.code_sent_at)" t-esc="x.code_sent_via == 'sms' ? 'SMS' : 'WhatsApp'"/></td>
                             <td><span t-attf-class="sl-badge {{cbadge[x.state]}}" t-esc="clabels[x.state]"/></td>
                             <td class="num" t-esc="x.percentage !== null ? pct(x.percentage) : '—'"/>
                             <td class="num">
@@ -309,6 +331,7 @@ export class ConcoursEditPage extends Component {
             loaded: false, c: { ...DEFAULTS }, tab: this.props.tab, saving: false,
             questions: [], categories: [], qsearch: "", qcat: "", qonly: false,
             candidates: [], csearch: "", selected: [], editCand: null,
+            issued: null, channels: [], sending: false, sendReport: "", waLinks: null,
         });
         this.steps = STEPS;
         this.cbadge = CANDIDATE_BADGE;
@@ -606,26 +629,76 @@ export class ConcoursEditPage extends Component {
             notify(e.message, "danger");
         }
     }
+    printIssued() {
+        printConvocations(store.session.company, this.state.issued, `${location.origin}/selecta/exam`);
+    }
+
+    async sendIssued(channel) {
+        const items = this.state.issued.codes.map((x) => ({ id: x.id, code: x.code }));
+        this.state.sending = true;
+        try {
+            let sent = 0, failed = [];
+            for (let i = 0; i < items.length; i += 25) {
+                const res = await api("codes_send", [this.state.c.id, items.slice(i, i + 25), channel]);
+                sent += res.sent;
+                failed = failed.concat(res.results.filter((r) => !r.ok));
+            }
+            const names = Object.fromEntries(this.state.issued.codes.map((x) => [x.id, x.name]));
+            this.state.sendReport = `${sent} code(s) envoyé(s) par ${channel === "sms" ? "SMS" : "WhatsApp"}` +
+                (failed.length ? `, ${failed.length} échec(s) : ` + failed.slice(0, 5).map((f) => `${names[f.id]} (${f.error})`).join(", ") : ".");
+            this.state.candidates = await api("candidates_list", [this.state.c.id]);
+            notify(this.state.sendReport, failed.length ? "warn" : "ok", 9000);
+        } catch (e) {
+            notify(e.message, "danger");
+        } finally {
+            this.state.sending = false;
+        }
+    }
+
+    async whatsappLinks() {
+        const items = this.state.issued.codes.map((x) => ({ id: x.id, code: x.code }));
+        try {
+            this.state.waLinks = await api("codes_whatsapp_links", [this.state.c.id, items]);
+        } catch (e) {
+            notify(e.message, "danger");
+        }
+    }
+
+    async closeIssued() {
+        const ok = await confirmDialog({
+            title: "Fermer la remise des codes ?",
+            body: "Les codes ne pourront plus être affichés. Un candidat sans code devra en recevoir un nouveau (régénération).",
+            confirmLabel: "Fermer",
+        });
+        if (ok) {
+            this.state.issued = null;
+            this.state.waLinks = null;
+        }
+    }
+
     async generateCodes(onlyMissing) {
         const ids = onlyMissing ? null : this.state.selected;
         const n = onlyMissing ? this.codesMissing : ids.length;
         const ok = await confirmDialog({
             title: `Générer ${n} code(s) d'accès ?`,
             body: onlyMissing
-                ? "Les convocations s'ouvriront pour impression. Les codes ne pourront plus être affichés ensuite : imprimez-les ou enregistrez-les en PDF immédiatement."
-                : "Les anciens codes de ces candidats seront invalidés. Les nouvelles convocations s'ouvriront pour impression.",
-            confirmLabel: "Générer et imprimer",
+                ? "Vous remettrez ensuite les codes : convocations imprimées, SMS ou WhatsApp. Ils ne pourront plus être affichés après fermeture du panneau de remise."
+                : "Les anciens codes de ces candidats seront invalidés. Vous remettrez ensuite les nouveaux : convocations imprimées, SMS ou WhatsApp.",
+            confirmLabel: "Générer les codes",
         });
         if (!ok) {
             return;
         }
         try {
             const res = await api("generate_codes", [this.state.c.id, ids, onlyMissing]);
-            const url = `${store.session ? location.origin : ""}/selecta/exam`;
-            printConvocations(store.session.company, res, url);
+            this.state.channels = await api("messaging_channels", []).catch(() => []);
+            // Les codes en clair ne vivent que dans ce panneau, le temps de les remettre.
+            this.state.issued = res;
+            this.state.waLinks = null;
+            this.state.sendReport = "";
             this.state.candidates = await api("candidates_list", [this.state.c.id]);
             this.state.selected = [];
-            notify(`${res.codes.length} code(s) générés. Conservez les convocations imprimées en lieu sûr.`, "ok", 8000);
+            notify(`${res.codes.length} code(s) générés : remettez-les maintenant (impression, SMS ou WhatsApp).`, "ok", 8000);
         } catch (e) {
             notify(e.message, "danger");
         }

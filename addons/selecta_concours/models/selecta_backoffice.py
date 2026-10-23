@@ -7,12 +7,14 @@ Chaque méthode vérifie explicitement le rôle de l'utilisateur ; les droits d'
 import base64
 import io
 from datetime import timedelta
+from urllib.parse import quote
 
 from odoo import api, fields, models, _
 from odoo.exceptions import AccessError, UserError
 
 from .selecta_concours import G_ADMIN, G_DESIGN, G_JURY, G_PROCTOR, require_group
 from .selecta_attempt import EVENT_LABELS, LEVEL_MAX_WARNINGS, to_ms
+from .selecta_messaging import normalize_phone
 
 CONCOURS_FIELDS = [
     'name', 'description', 'instructions', 'date_start', 'date_end', 'auto_close', 'duration_minutes',
@@ -325,6 +327,7 @@ class SelectaBackoffice(models.AbstractModel):
             'state': c.state, 'has_code': c.has_code, 'code_generated_at': _dt(c.code_generated_at),
             'percentage': att.percentage if att else None, 'has_photo': bool(c.photo_reference),
             'dossier_date': c.dossier_date and str(c.dossier_date) or '',
+            'code_sent_at': _dt(c.code_sent_at), 'code_sent_via': c.code_sent_via or '',
             'dossier_received_by': c.dossier_received_by.name or '',
         }
 
@@ -409,6 +412,71 @@ class SelectaBackoffice(models.AbstractModel):
                          'instructions': concours.instructions or '',
                          'exam_mode': concours.exam_mode, 'exam_venue': concours.exam_venue or ''},
         }
+
+    # ------------------------------------------------------------------ envoi des codes (SMS, WhatsApp)
+    @api.model
+    def messaging_channels(self):
+        require_group(self.env, G_ADMIN)
+        return self.env['selecta.messaging'].channels()
+
+    @api.model
+    def codes_send(self, concours_id, items, channel):
+        """Envoie à chaque candidat son code, que la console vient de générer et d'afficher.
+
+        ``items`` : [{'id': candidat, 'code': code en clair}]. Un code qui ne correspond pas au
+        candidat est refusé : la console ne peut rien faire envoyer d'autre que le vrai code.
+        """
+        require_group(self.env, G_ADMIN)
+        if channel not in ('sms', 'whatsapp'):
+            raise UserError(_("Canal d'envoi inconnu."))
+        concours = self.env['selecta.concours'].browse(int(concours_id)).exists()
+        if not concours:
+            raise UserError(_("Concours introuvable."))
+        Msg = self.env['selecta.messaging']
+        Cand = self.env['selecta.candidate']
+        results, sent = [], 0
+        for item in (items or [])[:500]:
+            cand = Cand.browse(int(item.get('id') or 0)).exists()
+            if not cand or cand.concours_id != concours:
+                continue
+            code = str(item.get('code') or '')
+            if not cand.sudo().code_hash or Cand._hash_code(code) != cand.sudo().code_hash:
+                results.append({'id': cand.id, 'ok': False, 'error': _("code invalide")})
+                continue
+            phone = normalize_phone(cand.phone, concours.company_id.country_id)
+            if not phone:
+                results.append({'id': cand.id, 'ok': False, 'error': _("pas de numéro de téléphone valide")})
+                continue
+            ok, error = Msg.send(channel, phone, Msg.code_message(cand, code))
+            if ok:
+                cand.sudo().write({'code_sent_at': fields.Datetime.now(), 'code_sent_via': channel})
+                sent += 1
+            results.append({'id': cand.id, 'ok': ok, 'error': error})
+        self.env['selecta.audit.log']._log(
+            'codes.send', _("Envoi de %(n)s code(s) par %(c)s", n=sent, c=channel.upper() if channel == 'sms' else 'WhatsApp'),
+            {'sent': sent, 'failed': len(results) - sent}, concours=concours)
+        return {'sent': sent, 'results': results}
+
+    @api.model
+    def codes_whatsapp_links(self, concours_id, items):
+        """Envoi manuel, sans service : un lien wa.me par candidat, ouvert depuis le téléphone du personnel."""
+        require_group(self.env, G_ADMIN)
+        concours = self.env['selecta.concours'].browse(int(concours_id)).exists()
+        Cand = self.env['selecta.candidate']
+        Msg = self.env['selecta.messaging']
+        links = []
+        for item in (items or [])[:500]:
+            cand = Cand.browse(int(item.get('id') or 0)).exists()
+            if not cand or cand.concours_id != concours:
+                continue
+            code = str(item.get('code') or '')
+            if not cand.sudo().code_hash or Cand._hash_code(code) != cand.sudo().code_hash:
+                continue
+            phone = normalize_phone(cand.phone, concours.company_id.country_id)
+            links.append({'id': cand.id, 'name': cand.name, 'reference': cand.reference, 'phone': phone,
+                          'url': 'https://wa.me/%s?text=%s' % (phone.lstrip('+'), quote(Msg.code_message(cand, code)))
+                          if phone else ''})
+        return links
 
     # ------------------------------------------------------------------ surveillance en direct
     def _event_dict(self, e):

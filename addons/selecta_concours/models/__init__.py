@@ -8,5 +8,6 @@ from . import selecta_attempt
 from . import selecta_proctor
 from . import selecta_throttle
 from . import selecta_ai
+from . import selecta_messaging
 from . import selecta_backoffice
 from . import res_users
