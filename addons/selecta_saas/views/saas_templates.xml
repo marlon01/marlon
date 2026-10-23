@@ -45,6 +45,7 @@
                 <link rel="icon" href="/selecta_concours/static/description/icon.png"/>
                 <link rel="stylesheet" href="/selecta_concours/static/src/css/selecta_base.css"/>
                 <link rel="stylesheet" href="/selecta_saas/static/src/css/saas_public.css"/>
+                <script src="/selecta_saas/static/src/public/selecta_i18n.js"/>
             </head>
             <body class="lp">
                 <a class="lp-skip" href="#contenu">Aller au contenu</a>
@@ -62,6 +63,7 @@
                             <a href="#faq">FAQ</a>
                         </nav>
                         <div class="lp-top-actions">
+                            <div class="sl-lang-switch" role="group" aria-label="Langue / Language" data-no-i18n=""><button type="button" data-selecta-lang="fr" lang="fr">FR</button><button type="button" data-selecta-lang="en" lang="en">EN</button></div>
                             <a class="lp-top-link lp-hide-s" href="/selecta/exam">Espace candidat</a>
                             <a class="lp-top-link" href="/selecta/login">Se connecter</a>
                             <t t-call="selecta_saas.lp_cta">

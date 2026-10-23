@@ -32,6 +32,7 @@ SELECTA SaaS (by Naxoris)
         # Espace « Abonnement » et bandeau d'échéance, ajoutés à la console de chaque structure.
         'selecta_concours.assets_admin': [
             'selecta_saas/static/src/css/saas_tenant.css',
+            'selecta_saas/static/src/i18n/*.js',
             'selecta_saas/static/src/tenant/**/*.js',
         ],
         # Formulaire d'inscription (application OWL autonome).
@@ -44,6 +45,7 @@ SELECTA SaaS (by Naxoris)
             'selecta_concours/static/src/css/selecta_base.css',
             'selecta_saas/static/src/css/saas_signup.css',
             'selecta_concours/static/src/common/**/*.js',
+            'selecta_saas/static/src/i18n/*.js',
             'selecta_saas/static/src/signup/**/*.js',
         ],
         # Console de l'administration centrale (application OWL autonome).
@@ -57,6 +59,7 @@ SELECTA SaaS (by Naxoris)
             'selecta_concours/static/src/css/selecta_admin.css',
             'selecta_saas/static/src/css/saas_platform.css',
             'selecta_concours/static/src/common/**/*.js',
+            'selecta_saas/static/src/i18n/*.js',
             'selecta_saas/static/src/platform/**/*.js',
         ],
     },

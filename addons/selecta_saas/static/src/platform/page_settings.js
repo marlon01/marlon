@@ -1,4 +1,5 @@
 /** @odoo-module */
+import { locale } from "@selecta_concours/common/i18n";
 import { Component, onMounted, onWillStart, onWillUnmount, useRef, useState, xml } from "@odoo/owl";
 import { Icon, notify } from "@selecta_concours/common/ui";
 import { fmtNum } from "@selecta_concours/common/utils";
@@ -618,7 +619,7 @@ export class SettingsPage extends Component {
         if (!m) {
             return "jamais (textes par défaut)";
         }
-        return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+        return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString(locale(), { day: "numeric", month: "long", year: "numeric" });
     }
     num(v) {
         return fmtNum(v || 0, 0);

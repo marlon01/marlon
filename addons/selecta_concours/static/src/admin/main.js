@@ -61,6 +61,7 @@ class AdminApp extends Component {
                         <div class="ad-user-name" t-esc="session.name"/>
                         <div class="ad-user-role" t-esc="roleLabel"/>
                     </div>
+                    <div class="sl-lang-switch sl-lang-dark" role="group" aria-label="Langue / Language" data-no-i18n=""><button type="button" data-selecta-lang="fr" lang="fr">FR</button><button type="button" data-selecta-lang="en" lang="en">EN</button></div>
                     <a href="/selecta/logout" class="sl-btn sl-btn-ghost sl-btn-icon" title="Se déconnecter" aria-label="Se déconnecter"><Icon name="'logout'"/></a>
                 </div>
             </aside>

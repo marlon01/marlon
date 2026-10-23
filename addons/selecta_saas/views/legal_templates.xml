@@ -10,6 +10,7 @@
                 <meta name="description" t-att-content="title + ' de la plateforme SELECTA, éditée par ' + issuer + '.'"/>
                 <link rel="icon" href="/selecta_concours/static/description/icon.png"/>
                 <link rel="stylesheet" href="/selecta_concours/static/src/css/selecta_base.css"/>
+                <script src="/selecta_saas/static/src/public/selecta_i18n.js"/>
                 <style>
                     body{background:var(--sl-paper)}
                     .lg-top{border-bottom:1px solid var(--sl-border);background:#fff}
@@ -38,6 +39,7 @@
                         <a href="/selecta/conditions" t-att-aria-current="'page' if kind == 'terms' else None">Conditions d'utilisation</a>
                         <a href="/selecta/confidentialite" t-att-aria-current="'page' if kind == 'privacy' else None">Confidentialité</a>
                     </nav>
+                    <div class="sl-lang-switch" role="group" aria-label="Langue / Language" data-no-i18n=""><button type="button" data-selecta-lang="fr" lang="fr">FR</button><button type="button" data-selecta-lang="en" lang="en">EN</button></div>
                 </div></header>
                 <main class="lg-doc" id="contenu">
                     <t t-if="custom">

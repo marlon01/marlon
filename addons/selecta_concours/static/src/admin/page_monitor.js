@@ -1,4 +1,5 @@
 /** @odoo-module */
+import { locale } from "@selecta_concours/common/i18n";
 import { Component, onWillStart, onWillUnmount, useState, xml } from "@odoo/owl";
 import { api } from "@selecta_concours/common/rpc";
 import { confirmDialog, Icon, notify } from "@selecta_concours/common/ui";
@@ -162,7 +163,7 @@ export class MonitorPage extends Component {
     async load() {
         try {
             this.state.data = await api("monitor", [this.props.concoursId]);
-            this.state.updated = new Date().toLocaleTimeString("fr-FR");
+            this.state.updated = new Date().toLocaleTimeString(locale());
         } catch (e) {
             notify(e.message, "danger");
         }

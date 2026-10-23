@@ -5,8 +5,9 @@ import { fmtNum, fmtPct } from "@selecta_concours/common/utils";
 import { BarChart } from "@selecta_saas/platform/charts";
 import { daysLabel, errMessage, fmtDate, money, papi, pstore, TENANT_BADGE } from "@selecta_saas/platform/papi";
 
-const SHORT = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
-const MONTHS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+import { locale } from "@selecta_concours/common/i18n";
+
+const monthName = (i, style) => new Date(2000, i, 1).toLocaleDateString(locale(), { month: style });
 
 export class OverviewPage extends Component {
     static components = { Icon, BarChart };
@@ -151,7 +152,8 @@ export class OverviewPage extends Component {
         return this.state.data.revenue.map((r) => {
             const [m, y] = String(r.label).split("/");
             const i = parseInt(m, 10) - 1;
-            return { value: r.value, label: SHORT[i] || r.label, long: MONTHS[i] ? `${MONTHS[i]} ${y}` : r.label };
+            const known = i >= 0 && i < 12;
+            return { value: r.value, label: known ? monthName(i, "short") : r.label, long: known ? `${monthName(i, "long")} ${y}` : r.label };
         });
     }
     weekLabel(label) {

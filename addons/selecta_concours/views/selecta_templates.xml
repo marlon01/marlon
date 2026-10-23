@@ -39,6 +39,7 @@
                 <meta name="viewport" content="width=device-width, initial-scale=1"/>
                 <title>Vérification d'authenticité — SELECTA</title>
                 <link rel="stylesheet" href="/selecta_concours/static/src/css/selecta_base.css"/>
+                <script src="/selecta_concours/static/src/public/selecta_i18n_core.js"/>
                 <style>
                     body{background:var(--sl-bg);display:flex;min-height:100vh;align-items:center;justify-content:center;padding:24px}
                     .v-card{max-width:720px;width:100%;background:var(--sl-surface);border-radius:20px;box-shadow:var(--sl-shadow-lg);overflow:hidden}
@@ -52,6 +53,7 @@
                 </style>
             </head>
             <body>
+                <div class="v-lang"><div class="sl-lang-switch" role="group" aria-label="Langue / Language" data-no-i18n=""><button type="button" data-selecta-lang="fr" lang="fr">FR</button><button type="button" data-selecta-lang="en" lang="en">EN</button></div></div>
                 <div class="v-card">
                     <t t-if="concours">
                         <div class="v-head v-ok">

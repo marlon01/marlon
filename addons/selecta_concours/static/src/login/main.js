@@ -9,6 +9,7 @@ class StaffLogin extends Component {
     static template = xml`
         <div class="lg-wrap">
             <form class="lg-card" t-on-submit.prevent="submit" autocomplete="on">
+                <div class="sl-lang-switch lg-lang" role="group" aria-label="Langue / Language" data-no-i18n=""><button type="button" data-selecta-lang="fr" lang="fr">FR</button><button type="button" data-selecta-lang="en" lang="en">EN</button></div>
                 <div class="lg-brand">
                     <img t-att-src="config.company.logo" alt="" t-on-error="(ev) => ev.target.style.display='none'"/>
                     <div>

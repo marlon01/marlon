@@ -149,3 +149,16 @@ button, input, select, textarea { font: inherit; color: inherit; }
   body { background: #fff; }
   .sl-noprint { display: none !important; }
 }
+
+/* ---------------------------------------------------------------- sélecteur de langue FR | EN */
+.sl-lang-switch { display: inline-flex; border: 1px solid var(--sl-border-strong); border-radius: 999px; padding: 2px; gap: 2px; background: var(--sl-surface); flex: none; }
+.sl-lang-switch button { border: 0; background: transparent; color: var(--sl-ink-soft); font: 600 12px/1 var(--sl-font); letter-spacing: .04em; padding: 6px 9px; border-radius: 999px; cursor: pointer; min-width: 34px; min-height: 26px; }
+.sl-lang-switch button:hover { color: var(--sl-ink); }
+html[data-lang="fr"] .sl-lang-switch [data-selecta-lang="fr"], html[data-lang="en"] .sl-lang-switch [data-selecta-lang="en"] { background: var(--sl-ink); color: #fff; }
+.sl-lang-dark { background: transparent; border-color: rgba(255,255,255,.22); }
+.sl-lang-dark button { color: #C9D3EA; }
+html[data-lang="fr"] .sl-lang-dark [data-selecta-lang="fr"], html[data-lang="en"] .sl-lang-dark [data-selecta-lang="en"] { background: rgba(255,255,255,.16); color: #fff; }
+.lg-lang, .su-lang { align-self: flex-end; }
+.ex-lang { position: absolute; top: 18px; right: 18px; z-index: 2; }
+.ex-login-main { position: relative; }
+.v-lang { position: fixed; top: 16px; right: 16px; }

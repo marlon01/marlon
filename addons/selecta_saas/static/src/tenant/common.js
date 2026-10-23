@@ -1,5 +1,6 @@
 /** @odoo-module */
 /* Abonnement d'une structure : état partagé (bandeau ⇄ page) et utilitaires de présentation. */
+import { locale } from "@selecta_concours/common/i18n";
 import { reactive } from "@odoo/owl";
 import { store } from "@selecta_concours/admin/store";
 import { ICONS } from "@selecta_concours/common/ui";
@@ -74,7 +75,7 @@ export function fmtMoney(amount, symbol = "$") {
     }
     const n = Number(amount);
     const digits = Number.isInteger(n) ? 0 : 2;
-    return `${n.toLocaleString("fr-FR", { minimumFractionDigits: digits, maximumFractionDigits: 2 })}\u00a0${symbol || "$"}`;
+    return `${n.toLocaleString(locale(), { minimumFractionDigits: digits, maximumFractionDigits: 2 })}\u00a0${symbol || "$"}`;
 }
 
 export function fmtDate(value, style = "long") {
@@ -82,7 +83,7 @@ export function fmtDate(value, style = "long") {
     if (!d || isNaN(d)) {
         return "—";
     }
-    return d.toLocaleDateString("fr-FR", { dateStyle: style });
+    return d.toLocaleDateString(locale(), { dateStyle: style });
 }
 
 export function daysLabel(n) {

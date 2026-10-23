@@ -1,4 +1,5 @@
 /** @odoo-module */
+import { locale } from "@selecta_concours/common/i18n";
 
 export function readConfig() {
     const el = document.getElementById("selecta-config");
@@ -22,7 +23,7 @@ export function fmtDateTime(value) {
     if (!d || isNaN(d)) {
         return "—";
     }
-    return d.toLocaleString("fr-FR", { dateStyle: "medium", timeStyle: "short" });
+    return d.toLocaleString(locale(), { dateStyle: "medium", timeStyle: "short" });
 }
 
 export function fmtTime(value) {
@@ -30,7 +31,7 @@ export function fmtTime(value) {
     if (!d || isNaN(d)) {
         return "—";
     }
-    return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    return d.toLocaleTimeString(locale(), { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 }
 
 /** Convertit une date UTC Odoo vers la valeur d'un <input type="datetime-local"> (heure locale). */
@@ -67,14 +68,14 @@ export function fmtPct(v, digits = 1) {
     if (v === null || v === undefined) {
         return "—";
     }
-    return `${Number(v).toLocaleString("fr-FR", { minimumFractionDigits: digits, maximumFractionDigits: digits })} %`;
+    return `${Number(v).toLocaleString(locale(), { minimumFractionDigits: digits, maximumFractionDigits: digits })} %`;
 }
 
 export function fmtNum(v, digits = 2) {
     if (v === null || v === undefined) {
         return "—";
     }
-    return Number(v).toLocaleString("fr-FR", { maximumFractionDigits: digits });
+    return Number(v).toLocaleString(locale(), { maximumFractionDigits: digits });
 }
 
 /** Analyse CSV robuste (séparateur ; ou , détecté, guillemets gérés). */

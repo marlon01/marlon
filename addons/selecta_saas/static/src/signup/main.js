@@ -3,6 +3,7 @@ import { Component, mount, onMounted, useState, whenReady, xml } from "@odoo/owl
 import { jsonrpc } from "@selecta_concours/common/rpc";
 import { Icon } from "@selecta_concours/common/ui";
 import { fmtNum, readConfig } from "@selecta_concours/common/utils";
+import { getLang, locale } from "@selecta_concours/common/i18n";
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$/;
 const FIELD_ORDER = ["plan", "organization", "contact_name", "email", "phone", "country", "password", "accept_terms"];
@@ -41,6 +42,7 @@ class Signup extends Component {
         <div class="su-wrap" t-att-class="{ 'su-wrap-single': !(config.signup_enabled and plan) }">
             <main class="su-main">
                 <div class="su-card">
+                    <div class="sl-lang-switch su-lang" role="group" aria-label="Langue / Language" data-no-i18n=""><button type="button" data-selecta-lang="fr" lang="fr">FR</button><button type="button" data-selecta-lang="en" lang="en">EN</button></div>
                     <a class="su-mark" href="/selecta" aria-label="SELECTA, retour à la présentation">
                         <span class="su-mark-seal" aria-hidden="true">S</span>
                         <span class="su-mark-word">SELECTA</span>
@@ -191,7 +193,10 @@ class Signup extends Component {
         this.config = readConfig();
         this.fmtNum = fmtNum;
         this.plans = this.config.plans || [];
-        this.countries = this.config.countries || [];
+        const en = getLang() === "en";
+        this.countries = (this.config.countries || [])
+            .map((c) => ({ code: c.code, name: (en && c.name_en) || c.name }))
+            .sort((a, b) => a.name.localeCompare(b.name, locale()));
         this.contactEmail = this.config.support_email || "contact@naxoris.com";
         const wanted = this.plans.find((p) => p.code === this.config.plan);
         const initial = wanted || this.plans.find((p) => p.highlight) || this.plans[0];

@@ -1,0 +1,1039 @@
+// Fichier généré par tools/build_ui_i18n.py : ne pas modifier à la main.
+(function () {
+/*
+ * Interface bilingue français / anglais.
+ *
+ * Les écrans sont rédigés en français ; en anglais, chaque texte affiché (nœuds texte, placeholder,
+ * title, aria-label, alt, titre du document) est remplacé à la volée par sa traduction dès que
+ * l'interface le produit (MutationObserver : avant l'affichage, sans clignotement). Les messages
+ * contenant des valeurs (« Import de 3 question(s) ») sont reconnus par des modèles %s / %(nom)s.
+ *
+ * Langue : choix mémorisé (sélecteur FR | EN, éléments [data-selecta-lang]), sinon langue du
+ * navigateur. Les dictionnaires sont générés depuis i18n_ui/en.json (tools/build_ui_i18n.py).
+ * Un élément [data-no-i18n] et ses descendants ne sont jamais traduits (saisies, contenus métier).
+ */
+const STORAGE_KEY = "selecta.lang";
+const ATTRIBUTES = ["placeholder", "title", "aria-label", "alt"];
+// Contenu jamais traduit ; une zone de saisie (TEXTAREA) garde son texte mais son placeholder est traduit.
+const SKIP_TAGS = new Set(["SCRIPT", "STYLE", "CODE", "PRE"]);
+const exact = new Map();
+const patterns = [];
+const done = new WeakMap(); // nœud → dernière valeur écrite par la traduction
+
+// Apostrophes typographiques et droites confondues : « l’essai » et « l'essai » partagent leur traduction.
+const norm = (s) => s.replace(/\s+/g, " ").replace(/[’‘]/g, "'").trim();
+
+function compile(key, value) {
+    const names = [];
+    const source = key.replace(/%%/g, "\u0000").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = source.replace(/%\\\((\w+)\\\)s|%(?:\\\.\d)?[sdf]/g, (m, name) => {
+        names.push(name || null);
+        // %d : nombre uniquement (« 3 sur 10 »), pour ne pas capturer une phrase entière.
+        return m === "%d" ? "([\\d\\s.,\u00a0\u202f]+)" : "(.*?)";
+    }).replace(/\u0000/g, "%");
+    // Le modèle le plus précis (le plus de texte fixe) est essayé en premier : « Catégorie %s activée… »
+    // passe avant « Catégorie %s ».
+    const weight = key.replace(/%(\(\w+\))?(\.\d)?[sdf]/g, "").length;
+    patterns.push({ regex: new RegExp(`^${regex}$`), names, value, weight });
+}
+
+/** Ajoute des traductions pour l'anglais (clé : texte français tel qu'affiché). */
+function register(dict) {
+    for (const [key, value] of Object.entries(dict)) {
+        if (/%(\(\w+\))?(\.\d)?[sdf]/.test(key)) {
+            compile(norm(key), value);
+        } else {
+            exact.set(norm(key), value);
+        }
+    }
+    patterns.sort((a, b) => b.weight - a.weight);
+}
+
+function getLang() {
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved === "fr" || saved === "en") {
+            return saved;
+        }
+    } catch {
+        // Stockage indisponible (navigation privée, kiosque) : langue du navigateur.
+    }
+    return (navigator.language || "fr").toLowerCase().startsWith("en") ? "en" : "fr";
+}
+
+function setLang(lang) {
+    try {
+        localStorage.setItem(STORAGE_KEY, lang);
+    } catch {
+        // Sans stockage, le choix vaut pour cette page seulement.
+    }
+    location.reload();
+}
+
+/** Locale des dates et des nombres. */
+function locale() {
+    return getLang() === "en" ? "en-GB" : "fr-FR";
+}
+
+/** Traduction d'un texte (français si l'interface est en français ou si le texte est inconnu). */
+function t(text) {
+    if (getLang() !== "en" || !text) {
+        return text;
+    }
+    return lookup(norm(String(text)), 0) ?? text;
+}
+
+function lookup(key, depth) {
+    if (exact.has(key)) {
+        return exact.get(key);
+    }
+    if (key.length < 400 && depth < 2) {
+        for (const p of patterns) {
+            const m = p.regex.exec(key);
+            if (m) {
+                const groups = m.slice(1);
+                let i = 0;
+                return p.value.replace(/%%/g, "\u0000").replace(/%\((\w+)\)s|%(?:\.\d)?[sdf]/g, (all, name) => {
+                    const index = name ? p.names.indexOf(name) : i++;
+                    // Une valeur connue du dictionnaire (nom de catégorie, « Semaine du 19/10 »…) est traduite elle aussi.
+                    return index >= 0 && groups[index] !== undefined ? lookup(groups[index], depth + 1) ?? groups[index] : all;
+                }).replace(/\u0000/g, "%");
+            }
+        }
+    }
+    return null;
+}
+
+function translateText(node) {
+    const value = node.nodeValue;
+    if (node.parentElement?.tagName === "TEXTAREA" || !value || done.get(node) === value || !/[A-Za-zÀ-ÿ]/.test(value)) {
+        return;
+    }
+    const translated = t(value);
+    if (translated !== value) {
+        const lead = value.match(/^\s*/)[0];
+        const trail = value.match(/\s*$/)[0];
+        const next = lead + translated + trail;
+        done.set(node, next);
+        node.nodeValue = next;
+    } else {
+        done.set(node, value);
+    }
+}
+
+function skipped(el) {
+    return !el || SKIP_TAGS.has(el.tagName) || el.closest?.("[data-no-i18n], [contenteditable='true']");
+}
+
+function translateAttributes(el) {
+    for (const name of ATTRIBUTES) {
+        const value = el.getAttribute(name);
+        if (value) {
+            const translated = t(value);
+            if (translated !== value) {
+                el.setAttribute(name, translated);
+            }
+        }
+    }
+}
+
+/** Traduit un arbre DOM, y compris celui d'un autre document (iframe d'impression). */
+function translateTree(root) {
+    if (root.nodeType === Node.TEXT_NODE) {
+        if (!skipped(root.parentElement)) {
+            translateText(root);
+        }
+        return;
+    }
+    if (getLang() !== "en" || root.nodeType !== Node.ELEMENT_NODE || skipped(root)) {
+        return;
+    }
+    translateAttributes(root);
+    const walker = (root.ownerDocument || document).createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
+        acceptNode: (n) => (n.nodeType === Node.ELEMENT_NODE && skipped(n) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT),
+    });
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+        if (n.nodeType === Node.TEXT_NODE) {
+            translateText(n);
+        } else {
+            translateAttributes(n);
+        }
+    }
+}
+
+let started = false;
+
+/** Démarre la traduction de la page (sans effet en français) et branche le sélecteur de langue. */
+function startI18n() {
+    if (started) {
+        return;
+    }
+    started = true;
+    const lang = getLang();
+    document.documentElement.lang = lang;
+    document.documentElement.dataset.lang = lang;
+    document.addEventListener("click", (ev) => {
+        const btn = ev.target.closest?.("[data-selecta-lang]");
+        if (btn) {
+            ev.preventDefault();
+            if (btn.dataset.selectaLang !== getLang()) {
+                setLang(btn.dataset.selectaLang);
+            }
+        }
+    });
+    if (lang !== "en") {
+        return;
+    }
+    const translateTitle = () => {
+        const translated = t(document.title);
+        if (translated !== document.title) {
+            document.title = translated;
+        }
+    };
+    translateTitle();
+    translateTree(document.body);
+    new MutationObserver((mutations) => {
+        for (const m of mutations) {
+            if (m.type === "characterData") {
+                if (!skipped(m.target.parentElement)) {
+                    translateText(m.target);
+                }
+            } else if (m.type === "attributes") {
+                if (!skipped(m.target)) {
+                    translateAttributes(m.target);
+                }
+            } else {
+                m.addedNodes.forEach(translateTree);
+            }
+        }
+    }).observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ATTRIBUTES });
+    const titleEl = document.querySelector("title");
+    if (titleEl) {
+        new MutationObserver(translateTitle).observe(titleEl, { childList: true, characterData: true, subtree: true });
+    }
+}
+
+if (typeof document !== "undefined") {
+    if (document.body) {
+        startI18n();
+    } else {
+        document.addEventListener("DOMContentLoaded", startI18n);
+    }
+}
+
+register({
+"%(n)s paire(s) de candidats partagent un nombre improbable de": "%(n)s pair(s) of candidates share an improbable number of",
+"%. Votre admission définitive dépend du classement final (": "%. Your final admission depends on the final ranking (",
+"%s (copie)": "%s (copy)",
+"%s candidat(s) disqualifié(s) par la surveillance IA.": "%s candidate(s) disqualified by AI proctoring.",
+"%s candidat(s) importé(s)": "%s candidate(s) imported",
+"%s candidat(s) obtiennent un score élevé avec une durée de": "%s candidate(s) achieve a high score with a duration of",
+"%s code(s) générés. Conservez les convocations imprimées en lieu sûr.": "%s code(s) generated. Keep the printed notices somewhere safe.",
+"%s question(s) présentent une discrimination négative ou une clé": "%s question(s) show negative discrimination or an answer key",
+"%s question(s) trop faciles (≥ 90 %% de réussite) : faible pouvoir": "%s question(s) too easy (≥ 90 %% success): low power",
+"%s question(s) très difficiles (≤ 20 %% de réussite) : vérifier": "%s question(s) very hard (≤ 20 %% success): check",
+"%s terminés, %s en cours, %s disqualifiés sur %s inscrits": "%s finished, %s in progress, %s disqualified out of %s registered",
+"%s visages détectés simultanément": "%s faces detected at the same time",
+"%s, durée %s min": "%s, duration %s min",
+"%s, ouverture le %s, durée %s min": "%s, opens %s, duration %s min",
+"(cochez la ou les bonnes réponses)": "(tick the correct answer(s))",
+"(enregistrée)": "(saved)",
+"(hasard ≈": "(chance ≈",
+"(médiane": "(median",
+") en": ") in",
+", admis :": ", admitted:",
+", après avoir répondu à toutes ses questions": ", after answering all its questions",
+", candidats disqualifiés :": ", candidates disqualified:",
+", dernière à": ", last at",
+", nombre de places :": ", number of places:",
+", n°": ", no.",
+", plus faibles": ", weakest",
+", plusieurs réponses possibles": ", several answers possible",
+", sur": ", out of",
+". Corrélation point-bisériale :": ". Point-biserial correlation:",
+". Il est impossible de revenir sur une page validée.": ". You cannot go back to a validated page.",
+". La liste ci-dessous est celle enregistrée au moment de la publication ; toute version divergente est un faux.": ". The list below is the one recorded at publication; any different version is a forgery.",
+". Les codes d'accès sont hachés : ils ne sont affichés qu'une fois, au moment de l'impression des convocations.": ". Access codes are hashed: they are shown only once, when the notices are printed.",
+". Seuil de réussite :": ". Pass mark:",
+"0 = tous les candidats au-dessus du seuil sont admis. Sinon, les meilleurs dans la limite des places.": "0 = every candidate above the pass mark is admitted. Otherwise, the best ones up to the number of places.",
+"0 = toutes les questions sélectionnées. Sinon, tirage aléatoire individuel dans la sélection.": "0 = all selected questions. Otherwise, an individual random draw from the selection.",
+"10 caractères minimum": "10 characters minimum",
+"10 caractères minimum. Communiquez-le en main propre.": "10 characters minimum. Hand it over in person.",
+"12 caractères, lettres et chiffres. Les tirets s'ajoutent automatiquement.": "12 characters, letters and digits. Dashes are added automatically.",
+"2 avertissements, puis disqualification. Recommandé pour les concours.": "2 warnings, then disqualification. Recommended for contests.",
+"5 avertissements avant disqualification. Adapté aux tests internes.": "5 warnings before disqualification. Suited to internal tests.",
+"Absence du visage tolérée (secondes)": "Tolerated face absence (seconds)",
+"Absent": "Absent",
+"Acceptable": "Acceptable",
+"Accès des postes": "Workstation access",
+"Accès réservé aux administrateurs, concepteurs, membres du jury et surveillants. Toutes les connexions sont journalisées.": "Restricted to administrators, designers, jury members and proctors. Every login is logged.",
+"Accéder à mon épreuve": "Go to my exam",
+"Action « %s » bloquée": "Action “%s” blocked",
+"Activer l'assistant": "Enable the assistant",
+"Actualisation automatique toutes les 4 secondes": "Automatic refresh every 4 seconds",
+"Administrateur": "Administrator",
+"Administrateur concours": "Contest administrator",
+"Administration centrale indisponible": "Central administration unavailable",
+"Admis": "Admitted",
+"Adresse": "Address",
+"Adresse de l'épreuve :": "Test address:",
+"Afficher": "Show",
+"Afficher le mot de passe": "Show password",
+"Afficher le résultat au candidat": "Show the result to the candidate",
+"Ajouter un membre": "Add a member",
+"Ajouter une proposition": "Add an option",
+"Analyse IA": "AI analysis",
+"Analyse IA des résultats": "AI analysis of the results",
+"Analyse des questions": "Question analysis",
+"Analyse disponible dès les premières copies corrigées.": "Analysis available as soon as the first papers are graded.",
+"Analyse en cours…": "Analysing…",
+"Analyse vidéo réalisée localement sur chaque poste : aucun flux vidéo n'est transmis, seuls les clichés probatoires des incidents sont conservés.": "Video is analysed locally on each workstation: no video stream is transmitted, only evidence snapshots of incidents are kept.",
+"Après validation, vous ne pourrez plus revenir sur les réponses de cette page.": "Once validated, you will not be able to change the answers on this page.",
+"Assistant LLM désactivé dans les paramètres.": "LLM assistant disabled in the settings.",
+"Assistant de rédaction (LLM local, facultatif)": "Writing assistant (local LLM, optional)",
+"Assistant opérationnel.": "Assistant operational.",
+"Attendu par hasard": "Expected by chance",
+"Au prochain manquement au-delà de cette limite, l'épreuve sera interrompue.": "At the next breach beyond this limit, the exam will be stopped.",
+"Aucun candidat admis pour le moment.": "No admitted candidates yet.",
+"Aucun candidat admis.": "No admitted candidates.",
+"Aucun candidat dans cette catégorie. Les candidats apparaissent dès qu'ils saisissent leur code.": "No candidate in this category. Candidates appear as soon as they enter their code.",
+"Aucun candidat inscrit.": "No candidate registered.",
+"Aucun candidat inscrit. Importez une liste CSV ou inscrivez les candidats un par un.": "No candidate registered. Import a CSV list or register candidates one by one.",
+"Aucun candidat à risque.": "No candidate at risk.",
+"Aucun concours dans cette catégorie.": "No contest in this category.",
+"Aucun incident signalé par la surveillance.": "No incident reported by proctoring.",
+"Aucun incident.": "No incident.",
+"Aucun procès-verbal ne correspond à cette empreinte": "No official report matches this fingerprint",
+"Aucun profil.": "No profile.",
+"Aucun visage détecté depuis %s s": "No face detected for %s s",
+"Aucun événement enregistré.": "No event recorded.",
+"Aucune anomalie.": "No anomaly.",
+"Aucune base de données sélectionnée.": "No database selected.",
+"Aucune caméra n'est branchée sur ce poste. Prévenez un surveillant.": "No camera is connected to this computer. Tell an invigilator.",
+"Aucune catégorie n'est disponible pour le moment.": "No category is available at the moment.",
+"Aucune copie corrigée pour le moment :": "No graded paper yet:",
+"Aucune copie.": "No papers.",
+"Aucune paire suspecte (seuil statistique p < 0,001).": "No suspicious pairs (statistical threshold p < 0.001).",
+"Aucune question n'est associée au concours.": "No question is linked to the contest.",
+"Aucune question ne correspond. Créez une question ou importez un fichier CSV.": "No matching question. Create a question or import a CSV file.",
+"Aucune question. Alimentez la banque de questions pour constituer le questionnaire.": "No question. Fill the question bank to build the questionnaire.",
+"Aucune épreuve n'est ouverte. Ouvrez un concours prêt pour permettre aux candidats de se connecter.": "No exam is open. Open a ready contest so candidates can log in.",
+"Authentification à deux facteurs requise : utilisez /web/login.": "Two-factor authentication required: use /web/login.",
+"Autorise une nouvelle connexion (panne de poste)": "Allows a new login (workstation failure)",
+"Autoriser la reprise": "Allow resumption",
+"Autoriser la reprise pour %s ?": "Allow %s to resume?",
+"Autre personne dans le champ, visage différent du candidat, caméra masquée ou coupée, outils développeur": "Another person in view, a face different from the candidate's, camera covered or off, developer tools",
+"Avec alertes": "With alerts",
+"Avertissement": "Warning",
+"Avertissement, puis disqualification au-delà de": "Warning, then disqualification beyond",
+"Avertissement, puis disqualification au-delà de %s": "Warning, then disqualification beyond %s",
+"Avertissements": "Warnings",
+"Banque de questions": "Question bank",
+"Banque de questions et paramétrage pédagogique.": "Question bank and test design.",
+"Barre effective pour les places disponibles :": "Effective cut-off for the available places:",
+"Barème": "Points",
+"Bonjour": "Hello",
+"Bonne": "Good",
+"Bonne réponse": "Correct answer",
+"Bonnes réponses": "Correct answers",
+"Calculé le": "Computed on",
+"Caméra active": "Camera on",
+"Caméra masquée": "Camera covered",
+"Candidat": "Candidate",
+"Candidat :": "Candidate:",
+"Candidat A": "Candidate A",
+"Candidat B": "Candidate B",
+"Candidat disqualifié.": "Candidate disqualified.",
+"Candidat enregistré.": "Candidate saved.",
+"Candidats admis par ordre de mérite": "Admitted candidates in order of merit",
+"Catégorie de votre structure": "Your organisation's category",
+"Ce candidat a déjà participé : suppression interdite.": "This candidate has already taken part: deletion not allowed.",
+"Ce compte n'a aucun rôle SELECTA. Contactez l'administrateur.": "This account has no SELECTA role. Contact the administrator.",
+"Ce compte n'a pas accès à SELECTA.": "This account has no access to SELECTA.",
+"Ce compte n'appartient pas à votre structure.": "This account does not belong to your organisation.",
+"Ce concours n'est pas en cours : la vue est figée.": "This contest is not running: the view is frozen.",
+"Ce n'est pas moi": "That's not me",
+"Ce poste n'autorise pas l'accès caméra (contexte non sécurisé). Utilisez le lanceur « Poste candidat » fourni.": "This computer does not allow camera access (insecure context). Use the supplied “Candidate workstation” launcher.",
+"Ce procès-verbal a été scellé par SELECTA le": "This official report was sealed by SELECTA on",
+"Ces informations sont gérées par le moteur SELECTA.": "This information is managed by the SELECTA engine.",
+"Cette action est définitive.": "This action is permanent.",
+"Cette matière contient des questions.": "This subject contains questions.",
+"Cette épreuve est terminée.": "This exam is over.",
+"Changer": "Change",
+"Chaque candidat reçoit un ordre différent : le voisin n'est d'aucune aide.": "Each candidate gets a different order: the neighbour is no help.",
+"Chaque opération est chaînée à la précédente par une empreinte SHA-256 : toute modification en base est détectable.": "Each operation is chained to the previous one by a SHA-256 fingerprint: any change in the database is detectable.",
+"Chaque opération est horodatée et scellée dans un journal infalsifiable.": "Every operation is timestamped and sealed in a tamper-proof log.",
+"Chaque page se valide une seule fois": "Each page is validated only once",
+"Chargement de l'analyse faciale…": "Loading face analysis…",
+"Chargement de la reconnaissance d'identité…": "Loading identity recognition…",
+"Chargement du détecteur de visage…": "Loading the face detector…",
+"Chargement du moteur de vision…": "Loading the vision engine…",
+"Chargement sécurisé…": "Secure loading…",
+"Chaîne intègre :": "Chain intact:",
+"Choisir le fichier": "Choose the file",
+"Choisir un concours": "Choose a contest",
+"Choisir une image": "Choose an image",
+"Choisissez un concours en cours pour suivre les candidats en temps réel.": "Choose a running contest to follow candidates in real time.",
+"Choisissez un concours pour afficher son classement.": "Choose a contest to display its ranking.",
+"Choisissez un concours pour lancer l'analyse.": "Choose a contest to run the analysis.",
+"Choix multiples": "Multiple choice",
+"Choix unique": "Single choice",
+"Classement complet": "Full ranking",
+"Clé d'API": "API key",
+"Clé suspecte": "Suspicious answer key",
+"Clôture automatique": "Automatic closing",
+"Clôture automatique : fenêtre de connexion expirée": "Automatic closing: login window expired",
+"Clôture automatique : tous les candidats ont terminé": "Automatic closing: all candidates have finished",
+"Clôture manuelle": "Manual closing",
+"Clôturer": "Close",
+"Clôturer l'épreuve ?": "Close the test?",
+"Clôturé": "Closed",
+"Clôturés": "Closed",
+"Cochez au moins une bonne réponse.": "Tick at least one correct answer.",
+"Code d'accès": "Access code",
+"Code d'accès invalide.": "Invalid access code.",
+"Code strictement personnel, valable une seule fois. Ne le communiquez à personne. Présentez une pièce d'identité au surveillant.": "Strictly personal code, valid once. Do not share it with anyone. Show an ID document to the invigilator.",
+"Codes d'accès des candidats": "Candidate access codes",
+"Collision de codes, veuillez réessayer.": "Code collision, please try again.",
+"Collusion : réponses fausses identiques improbables": "Collusion: improbable identical wrong answers",
+"Commencer l'épreuve": "Start the exam",
+"Comportement détecté": "Behaviour detected",
+"Comportement non conforme au règlement": "Behaviour not compliant with the rules",
+"Compte %(l)s %(s)s": "Account %(l)s %(s)s",
+"Compte %(l)s : rôle %(r)s": "Account %(l)s: role %(r)s",
+"Compte enregistré.": "Account saved.",
+"Concepteur": "Designer",
+"Concours": "Contest",
+"Concours dupliqué.": "Contest duplicated.",
+"Concours enregistré.": "Contest saved.",
+"Concours introuvable.": "Contest not found.",
+"Concours remis en préparation.": "Contest moved back to preparation.",
+"Concours récents": "Recent contests",
+"Concours validé et prêt": "Contest validated and ready",
+"Concours, candidats, codes d'accès, personnel et paramètres.": "Contests, candidates, access codes, staff and settings.",
+"Connecté au serveur d'examen": "Connected to the exam server",
+"Connecté au serveur d’examen": "Connected to the exam server",
+"Connexion au serveur d'examen interrompue.": "Connection to the exam server lost.",
+"Connexion du candidat": "Candidate login",
+"Connexion du personnel": "Staff login",
+"Connexion…": "Logging in…",
+"Conservation des données biométriques (jours)": "Biometric data retention (days)",
+"Consignes affichées aux candidats": "Instructions shown to candidates",
+"Consignes de l'organisateur": "Organiser's instructions",
+"Console des concours": "Contest console",
+"Console du personnel": "Staff console",
+"Contrôle continu d'identité": "Continuous identity check",
+"Contrôle d'identité": "Identity check",
+"Contrôle d'identité faciale validé": "Face identity check passed",
+"Contrôle d'identité refusé.": "Identity check rejected.",
+"Contrôle d’identité": "Identity check",
+"Contrôles d'accès": "Access checks",
+"Convocations %s": "Notices %s",
+"Copie enregistrée": "Paper saved",
+"Copie terminée, synchronisation en cours": "Paper finished, synchronising",
+"Copies": "Papers",
+"Copies corrigées :": "Papers marked:",
+"Correction automatique : votre résultat s'affiche dès la dernière page.": "Automatic grading: your result is shown right after the last page.",
+"Correction automatique par SELECTA : aucune intervention humaine sur les notes. Les copies sont scellées individuellement (empreinte SHA-256) et l'ensemble des opérations est consigné dans un journal d'audit chaîné.": "Automatic marking by SELECTA: no human intervention on the scores. Each paper is sealed individually (SHA-256 fingerprint) and every operation is recorded in a chained audit log.",
+"Correction automatique, classement et liste des admis produits en temps réel.": "Automatic grading, ranking and list of admitted candidates produced in real time.",
+"Corrigés": "Graded",
+"Couleur de marque": "Brand colour",
+"Création de votre espace…": "Creating your space…",
+"Création du concours %s": "Creation of contest %s",
+"Crédit partiel (bonnes moins mauvaises)": "Partial credit (right minus wrong)",
+"Créer mon espace et démarrer l'essai": "Create my space and start the trial",
+"Créer un concours": "Create a contest",
+"Créer votre espace": "Create your space",
+"Créez votre premier concours pour commencer.": "Create your first contest to get started.",
+"DOCUMENT PROVISOIRE — NON PUBLIÉ": "PROVISIONAL DOCUMENT — NOT PUBLISHED",
+"Description interne": "Internal description",
+"Difficile": "Hard",
+"Difficulté": "Difficulty",
+"Difficulté = taux de bonnes réponses. Discrimination = écart de réussite entre les 27 % meilleurs et les 27 % plus faibles.": "Difficulty = rate of correct answers. Discrimination = gap in success between the top 27% and the bottom 27%.",
+"Discrimination": "Discrimination",
+"Discrimination négative": "Negative discrimination",
+"Discutable": "Questionable",
+"Disqualification : %s": "Disqualification: %s",
+"Disqualification immédiate": "Immediate disqualification",
+"Disqualifier": "Disqualify",
+"Disqualifié": "Disqualified",
+"Disqualifiés": "Disqualified",
+"Distracteur inutile": "Useless distractor",
+"Distribution des notes asymétrique (%s) : l'épreuve est %s pour": "Skewed score distribution (%s): the exam is %s for",
+"Distribution des résultats": "Results distribution",
+"Document authentique": "Authentic document",
+"Donnez un intitulé au concours.": "Give the contest a title.",
+"Dupliquer": "Duplicate",
+"Durée": "Duration",
+"Durée de l'épreuve (minutes)": "Exam duration (minutes)",
+"Durée du verrouillage (minutes)": "Lockout duration (minutes)",
+"Durée médiane": "Median duration",
+"Dès que tous les inscrits ont terminé, le concours est clôturé et la liste des admis produite.": "As soon as all registered candidates have finished, the contest is closed and the list of admitted candidates produced.",
+"Début de composition": "Start of the exam",
+"Décision du surveillant : %s": "Proctor's decision: %s",
+"Décision en attente de synchronisation avec le serveur.": "Decision waiting to be synchronised with the server.",
+"Décomptée pour chaque candidat à partir de l'affichage du questionnaire.": "Counted for each candidate from the moment the questionnaire is displayed.",
+"Décourage les réponses au hasard.": "Discourages random answers.",
+"Déjà inscrit ?": "Already registered?",
+"Délai maximal de synchronisation (secondes)": "Maximum synchronisation delay (seconds)",
+"Désactiver": "Deactivate",
+"Détail": "Details",
+"Détection de fraude": "Fraud detection",
+"E-mail professionnel": "Work e-mail",
+"Effacement des données biométriques (durée de conservation échue)": "Erasure of biometric data (retention period expired)",
+"Empreinte": "Fingerprint",
+"Empreinte de copie": "Paper fingerprint",
+"Empreinte faciale": "Face template",
+"Empreinte faciale invalide : recommencez le contrôle caméra.": "Invalid face template: redo the camera check.",
+"Empreinte précédente": "Previous fingerprint",
+"En cas de coupure du réseau local, le candidat continue de composer ; ses réponses sont synchronisées au retour du réseau. Le corrigé ne quitte jamais le serveur.": "If the local network drops, the candidate keeps working; answers are synchronised when the network returns. The answer key never leaves the server.",
+"En composition": "Taking the test",
+"En cours": "Running",
+"En direct": "Live",
+"Enregistrer la question": "Save the question",
+"Erreur serveur": "Server error",
+"Essai gratuit de": "Free trial of",
+"Essais infructueux avant verrouillage du poste": "Failed attempts before the workstation is locked",
+"Ex. : Banque Commerciale du Congo": "E.g. Congo Commercial Bank",
+"Ex. : Recrutement des agents de guichet, session 2026": "E.g. Recruitment of counter staff, 2026 session",
+"Ex. : téléphone portable constaté par le surveillant": "E.g. mobile phone spotted by the invigilator",
+"Excellente": "Excellent",
+"Explication pour le jury": "Explanation for the jury",
+"Export des résultats": "Results export",
+"Facile": "Easy",
+"Facultatif": "Optional",
+"Facultatif. Avant cette heure, les codes sont refusés.": "Optional. Before this time, codes are refused.",
+"Faible": "Weak",
+"Fausses identiques": "Identical wrong answers",
+"Fermeture des connexions": "Logins close",
+"Fiabilité KR-20": "KR-20 reliability",
+"Fiabilité de l'épreuve (KR-20) : %(v)s — %(l)s.": "Exam reliability (KR-20): %(v)s — %(l)s.",
+"Fichier CSV (séparateur point-virgule ou virgule, encodage UTF-8), une question par ligne :": "CSV file (semicolon or comma separator, UTF-8 encoding), one question per line:",
+"Figée": "Frozen",
+"Fil des incidents": "Incident feed",
+"Filtrer par événement ou message": "Filter by event or message",
+"Fin": "End",
+"Fin d'épreuve (%s)": "End of exam (%s)",
+"Flux caméra interrompu": "Camera stream interrupted",
+"Focus perdu plus de 2 secondes": "Focus lost for more than 2 seconds",
+"Format CSV :": "CSV format:",
+"Général": "General",
+"Génération de %s code(s) d'accès": "Generation of %s access code(s)",
+"Générer %s code(s) d'accès ?": "Generate %s access code(s)?",
+"Générer et imprimer": "Generate and print",
+"Générer les codes manquants (": "Generate missing codes (",
+"Générez les codes d'accès des candidats avant l'ouverture.": "Generate the candidates' access codes before opening.",
+"Généré le": "Generated on",
+"Généré le %s": "Generated on %s",
+"Histogramme des pourcentages": "Percentage histogram",
+"Hors ligne": "Offline",
+"Identifiant de connexion": "Login",
+"Identifiant et mot de passe obligatoires.": "Login and password required.",
+"Identifiant ou mot de passe incorrect.": "Wrong login or password.",
+"Identité confirmée à la reprise": "Identity confirmed on resumption",
+"Identité de la structure, sécurité des connexions et assistant IA.": "Organisation identity, login security and AI assistant.",
+"Identité de votre structure et accès des postes.": "Your organisation's identity and workstation access.",
+"Il vous servira d'identifiant de connexion.": "It will be your login.",
+"Illustration (facultatif)": "Illustration (optional)",
+"Illustration de la question": "Question illustration",
+"Image": "Image",
+"Image enregistrée": "Image saved",
+"Image noire : caméra masquée ou obstruée": "Black image: camera covered or blocked",
+"Image trop lourde (3 Mo maximum).": "Image too large (3 MB maximum).",
+"Import de %s candidat(s)": "Import of %s candidate(s)",
+"Import de %s question(s)": "Import of %s question(s)",
+"Importer": "Import",
+"Importer (CSV)": "Import (CSV)",
+"Importer des questions": "Import questions",
+"Impossible de générer des codes pour un concours clôturé.": "Codes cannot be generated for a closed contest.",
+"Imprimer la liste": "Print the list",
+"Incidents": "Incidents",
+"Incidents de": "Incidents of",
+"Incidents des dernières 24 h": "Incidents in the last 24 h",
+"Indice d'intégrité global : %s/100.": "Overall integrity index: %s/100.",
+"Initialisation…": "Initialising…",
+"Inscriptions closes pour ce concours.": "Registrations closed for this contest.",
+"Inscriptions momentanément fermées": "Sign-ups temporarily closed",
+"Inscrire": "Register",
+"Inscrit": "Registered",
+"Inscrits": "Registered",
+"Insuffisante": "Insufficient",
+"Intitulé du concours": "Contest title",
+"J'accepte les": "I accept the",
+"J'ai lu ces règles, je certifie être": "I have read these rules, I certify that I am",
+"JavaScript est requis pour utiliser SELECTA.": "JavaScript is required to use SELECTA.",
+"Journal d'audit": "Audit log",
+"Jury": "Jury",
+"Jusqu'à": "Up to",
+"Justification de la bonne réponse, référence": "Justification of the correct answer, reference",
+"L'accès à la caméra a été refusé. Autorisez la caméra dans le navigateur puis réessayez.": "Camera access was denied. Allow the camera in the browser and try again.",
+"L'analyse psychométrique et la détection de fraude fonctionnent sans cet assistant. S'il est activé, seules des statistiques anonymisées lui sont transmises. Recommandé : Ollama installé sur le serveur, pour rester 100 % hors ligne.": "Psychometric analysis and fraud detection work without this assistant. If enabled, only anonymised statistics are sent to it. Recommended: Ollama installed on the server, to stay 100 % offline.",
+"L'assistant de rédaction n'est pas inclus dans votre abonnement.": "The writing assistant is not included in your subscription.",
+"L'empreinte faciale est comparée toutes les 8 secondes à celle enregistrée au départ. Toute substitution entraîne la disqualification.": "The face template is compared every 8 seconds with the one recorded at the start. Any substitution leads to disqualification.",
+"L'essai comprend": "The trial includes",
+"L'épreuve doit être composée en plein écran. La sortie a été signalée à la surveillance. Le chronomètre continue de tourner.": "The exam must be taken in full screen. Leaving it has been reported to the proctors. The timer keeps running.",
+"L'épreuve n'est pas ouverte.": "The exam is not open.",
+"L'épreuve « %s » est clôturée.": "The exam “%s” is closed.",
+"L'épreuve « %s » n'est pas encore ouverte.": "The exam “%s” is not open yet.",
+"La création d'espace en ligne est suspendue pour le moment. Écrivez-nous et nous ouvrirons votre espace avec vous.": "Online space creation is suspended for now. Write to us and we will open your space with you.",
+"La culture de l'excellence": "The culture of excellence",
+"La décision est immédiate, définitive et consignée dans le journal d'audit avec votre identité.": "The decision is immediate, final and recorded in the audit log with your identity.",
+"La fenêtre d'examen a été masquée": "The exam window was hidden",
+"La fenêtre de connexion est fermée.": "The login window is closed.",
+"La fermeture doit être postérieure à l'ouverture.": "Closing must be later than opening.",
+"La personnalisation (logo, couleur, slogan) est incluse dans les abonnements supérieurs.": "Branding (logo, colour, tagline) is included in higher plans.",
+"La question « %(q)s » est utilisée par le concours « %(c)s » déjà ouvert ou clôturé.": "The question “%(q)s” is used by the contest “%(c)s”, already open or closed.",
+"La réponse « B » d'un candidat n'est pas celle de son voisin.": "One candidate's answer “B” is not their neighbour's.",
+"La surveillance a constaté une infraction au règlement de l'épreuve. Cette décision, les clichés et l'horodatage associés sont scellés dans le journal d'audit et peuvent être consultés par le jury.": "Proctoring recorded a breach of the exam rules. This decision, the snapshots and their timestamps are sealed in the audit log and can be reviewed by the jury.",
+"Le barème d'une question doit être strictement positif.": "A question's points must be strictly positive.",
+"Le candidat %s a déjà composé : son code ne peut être régénéré.": "Candidate %s has already taken the exam: their code cannot be regenerated.",
+"Le candidat sera retiré de la liste des inscrits.": "The candidate will be removed from the registration list.",
+"Le chronomètre de": "The timer of",
+"Le chronomètre démarre au moment où le questionnaire s'affiche. À la fin du temps imparti, l'épreuve se termine automatiquement et seules les pages validées sont corrigées.": "The timer starts when the questionnaire is displayed. When time runs out, the exam ends automatically and only validated pages are graded.",
+"Le chronomètre démarre à l'ouverture du questionnaire, pas avant.": "The timer starts when the questionnaire opens, not before.",
+"Le classement devient officiel et infalsifiable (empreinte SHA-256, QR code de vérification). Cette opération est irréversible.": "The ranking becomes official and tamper-proof (SHA-256 fingerprint, verification QR code). This cannot be undone.",
+"Le classement est scellé par une empreinte SHA-256 et un QR code de vérification. Cette opération est irréversible.": "The ranking is sealed with a SHA-256 fingerprint and a verification QR code. This cannot be undone.",
+"Le concours doit être validé avant ouverture.": "The contest must be validated before opening.",
+"Le concours n'est pas en cours.": "The contest is not running.",
+"Le concours n'est pas en préparation.": "The contest is not in preparation.",
+"Le contrôle d'identité n'est plus possible pour cette épreuve.": "The identity check is no longer possible for this exam.",
+"Le contrôle d'identité par caméra doit être réalisé avant de commencer.": "The camera identity check must be done before starting.",
+"Le document présenté n'a pas été émis par SELECTA ou a été altéré.": "The document presented was not issued by SELECTA or has been altered.",
+"Le journal d'audit est immuable : aucune suppression possible.": "The audit log is immutable: no deletion possible.",
+"Le journal d'audit est immuable.": "The audit log is immutable.",
+"Le journal d'audit ne peut être alimenté que par le moteur SELECTA.": "The audit log can only be written by the SELECTA engine.",
+"Le maillon %(s)s ne pointe pas sur l'entrée précédente.": "Link %(s)s does not point to the previous entry.",
+"Le mot de passe doit comporter au moins 10 caractères.": "The password must be at least 10 characters long.",
+"Le nombre de questions tirées dépasse la banque sélectionnée.": "The number of drawn questions exceeds the selected bank.",
+"Le président du jury": "Chair of the jury",
+"Le questionnaire redevient modifiable.": "The questionnaire becomes editable again.",
+"Le représentant de l'organisme": "Organisation representative",
+"Le secrétaire": "Secretary",
+"Le serveur d'examen est momentanément injoignable. Vos réponses sont sécurisées sur ce poste (": "The exam server is temporarily unreachable. Your answers are secured on this workstation (",
+"Le seuil de réussite était fixé à": "The pass mark was set at",
+"Les anciens codes de ces candidats seront invalidés. Les nouvelles convocations s'ouvriront pour impression.": "These candidates' old codes will be invalidated. The new notices will open for printing.",
+"Les candidats déjà en composition terminent leur épreuve.": "Candidates already taking the exam finish it.",
+"Les candidats encore en composition seront arrêtés et corrigés sur les pages validées. Les candidats non connectés seront déclarés absents. La liste des admis est produite immédiatement.": "Candidates still taking the test will be stopped and marked on their submitted pages. Candidates who never signed in will be recorded as absent. The list of admitted candidates is produced immediately.",
+"Les candidats encore en composition seront arrêtés et corrigés sur leurs pages validées.": "Candidates still taking the test will be stopped and marked on their submitted pages.",
+"Les candidats pourront se connecter avec leur code. Les règles et le questionnaire seront définitivement figés et leur empreinte enregistrée dans le journal d'audit.": "Candidates will be able to sign in with their code. The rules and questionnaire will be permanently frozen and their fingerprint recorded in the audit log.",
+"Les convocations s'ouvriront pour impression. Les codes ne pourront plus être affichés ensuite : imprimez-les ou enregistrez-les en PDF immédiatement.": "The notices will open for printing. The codes cannot be shown again afterwards: print them or save them as PDF right away.",
+"Les preuves de surveillance ne peuvent être supprimées.": "Proctoring evidence cannot be deleted.",
+"Les preuves de surveillance sont immuables.": "Proctoring evidence is immutable.",
+"Les questions utilisées par un concours ouvert sont figées : dupliquez-les pour en créer une nouvelle version.": "Questions used by an open contest are frozen: duplicate them to create a new version.",
+"Les règles d'un concours ouvert ou clôturé sont figées.": "The rules of an open or closed contest are frozen.",
+"Les règles et le questionnaire sont figés depuis l'ouverture de l'épreuve : aucun candidat ne peut être avantagé par une modification en cours de route.": "The rules and questionnaire have been frozen since the exam opened: no candidate can be advantaged by a change along the way.",
+"Les réponses sont conservées sur le poste": "Answers are kept on the workstation",
+"Les résultats seront communiqués par l'organisateur.": "Results will be communicated by the organiser.",
+"Les épreuves ne peuvent pas être supprimées.": "Exams cannot be deleted.",
+"Les épreuves ne peuvent être créées que par le moteur SELECTA.": "Exams can only be created by the SELECTA engine.",
+"Les épreuves sont scellées : aucune modification manuelle n'est permise.": "Exams are sealed: no manual change is allowed.",
+"Lesquels sont des nombres pairs ?": "Which ones are even numbers?",
+"Ligne": "Line",
+"Lisez attentivement chaque question. Une fois une page validée, vous ne pourrez plus y revenir. Restez face à la caméra pendant toute la durée de l'épreuve.": "Read each question carefully. Once a page is submitted, you cannot go back to it. Stay in front of the camera for the whole test.",
+"Liste des admis": "List of admitted candidates",
+"Liste des candidats admis": "List of admitted candidates",
+"Liste provisoire : l'épreuve est en cours, le classement évolue à chaque copie corrigée": "Provisional list: the exam is running, the ranking changes with each graded paper",
+"Logo": "Logo",
+"Ma console": "My console",
+"Masquer le mot de passe": "Hide password",
+"Matière": "Subject",
+"Matières": "Subjects",
+"Minimum / maximum": "Minimum / maximum",
+"Mise à jour des paramètres": "Settings update",
+"Modification des règles": "Rules change",
+"Modifier la question": "Edit the question",
+"Modifier le compte": "Edit account",
+"Mot de passe": "Password",
+"Moteur de surveillance prêt": "Proctoring engine ready",
+"Moteur de vision introuvable": "Vision engine not found",
+"Motif (obligatoire)": "Reason (required)",
+"Moyenne": "Average",
+"Médiane": "Median",
+"Mélanger l'ordre des questions": "Shuffle question order",
+"Mélanger les propositions": "Shuffle options",
+"Même salle": "Same room",
+"Navigation de l'administration centrale": "Central administration navigation",
+"Ne fermez pas cette fenêtre et prévenez un surveillant.": "Do not close this window and alert a proctor.",
+"Niveau de sévérité": "Severity level",
+"Nom": "Name",
+"Nom affiché aux candidats": "Name shown to candidates",
+"Nom complet": "Full name",
+"Nom de la matière": "Subject name",
+"Nom de la structure": "Organisation name",
+"Nom et prénoms": "Full name",
+"Nom, numéro, salle": "Name, number, room",
+"Nombre de candidats qui atteindraient chaque seuil.": "Number of candidates who would reach each pass mark.",
+"Nombre de places": "Number of places",
+"Non admis": "Not admitted",
+"Notez ce code : il prouve le contenu exact de votre copie en cas de contestation.": "Write down this code: it proves the exact content of your paper in case of dispute.",
+"Nouveau concours": "New contest",
+"Nouveau membre": "New member",
+"Nouveau mot de passe (laisser vide pour conserver)": "New password (leave empty to keep)",
+"Nouvelle image": "New image",
+"Nouvelle matière": "New subject",
+"Nouvelle question": "New question",
+"Nouvelle version créée : vous pouvez la modifier.": "New version created: you can edit it.",
+"N°": "No.",
+"N° d'inscription": "Registration no.",
+"N° d'inscription : %s": "Registration no.: %s",
+"Opération interdite sur ce compte.": "Operation not allowed on this account.",
+"Ordre des pages non respecté.": "Page order not respected.",
+"Ouverture de l'épreuve": "Exam opening",
+"Ouverture de la caméra…": "Opening the camera…",
+"Ouverture des connexions": "Logins open",
+"Ouverture…": "Opening…",
+"Ouvrir l'épreuve": "Open the exam",
+"Ouvrir l'épreuve ?": "Open the test?",
+"Ouvrir la banque de questions": "Open the question bank",
+"PROCÈS-VERBAL OFFICIEL": "OFFICIAL REPORT",
+"PV %s": "Report %s",
+"Page": "Page",
+"Page de vérification": "Verification page",
+"Page introuvable": "Page not found",
+"Paramètres": "Settings",
+"Passer au contrôle caméra": "Go to the camera check",
+"Personnel et accès": "Staff and access",
+"Peu discriminante": "Weakly discriminating",
+"Photos d'identité, gabarits faciaux et clichés probatoires sont effacés ce nombre de jours après la clôture du concours (0 = conservation illimitée). Résultats et procès-verbaux sont conservés.": "ID photos, face templates and evidence snapshots are erased this many days after the contest closes (0 = kept indefinitely). Results and official reports are kept.",
+"Pièce d'identité": "ID document",
+"Placez votre visage dans le cadre, regardez l'écran. Votre empreinte faciale est enregistrée pour toute la durée de l'épreuve.": "Place your face in the frame and look at the screen. Your face template is recorded for the whole exam.",
+"Plateforme": "Platform",
+"Plein écran obligatoire": "Full screen required",
+"Plein écran requis": "Full screen required",
+"Plusieurs personnes": "Several people",
+"Point d'accès compatible OpenAI": "OpenAI-compatible endpoint",
+"Poste temporairement verrouillé.": "Workstation temporarily locked.",
+"Poste verrouillé (force brute)": "Workstation locked (brute force)",
+"Pour pourvoir les %(p)s places, la barre effective se situe à": "To fill the %(p)s places, the effective cut-off is",
+"Pourcentage et décision visibles dès la dernière page.": "Percentage and decision visible right after the last page.",
+"Premier comportement suspect : disqualification immédiate.": "First suspicious behaviour: immediate disqualification.",
+"Probabilité": "Probability",
+"Procès-verbal officiel, scellé le": "Official report, sealed on",
+"Profils de réponse au hasard": "Random answer patterns",
+"Progression": "Progress",
+"Proposition": "Option",
+"Proposition invalide.": "Invalid option.",
+"Propositions": "Options",
+"Préchargement sécurisé du questionnaire": "Secure questionnaire preloading",
+"Préparation": "Preparation",
+"Préparez, ouvrez et clôturez vos épreuves de sélection.": "Prepare, open and close your selection exams.",
+"Prêt": "Ready",
+"Prêts": "Ready",
+"Publication officielle des résultats": "Official publication of results",
+"Publier et sceller": "Publish and seal",
+"Publier et sceller les résultats ?": "Publish and seal the results?",
+"Publier les résultats ?": "Publish the results?",
+"Publié": "Published",
+"Publié le %s par %s. Scannez le code ou ouvrez l'adresse ci-dessous pour vérifier que cette liste n'a pas été modifiée.": "Published on %s by %s. Scan the code or open the address below to check that this list has not been altered.",
+"Publiés": "Published",
+"Pénalité (fraction du barème)": "Penalty (fraction of the points)",
+"Pénalité pour réponse fausse": "Penalty for wrong answers",
+"QR de vérification": "Verification QR",
+"Qualité": "Quality",
+"Qualité de l'épreuve, questions à revoir et indices de fraude, calculés localement sur le serveur.": "Exam quality, questions to review and fraud signals, computed locally on the server.",
+"Question": "Question",
+"Question archivée (déjà utilisée par un concours).": "Question archived (already used by a contest).",
+"Question enregistrée.": "Question saved.",
+"Question supprimée.": "Question deleted.",
+"Questionnaire": "Questionnaire",
+"Questionnaire incohérent :\\n• %s": "Inconsistent questionnaire:\\n• %s",
+"Questionnaire validé.": "Questionnaire validated.",
+"Questions": "Questions",
+"Questions par page": "Questions per page",
+"Questions tirées par candidat": "Questions drawn per candidate",
+"Questions à réponses multiples": "Multiple-answer questions",
+"Quitter": "Leave",
+"Quitter l'espace candidat": "Leave the candidate area",
+"Raccourci %s (outils développeur)": "Shortcut %s (developer tools)",
+"Rang": "Rank",
+"Rapport rédigé (LLM local)": "Written report (local LLM)",
+"Rapport rédigé par l'assistant": "Report written by the assistant",
+"Recalculer": "Recompute",
+"Recharger": "Reload",
+"Rechercher dans la banque": "Search the bank",
+"Rechercher un énoncé": "Search a question",
+"Regard détourné toléré (secondes)": "Tolerated looking away (seconds)",
+"Regard face à l'écran": "Looking at the screen",
+"Regardez l'écran": "Look at the screen",
+"Relire": "Review",
+"Reprendre l'épreuve": "Resume the exam",
+"Reprise autorisée": "Resumption allowed",
+"Reprise autorisée.": "Resumption allowed.",
+"Reprise de l'épreuve": "Resuming the test",
+"Reprise de l’épreuve": "Exam resumption",
+"Reprise de session…": "Resuming session…",
+"Reprise refusée : visage non conforme (écart %.2f)": "Resumption refused: face does not match (distance %.2f)",
+"Reprise sur incident autorisée": "Resumption after incident allowed",
+"Retirer": "Remove",
+"Retour en préparation": "Back to preparation",
+"Retour en préparation possible uniquement depuis l'état « Prêt ».": "Back to preparation is only possible from the “Ready” state.",
+"Retour à la présentation": "Back to the home page",
+"Revenir en plein écran": "Return to full screen",
+"Revenir en préparation": "Back to preparation",
+"Revenir en préparation ?": "Back to preparation?",
+"Revenir à la vue d'ensemble": "Back to the overview",
+"Reçu de dépôt": "Submission receipt",
+"Risque issu de la surveillance": "Proctoring risk",
+"Robustesse :": "Robustness:",
+"Rupture de séquence : entrée %(exp)s manquante ou insérée.": "Sequence break: entry %(exp)s missing or inserted.",
+"Règles de l'épreuve": "Exam rules",
+"Règles et barème": "Rules and scoring",
+"Réactiver": "Reactivate",
+"Récapitulatif de l'essai": "Trial summary",
+"Récupération des questions…": "Fetching questions…",
+"Rédigez une question claire et sans ambiguïté": "Write a clear, unambiguous question",
+"Référence attribuée à l'enregistrement": "Reference assigned when saved",
+"Référence attribuée à l’enregistrement": "Reference assigned on saving",
+"Régénérer la sélection": "Regenerate the selection",
+"Répondez à toutes les questions de la page pour la valider.": "Answer every question on the page to validate it.",
+"Réponse obligatoire": "Answer required",
+"Réponses": "Answers",
+"Réponses enregistrables uniquement par le moteur d'épreuve.": "Answers can only be recorded by the exam engine.",
+"Réponses non conformes à la page en cours.": "Answers do not match the current page.",
+"Résilience réseau": "Network resilience",
+"Résultat": "Result",
+"Résultats": "Results",
+"Résultats publiés": "Results published",
+"Résultats publiés et scellés.": "Results published and sealed.",
+"Résultats, analyse IA, clôture et publication du procès-verbal.": "Results, AI analysis, closing and publication of the official report.",
+"Réussi": "Passed",
+"Réussis": "Passed",
+"Réussite par matière": "Success by subject",
+"Rôle invalide.": "Invalid role.",
+"S'applique aux codes candidats et aux comptes du personnel. Un code compte 60 bits d'entropie : sa découverte par essais successifs est impossible en pratique.": "Applies to candidate codes and staff accounts. A code has 60 bits of entropy: guessing it by trial and error is impossible in practice.",
+"SELECTA Candidat": "SELECTA Candidate",
+"SELECTA Connexion": "SELECTA Sign-in",
+"SELECTA Console": "SELECTA Console",
+"SELECTA by Naxoris. Démonstration : +243 828 317 540, +243 831 509 420, contact@naxoris.com": "SELECTA by Naxoris. Demo: +243 828 317 540, +243 831 509 420, contact@naxoris.com",
+"SELECTA vérifie la cohérence de chaque question (propositions, bonnes réponses). Le concours pourra ensuite être ouvert.": "SELECTA checks each question for consistency (options, correct answers). The contest can then be opened.",
+"SELECTA — Connexion du personnel": "SELECTA — Staff sign-in",
+"SELECTA — Console des concours": "SELECTA — Contest console",
+"SELECTA, la culture de l'excellence.": "SELECTA, the culture of excellence.",
+"SELECTA, la culture de l'excellence. By Naxoris, version": "SELECTA, the culture of excellence. By Naxoris, version",
+"SELECTA, retour à la présentation": "SELECTA, back to the home page",
+"Saisissez au moins deux propositions.": "Enter at least two options.",
+"Saisissez le code personnel imprimé sur votre convocation. Il est unique, confidentiel et ne fonctionne qu'une seule fois.": "Enter the personal code printed on your notice. It is unique, confidential and works only once.",
+"Salle": "Room",
+"Sanction": "Sanction",
+"Sans carte bancaire, aucun prélèvement automatique": "No bank card, no automatic charge",
+"Sans matière": "No subject",
+"Sceau d'authenticité SELECTA": "SELECTA seal of authenticity",
+"Score": "Score",
+"Se déconnecter": "Log out",
+"Serveur d'examen injoignable — vérifiez le câble ou le Wi-Fi de la salle": "Exam server unreachable — check the room's cable or Wi-Fi",
+"Serveur d'examen injoignable. Vérifiez la connexion du poste.": "Exam server unreachable. Check this computer's connection.",
+"Serveur d’examen injoignable — vérifiez le câble ou le Wi-Fi de la salle": "Exam server unreachable — check the room's cable or Wi-Fi",
+"Serveur injoignable.": "Server unreachable.",
+"Session d'épreuve invalide ou ouverte sur un autre poste.": "Invalid exam session or opened on another workstation.",
+"Seuil atteint": "Pass mark reached",
+"Seuil de réussite (%)": "Pass mark (%)",
+"Seul un concours clôturé peut être publié.": "Only a closed contest can be published.",
+"Seul un concours en préparation sans participation peut être supprimé.": "Only a contest in preparation with no participation can be deleted.",
+"Signalements": "Reports",
+"Simulation du seuil": "Pass mark simulation",
+"Site web": "Website",
+"Situation en temps réel des concours de": "Real-time status of the contests of",
+"Slogan": "Tagline",
+"Sont considérés comme suspects : quitter la fenêtre, sortir du plein écran, regarder ailleurs de façon prolongée, la présence d'une autre personne, un visage différent, masquer la caméra, utiliser des raccourcis clavier.": "Considered suspicious: leaving the window, exiting full screen, looking away for long, another person present, a different face, covering the camera, using keyboard shortcuts.",
+"Sortie du mode plein écran": "Left full-screen mode",
+"Standard": "Standard",
+"Structure organisatrice": "Organising body",
+"Suivi en direct, reprise sur incident, disqualification motivée.": "Live monitoring, resumption after incidents, justified disqualification.",
+"Suppression du candidat %s": "Deletion of candidate %s",
+"Suppression du concours %s": "Deletion of contest %s",
+"Supprimer": "Delete",
+"Supprimer ce concours ?": "Delete this contest?",
+"Supprimer cette question ?": "Delete this question?",
+"Sur les postes candidats, utilisez le lanceur « Poste candidat » fourni : navigateur en mode kiosque verrouillé, caméra autorisée, aucune barre d'adresse.": "On candidate workstations, use the provided “Candidate workstation” launcher: locked kiosk browser, camera allowed, no address bar.",
+"Surveillance IA": "AI proctoring",
+"Surveillance IA active": "AI proctoring active",
+"Surveillance en direct": "Live proctoring",
+"Surveillant": "Invigilator",
+"Surveiller": "Monitor",
+"Synchronisation…": "Synchronising…",
+"Sécurité des connexions": "Login security",
+"Sélection uniquement": "Selection only",
+"Séparation des pouvoirs : les concepteurs ne voient pas les candidats en direct, les surveillants n'ont jamais accès aux questions ni aux corrigés.": "Separation of duties: designers do not see candidates live, proctors never access questions or answer keys.",
+"Tableau de bord": "Dashboard",
+"Taux de non-réponse :": "Non-response rate:",
+"Taux de réussite": "Success rate",
+"Temps écoulé": "Time elapsed",
+"Tentative de connexion parallèle refusée": "Parallel login attempt refused",
+"Terminer": "Finish",
+"Terminer l'épreuve ?": "Finish the test?",
+"Terminer l’épreuve ?": "Finish the exam?",
+"Terminé": "Finished",
+"Terminés": "Finished",
+"Tester la connexion": "Test the connection",
+"Tolérance de latence (secondes)": "Latency tolerance (seconds)",
+"Tolérance zéro": "Zero tolerance",
+"Tolérance zéro : le premier comportement suspect entraîne la disqualification immédiate.": "Zero tolerance: the first suspicious behaviour leads to immediate disqualification.",
+"Tolérant": "Lenient",
+"Tous": "All",
+"Tous les concours": "All contests",
+"Tout cocher": "Tick all",
+"Tout décocher": "Untick all",
+"Tout ou rien": "All or nothing",
+"Toute sortie du plein écran est signalée.": "Any exit from full screen is reported.",
+"Toutes": "All",
+"Toutes difficultés": "All difficulties",
+"Toutes les fonctions de la catégorie : surveillance webcam, procès-verbal scellé": "All features of the category: webcam proctoring, sealed official report",
+"Toutes les matières": "All subjects",
+"Trop de tentatives infructueuses depuis ce poste. Réessayez dans %s minute(s)": "Too many failed attempts from this workstation. Try again in %s minute(s)",
+"Trop facile": "Too easy",
+"Très difficile": "Very hard",
+"Type": "Type",
+"Télécharger un modèle": "Download a template",
+"Tête tournée %s pendant plus de %s s": "Head turned %s for more than %s s",
+"Un administrateur système ne peut être modifié depuis SELECTA.": "A system administrator cannot be modified from SELECTA.",
+"Un motif explicite (5 caractères minimum) est obligatoire.": "An explicit reason (5 characters minimum) is required.",
+"Une autre structure porte déjà ce nom.": "Another organisation already has this name.",
+"Une matière ne peut pas changer de structure.": "A subject cannot change organisation.",
+"Une page ne se valide que si toutes ses questions ont une réponse.": "A page can only be validated when all its questions are answered.",
+"Une page validée ne peut plus être consultée.": "A validated page can no longer be viewed.",
+"Une question ne peut pas changer de structure.": "A question cannot change organisation.",
+"Une question à choix unique n'admet qu'une bonne réponse.": "A single-choice question allows only one correct answer.",
+"Une réponse validée est définitive.": "A validated answer is final.",
+"Une réponse validée ne peut être supprimée.": "A validated answer cannot be deleted.",
+"Une seule personne": "One person only",
+"Une seule proposition est autorisée pour cette question.": "Only one option is allowed for this question.",
+"Une surveillance par caméra garantit l'égalité entre les candidats.": "Camera proctoring guarantees equal treatment of candidates.",
+"Utilisateur": "User",
+"Utilisée par un concours ouvert ou clôturé": "Used by an open or closed contest",
+"Validation de la page %s": "Validation of page %s",
+"Valider cette page": "Validate this page",
+"Valider et terminer l'épreuve": "Validate and finish the exam",
+"Valider la page": "Validate the page",
+"Valider la page %s ?": "Submit page %s?",
+"Valider le questionnaire": "Validate the questionnaire",
+"Valider le questionnaire ?": "Validate the questionnaire?",
+"Validé": "Validated",
+"Veuillez répondre à toutes les questions de la page avant de valider.": "Please answer every question on the page before validating.",
+"Visage absent, regard détourné prolongé, changement d'onglet ou d'application, sortie du plein écran, copier-coller, raccourcis interdits": "Face missing, looking away for long, switching tab or application, leaving full screen, copy-paste, forbidden shortcuts",
+"Visage détecté": "Face detected",
+"Visage non détecté": "Face not detected",
+"Visage non reconnu : la reprise est refusée et l'incident a été signalé.": "Face not recognised: resumption refused and the incident reported.",
+"Vitesse anormale avec score élevé": "Abnormal speed with a high score",
+"Voir les concours": "See contests",
+"Votre caméra reste active pendant toute l'épreuve. Restez seul, face à l'écran, visage découvert et bien éclairé.": "Your camera stays on for the whole exam. Stay alone, facing the screen, face uncovered and well lit.",
+"Votre compte n'a aucun rôle SELECTA.": "Your account has no SELECTA role.",
+"Votre copie sera corrigée immédiatement et votre résultat affiché.": "Your paper will be graded immediately and your result displayed.",
+"Votre essai gratuit": "Your free trial",
+"Votre nom": "Your name",
+"Votre résultat (pourcentage et décision) s'affiche dès la validation de la dernière page.": "Your result (percentage and decision) is shown as soon as the last page is validated.",
+"Votre visage doit correspondre à celui enregistré au début de l'épreuve. Le chronomètre n'a pas été suspendu.": "Your face must match the one recorded at the start of the exam. The timer was not paused.",
+"Votre épreuve commence ici.": "Your exam starts here.",
+"Votre épreuve est déjà ouverte sur un poste. En cas d'incident, demandez à un": "Your exam is already open on a workstation. In case of an incident, ask a",
+"Vous avez atteint le seuil de": "You reached the pass mark of",
+"Vous avez atteint le seuil de réussite de": "You reached the pass mark of",
+"Vous disposez de": "You have",
+"Vous n'avez pas les droits nécessaires pour cette opération.": "You do not have the rights required for this operation.",
+"Vous êtes candidat ? Accédez à l'espace candidat": "Are you a candidate? Go to the candidate area",
+"Vérification d'authenticité — SELECTA": "Authenticity check — SELECTA",
+"Vérification d'intégrité du journal : %s": "Log integrity check: %s",
+"Vérification échouée": "Verification failed",
+"Vérification…": "Checking…",
+"Vérifier l'intégrité": "Check integrity",
+"absents": "absent",
+"admis": "admitted",
+"analyse IA (psychométrie, fraude)": "AI analysis (psychometrics, fraud)",
+"assistant de rédaction (LLM)": "writing assistant (LLM)",
+"au moins 2 propositions et 1 bonne réponse requises": "at least 2 options and 1 correct answer required",
+"avec avertissement": "with warning",
+"avertissement(s). Au-delà, ou en cas de fraude caractérisée (autre personne, visage différent, caméra masquée), la disqualification est immédiate et définitive.": "warning(s). Beyond that, or in case of clear fraud (another person, different face, camera covered), disqualification is immediate and final.",
+"caméra": "camera",
+"candidats ayant réussi": "candidates passed",
+"candidats en composition": "candidates taking the exam",
+"candidats pendant l'essai": "candidates during the trial",
+"candidats · toutes les fonctions de la catégorie · sans carte bancaire": "candidates · all features of the category · no bank card",
+"clôturé": "closed",
+"concours en cours, sur": "contests running, out of",
+"conditions d'utilisation": "terms of use",
+"copies corrigées": "papers graded",
+"de réussite": "success",
+"disqualifications": "disqualifications",
+"disqualifiés": "disqualified",
+"effectif insuffisant": "too few candidates",
+"en attente": "pending",
+"en composition": "taking the exam",
+"en cours": "running",
+"en ligne": "online",
+"enregistrée": "recorded",
+"entrée(s)": "entry(ies)",
+"entrées vérifiées.": "entries checked.",
+"envoi(s) en attente) et seront transmises automatiquement dès le retour du réseau.": "pending upload(s)) and will be sent automatically as soon as the network is back.",
+"et j'accepte la surveillance de l'épreuve.": "and I accept the proctoring of the exam.",
+"et la": "and the",
+"identité": "identity",
+"indice d'intégrité sur 100": "integrity index out of 100",
+"jours d'accès complet, dès maintenant": "days of full access, starting now",
+"jours gratuits · jusqu'à": "free days · up to",
+"jours gratuits, puis": "free days, then",
+"jours, sans carte bancaire. Vous serez l'administrateur de votre espace.": "days, no bank card. You will be the administrator of your space.",
+"lettres et chiffres": "letters and digits",
+"meilleur résultat": "best result",
+"meilleurs": "top",
+"min": "min",
+"minutes": "minutes",
+"minutes démarrera dès que vous cliquerez sur « Commencer ». L'écran passera en plein écran.": "minutes will start as soon as you click “Start”. The screen will switch to full screen.",
+"moyenne": "average",
+"nom et numéro d'inscription obligatoires": "name and registration number required",
+"numéro %s déjà inscrit": "number %s already registered",
+"outils dév.": "dev tools",
+"page(s) par candidat": "page(s) per candidate",
+"pages": "pages",
+"par": "by",
+"pas encore connectés": "not logged in yet",
+"personnalisation (logo, couleur, slogan)": "branding (logo, colour, tagline)",
+"places": "places",
+"places).": "places).",
+"plein écran": "full screen",
+"point(s) au total": "point(s) in total",
+"postes sans signal": "workstations without signal",
+"pour réussir": "to pass",
+"propositions": "options",
+"préparation": "preparation",
+"prêt": "ready",
+"publié": "published",
+"question(s)": "question(s)",
+"question(s) importée(s).": "question(s) imported.",
+"question(s) sans réponse.": "unanswered question(s).",
+"question(s) sélectionnée(s)": "question(s) selected",
+"questions": "questions",
+"répondue(s)": "answered",
+"sans signal": "no signal",
+"sur": "of",
+"temps restant": "time left",
+"terminés": "finished",
+"trop difficile": "too hard",
+"trop facile": "too easy",
+"vers la droite": "to the right",
+"vers la gauche": "to the left",
+"vers le bas": "down",
+"vers le haut": "up",
+"vous": "you",
+"vérifiée": "verified",
+"« %s » : au moins deux propositions sont requises.": "“%s”: at least two options are required.",
+"« %s » : aucune bonne réponse définie.": "“%s”: no correct answer defined.",
+"« %s » : choix unique mais plusieurs bonnes réponses.": "“%s”: single choice but several correct answers.",
+"« type » vaut single ou multiple, « difficulte » easy, medium ou hard, « bonnes » liste les lettres correctes (ex. B ou A,C). Les matières inexistantes sont créées.": "“type” is single or multiple, “difficulte” easy, medium or hard, “bonnes” lists the correct letters (e.g. B or A,C). Missing subjects are created.",
+"À générer": "To generate",
+"À la fin de l'essai, sans abonnement, votre espace passe en consultation seule : vos résultats restent accessibles.": "At the end of the trial, without a subscription, your space becomes read-only: your results remain accessible.",
+"À utiliser uniquement en cas de panne du poste. Le candidat pourra se reconnecter une seule fois avec son code, sur n'importe quel poste. Son visage sera de nouveau vérifié. Le chronomètre n'est pas suspendu.": "Use only if the workstation fails. The candidate can sign in again once with their code, on any workstation. Their face will be checked again. The timer is not paused.",
+"Écart biométrique %.2f (seuil %.2f) confirmé par le serveur": "Biometric distance %.2f (threshold %.2f) confirmed by the server",
+"Écart biométrique %s sur 3 contrôles successifs": "Biometric mismatch %s on 3 consecutive checks",
+"Écart-type": "Standard deviation",
+"Échoué": "Failed",
+"Éclairage suffisant": "Enough light",
+"Émis": "Issued",
+"Énoncé": "Question text",
+"Épreuve clôturée : vérifiez l'analyse IA puis publiez pour sceller la liste": "Exam closed: check the AI analysis, then publish to seal the list",
+"Épreuve clôturée, liste des admis produite.": "Test closed, list of admitted candidates produced.",
+"Épreuve interrompue": "Exam stopped",
+"Épreuve ouverte": "Test open",
+"Épreuve ouverte : les candidats peuvent se connecter.": "Test open: candidates can sign in.",
+"Épreuves en cours": "Running exams",
+"Événement": "Event",
+"— Choisir —": "— Choose —"
+});
+})();

@@ -1,5 +1,6 @@
 /** @odoo-module */
 /* Page « Abonnement » de la console d'une structure : catégorie, consommation, offres, paiement, factures. */
+import { locale } from "@selecta_concours/common/i18n";
 import { Component, onMounted, onWillStart, onWillUnmount, onWillUpdateProps, useRef, useState, xml } from "@odoo/owl";
 import { extensions, store } from "@selecta_concours/admin/store";
 import { api } from "@selecta_concours/common/rpc";
@@ -529,7 +530,7 @@ export class SubscriptionPage extends Component {
     }
     get monthStart() {
         const d = new Date();
-        return new Date(d.getFullYear(), d.getMonth(), 1).toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
+        return new Date(d.getFullYear(), d.getMonth(), 1).toLocaleDateString(locale(), { day: "numeric", month: "long" });
     }
     get freeMonths() {
         const months = (this.state.info.plans || [])

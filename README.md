@@ -87,10 +87,16 @@ Choix automatique selon le pays de la structure : **FlexPay** pour le Mobile Mon
 * **Conservation des données biométriques** : photos d'identité, gabarits faciaux et clichés probatoires sont effacés automatiquement N jours après la clôture du concours (180 par défaut, réglable ; 0 = conservation illimitée). Résultats, procès-verbaux et motifs d'incident sont conservés ; chaque effacement est consigné dans le journal d'audit.
 * Logo par défaut : un monogramme aux initiales de la structure, remplaçable dans ses paramètres (catégories avec personnalisation).
 
+### Interface bilingue (français / anglais)
+* Toutes les interfaces (présentation, inscription, connexion, console des structures, espace candidat, administration centrale, pages juridiques, page de vérification, documents imprimés) existent en français et en anglais. Sélecteur **FR | EN** dans chaque en-tête ; à défaut de choix, la langue du navigateur s'applique. Dates, nombres et noms de pays suivent la langue choisie.
+* Les textes sont rédigés en français ; les traductions anglaises sont dans `addons/<module>/i18n_ui/en.json` (texte français → texte anglais, valeurs variables en `%s`, nombres en `%d`). Après modification : `python3 tools/build_ui_i18n.py` régénère les dictionnaires chargés par les pages, puis redémarrer Odoo.
+* Les contenus saisis par les structures (questions, intitulés de concours, noms) ne sont pas traduits.
+* Captures d'écran de chaque écran, en français et en anglais : [`docs/captures/`](docs/captures/README.md).
+
 ### Limites actuelles
 * Paiement en ligne non testé contre les API réelles de FlexPay, CinetPay et Stripe (aucun compte marchand disponible pendant le développement) : les échanges sont couverts par des tests simulés. À valider avec un compte de test de chaque prestataire avant l'ouverture.
 * Pas de proratisation pour un passage à une catégorie inférieure (il prend effet à l'échéance, sans avoir).
-* Les courriels sont en français uniquement.
+* Les courriels sont en français uniquement (l'interface est bilingue).
 
 ---
 

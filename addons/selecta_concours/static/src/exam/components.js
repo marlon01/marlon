@@ -1,4 +1,5 @@
 /** @odoo-module */
+import { locale } from "@selecta_concours/common/i18n";
 import { Component, onMounted, onWillUnmount, useRef, useState, xml } from "@odoo/owl";
 import { Icon } from "@selecta_concours/common/ui";
 import { fmtDuration, fmtPct } from "@selecta_concours/common/utils";
@@ -56,6 +57,7 @@ export class LoginScreen extends Component {
                 <div class="ex-powered">SELECTA, la culture de l'excellence. By Naxoris, version <t t-esc="props.version"/></div>
             </aside>
             <main class="ex-login-main">
+                <div class="sl-lang-switch ex-lang" role="group" aria-label="Langue / Language" data-no-i18n=""><button type="button" data-selecta-lang="fr" lang="fr">FR</button><button type="button" data-selecta-lang="en" lang="en">EN</button></div>
                 <form class="ex-login-form" t-on-submit.prevent="submit" autocomplete="off">
                     <h2>Code d'accès</h2>
                     <p class="sl-muted">12 caractères, lettres et chiffres. Les tirets s'ajoutent automatiquement.</p>
@@ -354,7 +356,7 @@ export class ResultScreen extends Component {
         return d ? d.slice(0, 16).toUpperCase().match(/.{1,4}/g).join("-") : "—";
     }
     fmt(v) {
-        return v === null || v === undefined ? "—" : Number(v).toLocaleString("fr-FR", { maximumFractionDigits: 2 });
+        return v === null || v === undefined ? "—" : Number(v).toLocaleString(locale(), { maximumFractionDigits: 2 });
     }
 }
 

@@ -1,6 +1,7 @@
 /** @odoo-module */
 /* Documents imprimables (convocations, procès-verbal) générés côté navigateur : aucune
  * dépendance à wkhtmltopdf, impression ou export PDF depuis la boîte de dialogue du système. */
+import { getLang, t, translateTree } from "@selecta_concours/common/i18n";
 import { escapeHTML as e, fmtDateTime, fmtPct } from "@selecta_concours/common/utils";
 
 const PRINT_CSS = `
@@ -36,8 +37,9 @@ export function printHTML(title, body) {
     document.body.appendChild(iframe);
     const doc = iframe.contentDocument;
     doc.open();
-    doc.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>${e(title)}</title><style>${PRINT_CSS}</style></head><body>${body}</body></html>`);
+    doc.write(`<!DOCTYPE html><html lang="${getLang()}"><head><meta charset="utf-8"><title>${e(t(title))}</title><style>${PRINT_CSS}</style></head><body>${body}</body></html>`);
     doc.close();
+    translateTree(doc.body);
     const go = () => {
         iframe.contentWindow.focus();
         iframe.contentWindow.print();

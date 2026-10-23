@@ -94,18 +94,18 @@ class SelectaSaasController(SelectaExamController):
     def signup_page(self, plan=None, **kw):
         if request.session.uid:
             return request.redirect('/selecta/admin')
-        # Noms des pays en français lorsque la langue est chargée (--load-language=fr_FR).
-        Country = request.env['res.country'].sudo()
-        if request.env['res.lang']._lang_get('fr_FR'):
-            Country = Country.with_context(lang='fr_FR')
-        countries = Country.search([]).sorted('name')
+        # Noms des pays en anglais et, lorsque la langue est chargée (--load-language=fr_FR), en français :
+        # la page affiche ceux de la langue choisie par le visiteur.
+        countries = request.env['res.country'].sudo().with_context(lang='en_US').search([])
+        names_fr = {c.id: c.name for c in countries.with_context(lang='fr_FR')} \
+            if request.env['res.lang']._lang_get('fr_FR') else {}
         return render_app('signup', "SELECTA — Créer votre espace", {
             'plans': [p._public_dict() for p in _plans()],
             'plan': plan or '',
             'trial_days': read_setting(request.env, 'trial_days'),
             'trial_max_candidates': read_setting(request.env, 'trial_max_candidates'),
             'signup_enabled': read_setting(request.env, 'signup_enabled'),
-            'countries': [{'code': c.code, 'name': c.name} for c in countries],
+            'countries': [{'code': c.code, 'name': names_fr.get(c.id, c.name), 'name_en': c.name} for c in countries],
             'default_country': 'CD',
             'support_email': read_setting(request.env, 'support_email'),
             'terms_url': '/selecta/conditions', 'privacy_url': '/selecta/confidentialite',

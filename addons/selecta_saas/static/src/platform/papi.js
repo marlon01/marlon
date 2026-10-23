@@ -1,5 +1,6 @@
 /** @odoo-module */
 /* Administration centrale : appel de l'API, état partagé, formats et boîte de saisie structurée. */
+import { locale } from "@selecta_concours/common/i18n";
 import { Component, reactive, useEffect, useState, xml } from "@odoo/owl";
 import { jsonrpc } from "@selecta_concours/common/rpc";
 import { ICONS } from "@selecta_concours/common/ui";
@@ -107,7 +108,7 @@ export function fmtDate(value) {
     if (!d || isNaN(d)) {
         return "—";
     }
-    return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" });
+    return d.toLocaleDateString(locale(), { day: "2-digit", month: "short", year: "numeric" });
 }
 
 export { fmtDateTime };

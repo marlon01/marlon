@@ -1,4 +1,5 @@
 /** @odoo-module */
+import { locale } from "@selecta_concours/common/i18n";
 /*
  * Surveillant IA — vision par ordinateur 100 % locale (aucune image ne quitte le poste,
  * sauf les clichés probatoires joints aux incidents).
@@ -169,7 +170,7 @@ export class Proctor {
         ctx.fillRect(0, this.canvas.height - 18, this.canvas.width, 18);
         ctx.fillStyle = "#fff";
         ctx.font = "11px sans-serif";
-        ctx.fillText(new Date().toLocaleString("fr-FR"), 6, this.canvas.height - 5);
+        ctx.fillText(new Date().toLocaleString(locale()), 6, this.canvas.height - 5);
         return this.canvas.toDataURL("image/jpeg", quality);
     }
 
