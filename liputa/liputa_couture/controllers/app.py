@@ -49,6 +49,8 @@ class LiputaHome(Home):
     """Route workshop users to the Liputa app instead of the Odoo web client."""
 
     def _login_redirect(self, uid, redirect=None):
+        if not redirect and request.env["res.users"].sudo().browse(uid).share:
+            return "/c"  # clients : le portail des ateliers
         if not redirect and not _is_platform_admin(request.env, uid):
             return "/app"
         return super()._login_redirect(uid, redirect=redirect)
@@ -56,6 +58,8 @@ class LiputaHome(Home):
     @http.route()
     def web_client(self, s_action=None, **kw):
         uid = request.session.uid
+        if uid and request.env["res.users"].sudo().browse(uid).share:
+            return request.redirect("/c", 303)
         if uid and not _is_platform_admin(request.env, uid):
             return request.redirect("/app", 303)
         return super().web_client(s_action=s_action, **kw)
@@ -77,6 +81,8 @@ class LiputaApp(http.Controller):
             return request.not_found()
         if not request.session.uid or request.env.user._is_public():
             return request.redirect("/app/login", 303)
+        if request.env.user.share:
+            return request.redirect("/c", 303)  # un client n'a rien à faire dans l'application atelier
         return request.render("liputa_couture.app_shell", {
             "lang": (request.env.user.lang or "fr_FR").split("_")[0],
         }, headers={"Cache-Control": "no-store"})

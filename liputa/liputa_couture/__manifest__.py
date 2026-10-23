@@ -16,6 +16,8 @@ Liputa turns every tailoring workshop (atelier de couture) into a digital busine
 * Orders with measurements & photo, delivery estimation from real workshop load
 * Planning per tailor, health monitoring, notifications (email / SMS / WhatsApp)
 * Client invoicing and public order tracking portal
+* Client portal app (/c): directory of workshops ranked by client ratings, WhatsApp contact,
+  followed orders, installable on the phone, web push for clients, workshops and administrators
 """,
     "author": "Liputa",
     "website": "https://liputa.app",
@@ -35,7 +37,9 @@ Liputa turns every tailoring workshop (atelier de couture) into a digital busine
         "views/saas_views.xml",
         "views/app_templates.xml",
         "views/portal_templates.xml",
+        "views/client_templates.xml",
         "views/menus.xml",
+        "views/client_views.xml",
     ],
     "assets": {
         "web.assets_backend": [

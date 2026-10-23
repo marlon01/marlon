@@ -1,0 +1,94 @@
+<template>
+  <style>
+    @font-face { font-family: "Bricolage Grotesque"; src: url("assets/fonts/BricolageGrotesque.ttf"); font-weight: 200 800; }
+    #root { position: absolute; inset: 0; overflow: hidden; background: linear-gradient(180deg, #fff3dc 0%, #f6e6c9 100%); }
+    /* Le classement des ateliers : celui de Nadège monte à la première place. */
+    #vi-titre { position: absolute; left: 120px; top: 170px; font-family: "Bricolage Grotesque"; font-weight: 800; font-size: 72px; letter-spacing: -0.02em; color: #16213e; }
+    #vi-titre span { display: inline-block; }
+    .vi-rang { position: absolute; left: 120px; width: 70px; height: 120px; display: grid; place-items: center; font-family: "Bricolage Grotesque"; font-weight: 800; font-size: 64px; color: #c99a06; }
+    .vi-carte { position: absolute; left: 210px; width: 720px; height: 120px; border-radius: 26px; background: #fbfcfe; box-shadow: 0 12px 28px rgba(22,33,62,.12);
+      display: flex; align-items: center; gap: 22px; padding: 0 26px; }
+    .vi-carte i { width: 76px; height: 76px; border-radius: 18px; display: grid; place-items: center; font-family: "Bricolage Grotesque"; font-style: normal; font-weight: 800; font-size: 34px; color: #fbfcfe; flex: none; }
+    .vi-carte b { display: block; font-family: "Bricolage Grotesque"; font-size: 36px; color: #16213e; }
+    .vi-carte span { display: block; font-family: "Bricolage Grotesque"; font-size: 30px; color: #4a5372; margin-top: 2px; }
+    .vi-carte em { color: #c99a06; font-style: normal; letter-spacing: 2px; }
+    #vi-c3 { box-shadow: 0 0 0 5px #f2c230, 0 16px 36px rgba(22,33,62,.18); }
+    #vi-sol { position: absolute; left: 0; right: 0; top: 880px; bottom: 0; background: #d8b48a; }
+    /* Une nouvelle cliente. */
+    #vi-cliente { position: absolute; left: 330px; top: 250px; width: 420px; height: 651px; }
+    #vc-haut { fill: #1f7a72; }
+    /* Le téléphone : l'annuaire réel, puis WhatsApp. */
+    #vi-tel { position: absolute; left: 1150px; top: 30px; width: 600px; height: 1020px; border-radius: 70px; background: #0f1a30; padding: 24px; box-shadow: 0 40px 80px rgba(22, 33, 62, 0.3); }
+    #vi-ecran { position: relative; width: 552px; height: 972px; border-radius: 50px; overflow: hidden; background: #f5f6fa; }
+    #vi-annuaire { position: absolute; left: 0; top: 0; width: 552px; }
+    #vi-annuaire img { display: block; width: 552px; }
+    #vi-rep { position: absolute; border: 5px solid #f2c230; border-radius: 18px; }
+    #vi-flash { position: absolute; border-radius: 12px; background: #fbfcfe; }
+    #vi-wa { position: absolute; inset: 0; background: #ece5dd; }
+    #vi-wa-tete { height: 150px; background: #075e54; display: flex; align-items: center; gap: 18px; padding: 50px 26px 0; }
+    #vi-wa-tete img { width: 72px; height: 72px; border-radius: 50%; background: #fbfcfe; }
+    #vi-wa-tete b { font-family: "Bricolage Grotesque"; font-size: 32px; color: #fbfcfe; }
+    .vi-bulle { position: absolute; max-width: 440px; padding: 20px 24px; border-radius: 22px; font-family: "Bricolage Grotesque"; font-size: 32px; line-height: 1.3; color: #16213e;
+      box-shadow: 0 2px 0 rgba(0,0,0,.06); }
+    #vi-b1 { right: 22px; top: 200px; background: #dcf8c6; border-top-right-radius: 6px; }
+    #vi-b2 { left: 22px; top: 470px; background: #fbfcfe; border-top-left-radius: 6px; }
+    /* États de départ cachés, posés en CSS pour l'image 0. */
+    #vi-titre span, .vi-rang, .vi-carte, #vi-rep, #vi-flash, #vi-wa, #vi-b1, #vi-b2 { opacity: 0; }
+  </style>
+
+  <div id="root" data-composition-id="vitrine" data-width="1920" data-height="1080">
+    <div id="vi-sol"></div>
+    <div id="vi-classement">
+      <div id="vi-titre"><span>Les</span> <span>mieux</span> <span>notés,</span> <span>en</span> <span>premier</span></div>
+      <div class="vi-rang" style="top: 330px">1</div><div class="vi-rang" style="top: 480px">2</div><div class="vi-rang" style="top: 630px">3</div>
+      <div class="vi-carte" id="vi-c1" style="top: 330px"><i style="background: #c4502a">KE</i><div><b>Couture Kin Élégance</b><span><em>★★★★☆</em> 4,1 · 12 avis</span></div></div>
+      <div class="vi-carte" id="vi-c2" style="top: 480px"><i style="background: #1f7a72">BR</i><div><b>Atelier Bazin Royal</b><span><em>★★★★☆</em> 4,1 · 9 avis</span></div></div>
+      <div class="vi-carte" id="vi-c3" style="top: 630px"><i style="background: #16213e; color: #f2c230">NC</i><div><b>Atelier Nadège Couture</b><span><em>★★★★★</em> 4,8 · 25 avis</span></div></div>
+    </div>
+    <div id="vi-cliente"></div>
+
+    <div id="vi-tel"><div id="vi-ecran">
+      <div id="vi-annuaire"><img src="assets/shots/annuaire.png" alt="Annuaire des ateliers sur Liputa" /><div id="vi-rep"></div><div id="vi-flash"></div></div>
+      <div id="vi-wa">
+        <div id="vi-wa-tete"><img src="assets/brand/liputa.svg" alt="" /><b>Atelier Nadège Couture</b></div>
+        <div class="vi-bulle" id="vi-b1">Bonjour Nadège, je vous ai trouvée sur Liputa. Vous cousez les tenues de dot ?</div>
+        <div class="vi-bulle" id="vi-b2">Bien sûr ! Passez demain à l'atelier, je prends vos mesures.</div>
+      </div>
+    </div></div>
+  </div>
+
+  <script>
+    LiputaRig.draw(document.querySelector("#vi-cliente"), { kind: "chantal", id: "vc" });
+    const R = LiputaRig;
+    const tl = gsap.timeline({ paused: true });
+    gsap.set("#vi-cliente", { x: -700 }); // état de l'image 0, avant le premier seek
+    tl.set("#vi-cliente", { x: -700 }, 0);
+
+    // 0–6 s : le classement. Les clientes notent ; l'atelier de Nadège monte en tête.
+    tl.fromTo("#vi-tel", { y: 1100 }, { y: 0, duration: 0.7, ease: "expo.out" }, 0.1);
+    tl.fromTo("#vi-titre span", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.35, stagger: 0.08, ease: "back.out(1.6)", immediateRender: false }, 0.5);
+    tl.fromTo(".vi-rang", { opacity: 0 }, { opacity: 1, duration: 0.3, stagger: 0.08, immediateRender: false }, 1.0);
+    tl.fromTo(".vi-carte", { opacity: 0, x: -120 }, { opacity: 1, x: 0, duration: 0.4, stagger: 0.12, ease: "expo.out", immediateRender: false }, 1.1);
+    // Les étoiles arrivent, la carte de Nadège passe devant les autres.
+    tl.to("#vi-c3", { y: -300, duration: 0.8, ease: "back.inOut(1.4)" }, 3.0);
+    tl.to("#vi-c1", { y: 150, duration: 0.7, ease: "power2.inOut" }, 3.05);
+    tl.to("#vi-c2", { y: 150, duration: 0.7, ease: "power2.inOut" }, 3.1);
+    tl.to("#vi-c3", { scale: 1.04, duration: 0.25, yoyo: true, repeat: 1, ease: "sine.inOut" }, 3.9);
+    tl.fromTo("#vi-rep", { opacity: 0, scale: 1.1 }, { opacity: 1, scale: 1, duration: 0.3, ease: "expo.out", immediateRender: false }, 4.2);
+
+    // 6,6–10,9 s : une nouvelle cliente découvre Nadège et lui écrit sur WhatsApp.
+    tl.to("#vi-classement", { opacity: 0, x: -200, duration: 0.45, ease: "power3.in" }, 6.3);
+    tl.to("#vi-cliente", { x: 0, duration: 0.6, ease: "expo.out" }, 6.6);
+    R.mood(tl, "vc", "espoir", 6.7);
+    R.look(tl, "vc", 14, 2, 6.9);
+    R.blinks(tl, "vc", [8.3, 10.4]);
+    R.breathe(tl, "vc", 6.6, 11.4);
+    tl.to("#vc-armR", { rotation: -50, duration: 0.4, ease: "power2.out" }, 7.0);
+    tl.to("#vi-flash", { keyframes: [{ opacity: 0.6, duration: 0.08 }, { opacity: 0, duration: 0.25 }] }, 7.5);
+    tl.fromTo("#vi-wa", { opacity: 0, x: 120 }, { opacity: 1, x: 0, duration: 0.4, ease: "expo.out", immediateRender: false }, 7.8);
+    tl.fromTo("#vi-b1", { opacity: 0, y: 30, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.35, ease: "back.out(1.6)", immediateRender: false }, 8.2);
+    tl.fromTo("#vi-b2", { opacity: 0, y: 30, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.35, ease: "back.out(1.6)", immediateRender: false }, 9.6);
+    R.mood(tl, "vc", "joie", 9.9);
+    window.__timelines["vitrine"] = tl;
+  </script>
+</template>

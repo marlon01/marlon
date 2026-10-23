@@ -920,7 +920,6 @@
         {
           "id": "c22a4b6d-140a-4ec4-960f-04f67c812436",
           "scope": "project",
-          "report": "/home/user/marlon/film/liputa/.hyperframes/artifacts/checks/c22a4b6d-140a-4ec4-960f-04f67c812436.json",
           "metadata": {
             "ok": false,
             "browserSkipped": false,
@@ -942,14 +941,15 @@
           "revision": "4678bcbe-b787-4245-b0f6-b16c30a47431",
           "inputFingerprint": "bb34b9531ae3fcddb71c23c25dc65f8cef8c3bcb50d2a245763b16ccb7d54d5b",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "8077a019-a584-4108-adb4-be4dc51f2dbf"
         }
       ],
       "587b8b7f-8bf1-4f30-a861-6cd8dfc1de46": [
         {
           "id": "a1a5b221-558e-4e05-aa43-41470a4365da",
           "scope": "project",
-          "report": "/home/user/marlon/film/liputa/.hyperframes/artifacts/checks/a1a5b221-558e-4e05-aa43-41470a4365da.json",
           "metadata": {
             "ok": true,
             "browserSkipped": false,
@@ -971,7 +971,9 @@
           "revision": "587b8b7f-8bf1-4f30-a861-6cd8dfc1de46",
           "inputFingerprint": "44bf91c903b14ee0f9c3d7226916747e9bcda4965bcd02f96b352f1de5c2565f",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "8077a019-a584-4108-adb4-be4dc51f2dbf"
         }
       ],
       "f897ae43-4066-4f5f-a8f5-4099049c686c": [
@@ -2664,15 +2666,15 @@
   },
   "renders": {
     "latest": {
-      "id": "f1cae7a3-fa19-41bd-abd0-8b8cb567c20e",
-      "completedAt": 1792746102871,
+      "id": "8077a019-a584-4108-adb4-be4dc51f2dbf",
+      "completedAt": 1792747708196,
       "output": "/home/user/marlon/film/liputa/renders/brut.mp4",
       "status": "completed",
-      "revision": null
+      "revision": "f897ae43-4066-4f5f-a8f5-4099049c686c"
     },
     "retainedRevisions": [
-      "2e371df1-6ea4-4f43-af4b-ed885e996a28",
-      "9c0d7cbd-fb8d-4d78-ad55-35753620b6e5"
+      "f897ae43-4066-4f5f-a8f5-4099049c686c",
+      "2e371df1-6ea4-4f43-af4b-ed885e996a28"
     ]
   },
   "pendingArtifactCleanup": []

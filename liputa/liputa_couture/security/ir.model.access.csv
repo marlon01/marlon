@@ -25,3 +25,6 @@ access_sub_manager,subscription manager,model_liputa_subscription,group_liputa_m
 access_sub_admin,subscription admin,model_liputa_subscription,group_liputa_saas_admin,1,1,1,1
 access_pay_manager,payment manager,model_liputa_subscription_payment,group_liputa_manager,1,0,0,0
 access_pay_admin,payment admin,model_liputa_subscription_payment,group_liputa_saas_admin,1,1,1,1
+access_review_manager,review manager,model_liputa_review,group_liputa_manager,1,0,0,0
+access_review_admin,review admin,model_liputa_review,group_liputa_saas_admin,1,1,0,1
+access_push_admin,push admin,model_liputa_push_message,group_liputa_saas_admin,1,0,0,1

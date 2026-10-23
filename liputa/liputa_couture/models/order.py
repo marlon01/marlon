@@ -36,6 +36,9 @@ class LiputaOrder(models.Model):
     partner_id = fields.Many2one("res.partner", "Client", required=True, tracking=True, index=True,
                                  check_company=True)
     client_phone = fields.Char(related="partner_id.phone", readonly=False)
+    client_partner_ids = fields.Many2many(
+        "res.partner", "liputa_order_client_partner_rel", "order_id", "partner_id", "Followed by client accounts",
+        copy=False, help="Client accounts that added this order to their Liputa app (from the tracking link).")
     client_photo = fields.Image("Client photo", max_width=1280, max_height=1280, attachment=True)
     photo_consent = fields.Boolean("Photo consent",
                                    help="The client agreed that the photo is used for the virtual "
@@ -416,6 +419,17 @@ class LiputaOrder(models.Model):
             partner_ids=managers.partner_id.ids, subtype_xmlid="mail.mt_note")
         if stage.notify_client:
             self._liputa_notify_client(stage)
+        if stage.client_visible:
+            self._liputa_push_client(stage)
+
+    def _liputa_push_client(self, stage):
+        """Push to every client account following the order (works with the phone locked)."""
+        self.ensure_one()
+        self.env["liputa.push.message"]._liputa_send(
+            self.partner_id | self.client_partner_ids, self.company_id.name,
+            _("Your %(model)s: %(stage)s.", model=self.garment_model_id.name or self.name,
+              stage=stage.client_label or stage.name),
+            url="/c/commande/%s" % self.id, tag="order-%s" % self.id)
 
     def _liputa_notify_client(self, stage):
         self.ensure_one()
@@ -462,6 +476,11 @@ class LiputaOrder(models.Model):
         self.ensure_one()
         label = dict(self._fields["schedule_health"].selection)[health]
         summary = _("%(ref)s is %(state)s", ref=self.name, state=label)
+        self.env["liputa.push.message"]._liputa_send(
+            self.company_id._liputa_manager_partners(), summary,
+            _("%(client)s - promised for %(date)s, progress %(p)s%%.", client=self.partner_id.name,
+              date=self.delivery_date_promised, p=int(self.progress)),
+            url="/app#/order/%s" % self.id, tag="health-%s" % self.id)
         for user in self._liputa_managers():
             already = self.activity_ids.filtered(lambda a: a.user_id == user and a.summary == summary)
             if not already:

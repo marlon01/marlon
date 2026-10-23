@@ -1,4 +1,4 @@
-# Script — Liputa « L'atelier respire » (v2)
+# Script — Liputa « L'atelier respire » (v3 : portail client, application installée, notifications)
 
 Texte lu : `voix.txt` (une ligne = une phrase = un fichier `assets/audio/phrases/NN.wav`).
 Génération : `tools/voix_off.py --voix siwis --vitesse 0.9 --prises 5 --verifier` ; une ligne
@@ -18,8 +18,12 @@ préfixée `[upmc-jessica]` (Chantal) ou `[upmc-pierre]` (Papy) est lue par cett
 | 10 | 39,5 | narratrice | Le patron se trace, le tissu se calcule. | Patron, 3,22 m |
 | 11 | 42,5 | narratrice | Chaque tailleur sait ce qu'il a à faire. Et l'application annonce une date qu'elle peut tenir. | Planning, puis date de livraison |
 | 12 | 47,5 | narratrice | Pour la première fois depuis longtemps, l'atelier respire. | Nadège inspire, la lumière s'ouvre |
-| 13 | 51,6 | narratrice | Chez elle, Chantal suit sa robe sur son téléphone. | Suivi de commande, « À retirer » |
-| 14 | 55,5 | narratrice | Plus d'allers-retours. Plus d'appels. Elle sait quand venir. | Moto barrée, téléphone barré |
-| 15 | 59,7 | Chantal | Elle est magnifique ! | À l'atelier, la robe portée, bras levés |
-| 16 | 62,2 | narratrice | Avec Liputa, le sur-mesure arrive à l'heure. | Logo, slogan |
-| 17 | 65,2 | narratrice | Créez votre atelier virtuel : essai gratuit de quatorze jours. | Appel, essai gratuit, ruban |
+| 13 | 51,6 | narratrice | Dans l'application Liputa, les clientes notent leur atelier. Les mieux notés apparaissent en premier. | Classement : la carte de Nadège monte en tête ; annuaire réel |
+| 14 | 57,6 | narratrice | De nouvelles clientes découvrent Nadège, et lui écrivent directement sur WhatsApp. | Nouvelle cliente, bouton WhatsApp, conversation |
+| 15 | 62,4 | narratrice | Chantal, elle, a installé l'application sur son téléphone. | « Installer Liputa ? », l'icône arrive sur l'écran d'accueil |
+| 16 | 66,6 | narratrice | Téléphone verrouillé, une notification : sa robe est prête. | Écran verrouillé, notification « À retirer », suivi de commande |
+| 17 | 70,2 | narratrice | Plus d'allers-retours. Plus d'appels. Elle sait quand venir. | Moto et téléphone barrés |
+| 18 | 74,6 | Chantal | Elle est magnifique ! | À l'atelier, la robe portée |
+| 19 | 76,2 | narratrice | Cinq étoiles. Et Nadège est prévenue aussitôt. | Cinq étoiles ; notification « Nouvel avis » chez Nadège |
+| 20 | 79,8 | narratrice | Avec Liputa, le sur-mesure arrive à l'heure. | Logo, slogan |
+| 21 | 83,2 | narratrice | Trouvez votre atelier, ou créez le vôtre. Essai gratuit de quatorze jours. | Double appel : clients et ateliers |

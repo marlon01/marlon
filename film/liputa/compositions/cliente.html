@@ -2,15 +2,34 @@
   <style>
     @font-face { font-family: "Bricolage Grotesque"; src: url("assets/fonts/BricolageGrotesque.ttf"); font-weight: 200 800; }
     #root { position: absolute; inset: 0; overflow: hidden; background: linear-gradient(180deg, #e6f0ea 0%, #d7e6dc 100%); }
-    /* Chez Chantal : un canapé, une fenêtre sur la ville le soir. */
+    /* Chez Chantal : un canapé, une fenêtre sur la ville. */
     #cl-maison { position: absolute; inset: 0; }
     #cl-fenetre { position: absolute; left: 90px; top: 110px; width: 420px; height: 330px; border: 16px solid #fbfcfe; border-radius: 8px;
-      background: linear-gradient(180deg, #f29f67 0%, #b45f6f 100%); }
+      background: linear-gradient(180deg, #f8d58e 0%, #f29f67 100%); }
     #cl-canape { position: absolute; left: 120px; top: 640px; width: 860px; height: 300px; border-radius: 60px 60px 20px 20px; background: #1f7a72; }
     #cl-canape-dos { position: absolute; left: 160px; top: 520px; width: 780px; height: 200px; border-radius: 50px; background: #186760; }
     #cl-chantal { position: absolute; left: 330px; top: 250px; width: 420px; height: 651px; }
     #cl-tel { position: absolute; left: 1150px; top: 30px; width: 600px; height: 1020px; border-radius: 70px; background: #0f1a30; padding: 24px; box-shadow: 0 40px 80px rgba(22, 33, 62, 0.3); }
     #cl-ecran { position: relative; width: 552px; height: 972px; border-radius: 50px; overflow: hidden; background: #f5f6fa; }
+    /* L'écran d'accueil du téléphone, puis l'installation de Liputa. */
+    #cl-accueil { position: absolute; inset: 0; background: linear-gradient(160deg, #1f7a72 0%, #16213e 100%); }
+    .cl-app { position: absolute; width: 100px; height: 100px; border-radius: 26px; }
+    #cl-app-liputa { left: 316px; top: 520px; background: #fbfcfe url("assets/brand/liputa.svg") center / 76px no-repeat; }
+    #cl-app-nom { position: absolute; left: 286px; top: 630px; width: 160px; text-align: center; font-family: "Bricolage Grotesque"; font-weight: 600; font-size: 28px; color: #fbfcfe; }
+    #cl-feuille { position: absolute; left: 0; right: 0; bottom: 0; height: 380px; border-radius: 40px 40px 0 0; background: #fbfcfe; padding: 40px 40px 0; text-align: center; }
+    #cl-feuille img { width: 96px; height: 96px; }
+    #cl-feuille b { display: block; font-family: "Bricolage Grotesque"; font-weight: 700; font-size: 40px; color: #16213e; margin: 14px 0 26px; }
+    #cl-installer { height: 88px; border-radius: 22px; background: #16213e; color: #fbfcfe; font-family: "Bricolage Grotesque"; font-weight: 700; font-size: 36px; display: grid; place-items: center; }
+    #cl-flash { position: absolute; left: 40px; right: 40px; bottom: 54px; height: 88px; border-radius: 22px; background: #fbfcfe; }
+    /* Écran verrouillé : la notification arrive. */
+    #cl-verrou { position: absolute; inset: 0; background: linear-gradient(170deg, #2c3a63 0%, #6a4c9c 100%); text-align: center; color: #fbfcfe; }
+    #cl-heure { margin-top: 120px; font-family: "Bricolage Grotesque"; font-weight: 600; font-size: 150px; line-height: 1; }
+    #cl-date { font-family: "Bricolage Grotesque"; font-size: 34px; margin-top: 12px; opacity: 0.9; }
+    #cl-notif { position: absolute; left: 22px; right: 22px; top: 360px; padding: 24px; border-radius: 30px; background: rgba(251, 252, 254, 0.95); color: #16213e; text-align: left;
+      display: flex; gap: 18px; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25); }
+    #cl-notif img { width: 64px; height: 64px; border-radius: 16px; background: #fbfcfe; flex: none; }
+    #cl-notif b { display: block; font-family: "Bricolage Grotesque"; font-size: 30px; }
+    #cl-notif span { display: block; font-family: "Bricolage Grotesque"; font-size: 30px; margin-top: 6px; color: #2b3658; }
     #cl-suivi { position: absolute; left: 0; top: 0; width: 552px; }
     #cl-suivi img { display: block; width: 552px; }
     #cl-rep { position: absolute; left: 30px; top: 838px; width: 170px; height: 56px; border: 5px solid #138a5e; border-radius: 14px; }
@@ -18,13 +37,20 @@
     .cl-icone { position: absolute; top: 160px; width: 190px; height: 190px; border-radius: 40px; background: #fbfcfe; box-shadow: 0 14px 30px rgba(22,33,62,.14); display: grid; place-items: center; }
     .cl-icone svg { width: 110px; height: 110px; stroke: #16213e; stroke-width: 2.2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
     .cl-barre { position: absolute; left: -10px; top: 88px; width: 210px; height: 14px; border-radius: 7px; background: #c23a33; transform: rotate(-35deg); transform-origin: 0 50%; }
-    /* À l'atelier : la robe est prête. */
+    /* À l'atelier : la robe est prête, cinq étoiles, et Nadège est prévenue. */
     #cl-atelier { position: absolute; inset: 0; background: linear-gradient(180deg, #fff3dc 0%, #f6e6c9 100%); clip-path: circle(0px at 50% 50%); }
     #cl-sol { position: absolute; left: 0; right: 0; top: 880px; bottom: 0; background: #d8b48a; }
     #cl-nadege { position: absolute; left: 330px; top: 250px; width: 420px; height: 651px; }
     #cl-chantal2 { position: absolute; left: 960px; top: 230px; width: 440px; height: 682px; }
+    #cl-etoiles { position: absolute; left: 0; right: 0; top: 70px; text-align: center; font-size: 120px; line-height: 1; color: #f2c230; letter-spacing: 12px; }
+    #cl-etoiles span { display: inline-block; text-shadow: 0 6px 18px rgba(201, 154, 6, 0.35); }
+    #cl-push { position: absolute; left: 60px; top: 230px; width: 560px; padding: 22px 26px; border-radius: 28px; background: #fbfcfe; display: flex; gap: 18px;
+      box-shadow: 0 18px 40px rgba(22, 33, 62, 0.22); }
+    #cl-push img { width: 64px; height: 64px; flex: none; }
+    #cl-push b { display: block; font-family: "Bricolage Grotesque"; font-size: 32px; color: #16213e; }
+    #cl-push span { display: block; font-family: "Bricolage Grotesque"; font-size: 28px; color: #4a5372; margin-top: 4px; }
     /* États de départ cachés, posés en CSS pour l'image 0. */
-    #cl-rep, #cl-i1, #cl-i2, #cd-haut { opacity: 0; }
+    #cl-rep, #cl-i1, #cl-i2, #cd-haut, #cl-app-liputa, #cl-app-nom, #cl-flash, #cl-verrou, #cl-notif, #cl-suivi, #cl-push, #cl-etoiles span { opacity: 0; }
     #cd-robe { opacity: 1; }
   </style>
 
@@ -36,13 +62,30 @@
       <div id="cl-canape"></div>
       <div class="cl-icone" id="cl-i1" style="left: 560px"><svg viewBox="0 0 24 24"><circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/><path d="M9 17h6M6 14l3-6h5l4 6M12 8l1-3h3"/></svg><div class="cl-barre" id="cl-b1"></div></div>
       <div class="cl-icone" id="cl-i2" style="left: 800px"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg><div class="cl-barre" id="cl-b2"></div></div>
-      <div id="cl-tel"><div id="cl-ecran"><div id="cl-suivi"><img src="assets/shots/suivi.png" alt="Suivi de commande de Chantal" /><div id="cl-rep"></div></div></div></div>
+      <div id="cl-tel"><div id="cl-ecran">
+        <div id="cl-accueil">
+          <div class="cl-app" style="left: 56px; top: 120px; background: #e07a2f"></div><div class="cl-app" style="left: 186px; top: 120px; background: #f2c230"></div>
+          <div class="cl-app" style="left: 316px; top: 120px; background: #6a4c9c"></div><div class="cl-app" style="left: 56px; top: 270px; background: #1fa855"></div>
+          <div class="cl-app" style="left: 186px; top: 270px; background: #0b5fff"></div><div class="cl-app" style="left: 316px; top: 270px; background: #c23a33"></div>
+          <div class="cl-app" style="left: 56px; top: 420px; background: #f29f67"></div><div class="cl-app" style="left: 186px; top: 420px; background: #138a5e"></div>
+          <div class="cl-app" style="left: 316px; top: 420px; background: #8b8f99"></div>
+          <div class="cl-app" id="cl-app-liputa"></div><div id="cl-app-nom">Liputa</div>
+          <div id="cl-feuille"><img src="assets/brand/liputa.svg" alt="" /><b>Installer Liputa ?</b><div id="cl-installer">Installer</div><div id="cl-flash"></div></div>
+        </div>
+        <div id="cl-verrou">
+          <div id="cl-heure">14:32</div><div id="cl-date">mercredi 28 octobre</div>
+          <div id="cl-notif"><img src="assets/brand/liputa.svg" alt="" /><div><b>Atelier Nadège Couture</b><span>Votre Robe sirène : À retirer.</span></div></div>
+        </div>
+        <div id="cl-suivi"><img src="assets/shots/suivi.png" alt="Suivi de commande de Chantal" /><div id="cl-rep"></div></div>
+      </div></div>
     </div>
 
     <div id="cl-atelier">
       <div id="cl-sol"></div>
       <div id="cl-nadege"></div>
       <div id="cl-chantal2"></div>
+      <div id="cl-etoiles"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+      <div id="cl-push"><img src="assets/brand/liputa.svg" alt="" /><div><b>Nouvel avis : ★★★★★</b><span>Chantal : « Ma robe sirène est magnifique ! »</span></div></div>
     </div>
   </div>
 
@@ -52,42 +95,71 @@
     LiputaRig.draw(document.querySelector("#cl-chantal2"), { kind: "chantal", id: "cd" });
     const R = LiputaRig;
     const tl = gsap.timeline({ paused: true });
-        gsap.set("#cl-b1, #cl-b2", { scaleX: 0 }); // état de l'image 0, avant le premier seek
-        tl.set("#cl-b1, #cl-b2", { scaleX: 0 }, 0);
+    gsap.set("#cl-b1, #cl-b2", { scaleX: 0 }); // état de l'image 0, avant le premier seek
+    tl.set("#cl-b1, #cl-b2", { scaleX: 0 }, 0);
+    gsap.set("#cl-feuille", { y: 400 }); // état de l'image 0, avant le premier seek
+    tl.set("#cl-feuille", { y: 400 }, 0);
 
-    // Chez elle, Chantal regarde son téléphone.
+    // 0–4,4 s : Chantal installe Liputa sur son téléphone.
     R.mood(tl, "cc", "neutre", 0.05);
     gsap.set("#cc-armR", { rotation: -50 }); // état de l'image 0, avant le premier seek
     tl.set("#cc-armR", { rotation: -50 }, 0);
     R.look(tl, "cc", 14, 4, 0.1);
-    R.breathe(tl, "cc", 0, 8.2);
-    R.blinks(tl, "cc", [1.4, 4.0, 6.9]);
+    R.breathe(tl, "cc", 0, 12.2);
+    R.blinks(tl, "cc", [1.4, 3.9, 7.4, 10.9]);
     tl.fromTo("#cl-tel", { y: 1100 }, { y: 0, duration: 0.7, ease: "expo.out" }, 0.0);
-    tl.to("#cl-suivi", { y: -320, duration: 1.2, ease: "power2.inOut" }, 1.7);
-    tl.fromTo("#cl-rep", { opacity: 0, scale: 1.25 }, { opacity: 1, scale: 1, duration: 0.3, ease: "expo.out", immediateRender: false }, 2.9);
+    tl.to("#cl-feuille", { y: 0, duration: 0.45, ease: "expo.out" }, 1.0);
+    tl.to("#cl-flash", { keyframes: [{ opacity: 0.4, duration: 0.08 }, { opacity: 0, duration: 0.25 }] }, 2.1);
+    tl.to("#cl-feuille", { y: 400, duration: 0.35, ease: "power3.in" }, 2.4);
+    tl.fromTo("#cl-app-liputa", { opacity: 0, scale: 0.2 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(2.2)", immediateRender: false }, 2.8);
+    tl.fromTo("#cl-app-nom", { opacity: 0 }, { opacity: 1, duration: 0.3, immediateRender: false }, 3.0);
     R.mood(tl, "cc", "sourire", 3.1);
-    tl.to("#cc-head", { rotation: 4, duration: 0.3, ease: "back.out(1.6)" }, 3.1);
 
-    // Plus d'allers-retours, plus d'appels : barrés l'un après l'autre.
-    tl.fromTo("#cl-i1", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.3, ease: "back.out(1.6)", immediateRender: false }, 4.5);
-    tl.to("#cl-b1", { scaleX: 1, duration: 0.25, ease: "power3.out" }, 5.0);
-    tl.fromTo("#cl-i2", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.3, ease: "back.out(1.6)", immediateRender: false }, 5.9);
-    tl.to("#cl-b2", { scaleX: 1, duration: 0.25, ease: "power3.out" }, 6.4);
-    R.mood(tl, "cc", "joie", 7.0);
+    // 4,4–8,0 s : plus tard, écran verrouillé… la notification : la robe est prête.
+    tl.to("#cl-verrou", { opacity: 1, duration: 0.35, ease: "power2.inOut" }, 4.3);
+    R.mood(tl, "cc", "neutre", 4.4);
+    R.look(tl, "cc", -6, -6, 4.4);
+    tl.fromTo("#cl-notif", { opacity: 0, y: -160 }, { opacity: 1, y: 0, duration: 0.5, ease: "back.out(1.5)", immediateRender: false }, 4.9);
+    tl.to("#cl-tel", { keyframes: [{ rotation: -1.5, duration: 0.05 }, { rotation: 1.5, duration: 0.05 }, { rotation: -1, duration: 0.05 }, { rotation: 0, duration: 0.05 }] }, 4.95);
+    R.look(tl, "cc", 14, 4, 5.1);
+    R.mood(tl, "cc", "sourire", 5.5);
+    tl.to("#cc-head", { rotation: 4, duration: 0.3, ease: "back.out(1.6)" }, 5.5);
+    tl.to("#cl-notif", { scale: 0.96, duration: 0.08, yoyo: true, repeat: 1 }, 6.5);
+    tl.fromTo("#cl-suivi", { opacity: 0, y: 200 }, { opacity: 1, y: 0, duration: 0.45, ease: "expo.out", immediateRender: false }, 6.7);
+    tl.to("#cl-suivi", { y: -320, duration: 1.0, ease: "power2.inOut" }, 7.2);
+    tl.fromTo("#cl-rep", { opacity: 0, scale: 1.25 }, { opacity: 1, scale: 1, duration: 0.3, ease: "expo.out", immediateRender: false }, 8.0);
 
-    // 8,3 s : l'iris s'ouvre sur l'atelier. La robe est prête, Chantal rayonne.
+    // 8,2–12 s : plus d'allers-retours, plus d'appels.
+    tl.fromTo("#cl-i1", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.3, ease: "back.out(1.6)", immediateRender: false }, 8.3);
+    tl.to("#cl-b1", { scaleX: 1, duration: 0.25, ease: "power3.out" }, 8.8);
+    tl.fromTo("#cl-i2", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.3, ease: "back.out(1.6)", immediateRender: false }, 9.4);
+    tl.to("#cl-b2", { scaleX: 1, duration: 0.25, ease: "power3.out" }, 9.9);
+    R.mood(tl, "cc", "joie", 10.6);
+
+    // 12,0 s : l'iris s'ouvre sur l'atelier. La robe est prête, Chantal rayonne.
     R.mood(tl, "cn", "sourire", 0.05);
     R.mood(tl, "cd", "joie", 0.05);
-    tl.to("#cl-atelier", { clipPath: "circle(1300px at 50% 50%)", duration: 0.55, ease: "power3.in" }, 8.2);
-    tl.fromTo("#cl-chantal2", { rotation: -8, y: 30 }, { rotation: 0, y: 0, duration: 0.6, ease: "back.out(2)" }, 8.6);
-    tl.to("#cd-armL", { rotation: 140, duration: 0.4, ease: "back.out(1.6)" }, 8.7);
-    tl.to("#cd-armR", { rotation: -140, duration: 0.4, ease: "back.out(1.6)" }, 8.75);
-    R.talk(tl, "cd", 8.75, 9.6, "joie");
-    R.look(tl, "cn", 12, -4, 8.7);
-    R.look(tl, "cd", -12, -2, 8.7);
-    tl.to("#cn-armL", { rotation: 30, duration: 0.4, ease: "power2.out" }, 8.9);
-    tl.to("#cn-armR", { rotation: -30, duration: 0.4, ease: "power2.out" }, 8.95);
-    R.blinks(tl, "cn", [9.8]);
+    tl.to("#cl-atelier", { clipPath: "circle(1300px at 50% 50%)", duration: 0.55, ease: "power3.in" }, 12.0);
+    tl.fromTo("#cl-chantal2", { rotation: -8, y: 30 }, { rotation: 0, y: 0, duration: 0.6, ease: "back.out(2)" }, 12.4);
+    tl.to("#cd-armL", { rotation: 140, duration: 0.4, ease: "back.out(1.6)" }, 12.4);
+    tl.to("#cd-armR", { rotation: -140, duration: 0.4, ease: "back.out(1.6)" }, 12.45);
+    R.talk(tl, "cd", 12.6, 13.45, "joie");
+    R.look(tl, "cn", 12, -4, 12.5);
+    R.look(tl, "cd", -12, -2, 12.5);
+    tl.to("#cn-armL", { rotation: 30, duration: 0.4, ease: "power2.out" }, 12.7);
+    tl.to("#cn-armR", { rotation: -30, duration: 0.4, ease: "power2.out" }, 12.75);
+    R.blinks(tl, "cn", [13.6, 16.9]);
+    R.blinks(tl, "cd", [15.2]);
+
+    // 14,2–18 s : cinq étoiles, et Nadège reçoit la notification.
+    tl.to("#cd-armL", { rotation: 0, duration: 0.4, ease: "power2.inOut" }, 13.8);
+    tl.to("#cd-armR", { rotation: -40, duration: 0.4, ease: "power2.inOut" }, 13.85);
+    tl.fromTo("#cl-etoiles span", { opacity: 0, scale: 0.3, rotation: -30 },
+      { opacity: 1, scale: 1, rotation: 0, duration: 0.35, stagger: 0.16, ease: "back.out(2.4)", immediateRender: false }, 14.2);
+    tl.fromTo("#cl-push", { opacity: 0, y: -60, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: "back.out(1.6)", immediateRender: false }, 15.7);
+    R.look(tl, "cn", -10, -8, 15.9);
+    R.mood(tl, "cn", "joie", 16.2);
+    tl.to("#cn-armL", { rotation: 120, duration: 0.4, ease: "back.out(1.6)" }, 16.3);
     window.__timelines["cliente"] = tl;
   </script>
 </template>

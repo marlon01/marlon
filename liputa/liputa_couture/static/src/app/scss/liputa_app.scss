@@ -432,3 +432,42 @@ img { max-width: 100%; display: block; }
 .lp-pay-result { padding: 12px 14px; border-radius: 12px; font-weight: 600; margin: 4px 0 12px; }
 .lp-pay-ok { background: #E4F5EE; color: #075A3D; }
 .lp-pay-ko { background: #FBE7E5; color: #7D1F18; }
+
+/* ------------------------------------------------------------ client portal (/c) */
+.lp-client .lp-client-wrap { padding-bottom: calc(var(--tabbar-h) + var(--safe-bottom) + 24px); }
+.lp-tabbar-client { grid-template-columns: repeat(3, 1fr); }
+.lp-client-hero { padding: 8px 0 14px; }
+.lp-client-hero .lp-title { margin: 10px 0 4px; }
+.lp-banner-install img { border-radius: 10px; flex-shrink: 0; }
+.lp-banner-push { background: #E7EEFF; }
+.lp-ws-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.lp-ws-card { display: flex; align-items: center; gap: 10px; background: var(--sheet); border-radius: var(--r-card); padding: 12px 14px; }
+.lp-ws-main { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; color: inherit; text-decoration: none; }
+.lp-ws-rank { width: 26px; flex-shrink: 0; text-align: center; font-family: var(--font-display); font-weight: 800; font-size: 20px; color: var(--tape-deep); }
+.lp-ws-card:nth-child(-n + 3) .lp-ws-rank { color: var(--ink); }
+.lp-ws-logo { width: 56px; height: 56px; border-radius: 14px; object-fit: cover; background: var(--paper); flex-shrink: 0; }
+.lp-ws-logo-lg { width: 88px; height: 88px; border-radius: 22px; }
+.lp-ws-head { display: flex; align-items: center; gap: 16px; }
+.lp-ws-head .lp-hero-name { margin: 0 0 2px; }
+.lp-ws-actions { display: flex; gap: 10px; margin-top: 12px; }
+.lp-ws-group { display: flex; align-items: center; gap: 12px; padding: 12px 0 6px; }
+.lp-ws-group .lp-ws-logo { width: 40px; height: 40px; border-radius: 10px; }
+.lp-ws-group a.lp-row-main { color: var(--ink); text-decoration: none; }
+.lp-rating { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 14px; }
+.lp-stars { color: var(--tape-deep); letter-spacing: 1px; }
+.lp-btn-wa { background: #1FA855; color: #fff; gap: 6px; }
+.lp-back { display: inline-block; margin: 6px 0 12px; }
+.lp-pad-x { padding: 12px 2px 0; margin: 0; }
+.lp-alert-ok { background: var(--ok-pale); color: var(--ok); }
+/* Notation : cinq étoiles cliquables (ordre inversé pour colorer les étoiles précédentes au survol). */
+.lp-rate { border: 0; padding: 0; margin: 4px 0 12px; display: flex; flex-direction: row-reverse; justify-content: flex-end; gap: 4px; }
+.lp-rate legend { width: 100%; margin-bottom: 6px; }
+.lp-rate input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.lp-rate label { font-size: 38px; line-height: 1; color: #D5D9E3; cursor: pointer; padding: 2px; }
+.lp-rate input:checked ~ label, .lp-rate label:hover, .lp-rate label:hover ~ label { color: var(--tape); }
+.lp-rate input:focus-visible + label { outline: 2px solid var(--ink); border-radius: 6px; }
+.lp-rate-form .lp-textarea { margin-bottom: 12px; }
+.lp-reviews { list-style: none; margin: 16px 0 0; padding: 0; }
+.lp-reviews li { padding: 12px 0; border-top: 1px solid var(--line); }
+.lp-reviews p { margin: 6px 0 0; color: var(--ink-soft); }
+.lp-review-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }

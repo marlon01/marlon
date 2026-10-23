@@ -1,6 +1,6 @@
 /* Liputa service worker: keeps the app shell, fonts and model images available
  * on weak or intermittent mobile networks. API calls always go to the network. */
-const CACHE = "liputa-v1";
+const CACHE = "liputa-v2";
 const SHELL = ["/app", "/liputa_couture/static/description/icon.svg",
                "/liputa_couture/static/src/app/fonts/BricolageGrotesque.ttf"];
 
@@ -36,4 +36,27 @@ self.addEventListener("fetch", (event) => {
         // network first, offline fallback to the cached shell
         event.respondWith(fetch(event.request).catch(() => caches.match("/app")));
     }
+});
+
+// Notifications push : réveillent le service worker même application fermée, écran verrouillé.
+self.addEventListener("push", (event) => {
+    let msg = { title: "Liputa", options: {} };
+    try {
+        msg = event.data.json();
+    } catch {
+        msg.options.body = event.data ? event.data.text() : "";
+    }
+    event.waitUntil(self.registration.showNotification(msg.title || "Liputa", msg.options || {}));
+});
+
+self.addEventListener("notificationclick", (event) => {
+    event.notification.close();
+    const target = new URL((event.notification.data && event.notification.data.url) || "/app", self.location.origin).href;
+    event.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((wins) => {
+        const open = wins[0];
+        if (open) {
+            return open.navigate(target).then((w) => (w || open).focus());
+        }
+        return self.clients.openWindow(target);
+    }));
 });

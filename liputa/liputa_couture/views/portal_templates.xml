@@ -73,6 +73,15 @@
                     <div class="lp-kv lp-strong"><span>Reste à payer</span><span t-out="order.amount_residual" t-options="{'widget': 'monetary', 'display_currency': order.currency_id}"/></div>
                 </section>
 
+                <!-- Lien de suivi (jeton) : le client ajoute la commande à son application pour être notifié. -->
+                <form t-if="token and not followed" method="post" t-attf-action="/c/commande/#{order.id}/suivre" class="lp-sheet lp-pad lp-follow" style="margin-top: 12px">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    <input type="hidden" name="access_token" t-att-value="token"/>
+                    <p class="lp-strong" style="margin: 0 0 4px">Ne cherchez plus ce lien</p>
+                    <p class="lp-small lp-muted" style="margin: 0 0 12px">Ajoutez cette commande à l'application Liputa : vous serez prévenu à chaque étape, même téléphone verrouillé.</p>
+                    <button type="submit" class="lp-btn lp-btn-tape lp-btn-block">Suivre dans mon application</button>
+                </form>
+
                 <div style="display: flex; gap: 10px; margin-top: 16px">
                     <a t-if="order.company_id.phone" class="lp-btn lp-btn-ghost" style="flex: 1" t-attf-href="tel:#{order.company_id.phone}">Appeler</a>
                     <a t-if="order.company_id.atelier_whatsapp" class="lp-btn lp-btn-primary" style="flex: 1"

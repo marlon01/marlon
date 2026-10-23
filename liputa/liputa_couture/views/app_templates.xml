@@ -11,7 +11,7 @@
         <meta name="robots" content="noindex"/>
         <link rel="icon" type="image/svg+xml" href="/liputa_couture/static/description/icon.svg"/>
         <link rel="apple-touch-icon" href="/liputa_couture/static/src/app/img/icon-512.png"/>
-        <link rel="manifest" href="/app/manifest.webmanifest"/>
+        <link rel="manifest" t-att-href="manifest_url or '/app/manifest.webmanifest'"/>
         <title t-esc="title or 'Liputa'"/>
     </template>
 
@@ -37,8 +37,9 @@
                 <t t-call="liputa_couture.app_head"/>
                 <t t-call-assets="liputa_couture.assets_app" t-js="false"/>
             </head>
-            <body t-attf-class="lp-body lp-public #{body_class or ''}">
+            <body t-attf-class="lp-body lp-public #{body_class or ''} #{'lp-client' if client_nav else ''}">
                 <t t-out="0"/>
+                <t t-if="client_nav" t-call="liputa_couture.client_tabbar"/>
             </body>
         </html>
     </template>

@@ -93,6 +93,11 @@ class ResCompany(models.Model):
             "company_id": company.id, "plan_id": env.ref("liputa_couture.plan_standard").id, "signup_ip": ip,
         })
         env["liputa.tailor"].create({"name": values["name"][:120], "company_id": company.id, "user_id": user.id})
+        env["liputa.push.message"]._liputa_send(
+            env["res.company"]._liputa_admin_partners(), _("New workshop: %s", company.name),
+            _("%(name)s has just created a workshop (%(country)s).", name=user.name,
+              country=country.name if country else "?"),
+            url="/odoo", model="res.company", res_id=company.id, tag="signup-%s" % company.id)
         return company
 
     def _search_liputa_subscription(self, operator, value):
@@ -204,6 +209,15 @@ class LiputaSubscription(models.Model):
             sub.message_post(body=_("Payment %(ref)s received: %(amount)s %(cur)s via %(method)s.",
                                     ref=payment.reference, amount=payment.amount,
                                     cur=payment.currency_id.name, method=payment.method))
+            Push = self.env["liputa.push.message"]
+            Push._liputa_send(self.env["res.company"]._liputa_admin_partners(),
+                              _("Payment received: %s", sub.company_id.name),
+                              _("%(amount)s %(cur)s via %(method)s.", amount=payment.amount,
+                                cur=payment.currency_id.name, method=payment.method),
+                              url="/odoo", model=sub._name, res_id=sub.id, tag="payment-%s" % payment.id)
+            Push._liputa_send(sub.company_id._liputa_manager_partners(), _("Subscription renewed"),
+                              _("Thank you! Your workshop is active until %s.", sub.next_due_date),
+                              url="/app#/account", tag="subscription-%s" % sub.id)
 
     def ai_consume(self, credits=1):
         self.ensure_one()

@@ -157,6 +157,12 @@
                             <field name="atelier_whatsapp" widget="phone"/>
                             <field name="liputa_subscription_state" widget="badge"/>
                         </group>
+                        <group string="Client directory">
+                            <field name="atelier_listed"/>
+                            <field name="atelier_description" placeholder="Specialities, neighbourhood, opening hours..."/>
+                            <field name="liputa_rating_avg" readonly="1"/>
+                            <field name="liputa_rating_count" readonly="1"/>
+                        </group>
                     </group>
                 </page>
             </notebook>

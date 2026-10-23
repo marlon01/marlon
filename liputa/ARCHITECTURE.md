@@ -64,6 +64,26 @@ La bibliothèque partagée : `company_id = False` = public. Lecture : public + m
 
 **IA (`liputa.ai.service`)** — indépendante du fournisseur ; repli automatique sur un moteur de règles si aucune clé n'est configurée (le produit reste utilisable sans IA).
 
+## 5 bis. Portail client (`/c`) et notifications push
+
+**Annuaire des ateliers** (`/c`, public) : ateliers inscrits, visibles (`atelier_listed`) et dont l'abonnement est en cours, classés par **note bayésienne** : `(3,5 × 5 + somme des notes) ÷ (5 + nombre d'avis)`. Un atelier noté 5/5 une seule fois ne passe pas devant un atelier à 4,8/5 sur 25 avis. Chaque fiche (`/c/atelier/<id>`) donne la note, les avis, la présentation et un bouton **WhatsApp** (`wa.me/<numéro>?text=…`, numéro de l'atelier réduit à ses chiffres).
+
+**Comptes clients** : utilisateurs portail, gratuits (`/c/inscription`, 5 inscriptions/heure/IP), rattachés à la plateforme et non à un atelier : aucun atelier ne voit les contacts des clients. Un client note un atelier une fois (modifiable). Il ne peut pas noter son propre atelier. Le badge « Client vérifié » signale qu'il suit une commande chez cet atelier. Les administrateurs masquent un avis abusif (menu Plateforme > Avis clients), et le classement se recalcule.
+
+**Commandes suivies** : le lien de suivi à jeton (`/my/couture/<id>?access_token=…`) propose « Suivre dans mon application ». Le jeton prouve que la commande est la sienne. La commande rejoint alors `client_partner_ids` et la liste « Mes commandes », regroupée par atelier (`/c/commandes`). Sans jeton, aucune commande n'est rattachée, et un numéro de téléphone saisi ne suffit pas.
+
+**Application installable** : `/c` est une PWA distincte de l'application atelier (`/app`) : manifeste, service worker (portée `/c`, coquille hors ligne), invite d'installation (Android, ordinateur) ou explication du geste « Sur l'écran d'accueil » (iPhone).
+
+**Notifications push** (Web Push, VAPID, chiffrement aes128gcm) : appareils enregistrés dans `mail.push.device` (clés VAPID et chiffrement d'Odoo). Les envois passent par la file `liputa.push.message` avec un **TTL de 3 jours**. Le service push garde ainsi le message tant que le téléphone est éteint ou hors réseau, alors que la file d'Odoo, pensée pour la messagerie, n'a que 60 secondes. Le service worker affiche la notification même application fermée et écran verrouillé.
+
+| Destinataire | Événement |
+|---|---|
+| Client | Chaque étape visible de sa commande (lien vers `/c/commande/<id>`) |
+| Atelier (chefs d'atelier) | Nouvel avis, commande en retard ou à risque, abonnement renouvelé |
+| Administrateurs plateforme | Nouvel atelier inscrit, paiement reçu (ouvre la fiche dans Odoo) |
+
+Activation : bandeau « Activer » du portail client, interrupteur « Alertes sur ce téléphone » dans Mon compte de l'application atelier ; pour les administrateurs, l'autorisation de notifications du client web Odoo. Sur iPhone (iOS 16.4 et plus), le push n'existe que dans l'application installée sur l'écran d'accueil.
+
 ## 6. Sécurité
 
 | Risque | Mesure |

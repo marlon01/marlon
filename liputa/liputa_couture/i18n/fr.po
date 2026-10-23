@@ -705,3 +705,184 @@ msgstr "Broderie"
 #: model:ir.model.fields.selection,name:liputa_couture.selection__liputa_order_task__step__finishing
 msgid "Finishing & ironing"
 msgstr "Finitions et repassage"
+
+#. module: liputa_couture
+#. odoo-python
+#: code:addons/liputa_couture/models/client_portal.py:0
+msgid "The rating must be between 1 and 5 stars."
+msgstr "La note doit être comprise entre 1 et 5 étoiles."
+
+#. module: liputa_couture
+#. odoo-python
+#: code:addons/liputa_couture/models/client_portal.py:0
+msgid "A workshop cannot rate itself."
+msgstr "Un atelier ne peut pas se noter lui-même."
+
+#. module: liputa_couture
+#. odoo-python
+#: code:addons/liputa_couture/models/client_portal.py:0
+msgid "Client"
+msgstr "Client"
+
+#. module: liputa_couture
+#. odoo-python
+#: code:addons/liputa_couture/models/client_portal.py:0
+msgid "New review: %s"
+msgstr "Nouvel avis : %s"
+
+#. module: liputa_couture
+#. odoo-python
+#: code:addons/liputa_couture/models/client_portal.py:0
+msgid "%s rated your workshop."
+msgstr "%s a noté votre atelier."
+
+#. module: liputa_couture
+#. odoo-python
+#: code:addons/liputa_couture/models/client_portal.py:0
+msgid "Hello %s, I found your workshop on Liputa."
+msgstr "Bonjour %s, j'ai trouvé votre atelier sur Liputa."
+
+#. module: liputa_couture
+#. odoo-python
+#: code:addons/liputa_couture/models/saas.py:0
+msgid "Payment received: %s"
+msgstr "Paiement reçu : %s"
+
+#. module: liputa_couture
+#. odoo-python
+#: code:addons/liputa_couture/models/saas.py:0
+msgid "%(amount)s %(cur)s via %(method)s."
+msgstr "%(amount)s %(cur)s par %(method)s."
+
+#. module: liputa_couture
+#. odoo-python
+#: code:addons/liputa_couture/models/saas.py:0
+msgid "Subscription renewed"
+msgstr "Abonnement renouvelé"
+
+#. module: liputa_couture
+#. odoo-python
+#: code:addons/liputa_couture/models/saas.py:0
+msgid "Thank you! Your workshop is active until %s."
+msgstr "Merci ! Votre atelier est actif jusqu'au %s."
+
+#. module: liputa_couture
+#. odoo-python
+#: code:addons/liputa_couture/models/saas.py:0
+msgid "New workshop: %s"
+msgstr "Nouvel atelier : %s"
+
+#. module: liputa_couture
+#. odoo-python
+#: code:addons/liputa_couture/models/saas.py:0
+msgid "%(name)s has just created a workshop (%(country)s)."
+msgstr "%(name)s vient de créer un atelier (%(country)s)."
+
+#. module: liputa_couture
+#. odoo-python
+#: code:addons/liputa_couture/models/order.py:0
+msgid "Your %(model)s: %(stage)s."
+msgstr "Votre %(model)s : %(stage)s."
+
+#. module: liputa_couture
+#. odoo-python
+#: code:addons/liputa_couture/models/order.py:0
+msgid "%(client)s - promised for %(date)s, progress %(p)s%%."
+msgstr "%(client)s - promise pour le %(date)s, avancement %(p)s %%."
+
+#. module: liputa_couture
+#. odoo-python
+#: code:addons/liputa_couture/controllers/client.py:0
+msgid "Invalid push subscription."
+msgstr "Abonnement aux notifications invalide."
+
+#. module: liputa_couture
+#: model:ir.model.fields,field_description:liputa_couture.field_res_company__atelier_listed
+msgid "Shown in the client directory"
+msgstr "Visible dans l'annuaire des clients"
+
+#. module: liputa_couture
+#: model:ir.model.fields,field_description:liputa_couture.field_res_company__atelier_description
+msgid "Presentation"
+msgstr "Présentation"
+
+#. module: liputa_couture
+#: model:ir.model.fields,field_description:liputa_couture.field_res_company__liputa_rating_avg
+msgid "Average rating"
+msgstr "Note moyenne"
+
+#. module: liputa_couture
+#: model:ir.model.fields,field_description:liputa_couture.field_res_company__liputa_rating_count
+msgid "Reviews"
+msgstr "Avis"
+
+#. module: liputa_couture
+#: model:ir.model.fields,field_description:liputa_couture.field_res_company__liputa_rating_score
+msgid "Ranking score"
+msgstr "Score de classement"
+
+#. module: liputa_couture
+#: model:ir.model.fields,field_description:liputa_couture.field_liputa_review__verified
+msgid "Verified client"
+msgstr "Client vérifié"
+
+#. module: liputa_couture
+#: model:ir.model.fields,field_description:liputa_couture.field_liputa_review__is_published
+msgid "Published"
+msgstr "Publié"
+
+#. module: liputa_couture
+#: model:ir.model.fields,field_description:liputa_couture.field_liputa_review__author_name
+msgid "Author Name"
+msgstr "Auteur"
+
+#. module: liputa_couture
+#: model:ir.model.fields,field_description:liputa_couture.field_liputa_review__rating
+msgid "Rating"
+msgstr "Note"
+
+#. module: liputa_couture
+#: model:ir.model.fields,field_description:liputa_couture.field_liputa_review__comment
+msgid "Comment"
+msgstr "Commentaire"
+
+#. module: liputa_couture
+#: model:ir.model.fields,field_description:liputa_couture.field_liputa_review__user_id
+msgid "Client account"
+msgstr "Compte client"
+
+#. module: liputa_couture
+#: model:ir.model.fields,field_description:liputa_couture.field_liputa_order__client_partner_ids
+msgid "Followed by client accounts"
+msgstr "Suivie par des comptes clients"
+
+#. module: liputa_couture
+#: model_terms:ir.ui.view,arch_db:liputa_couture.view_company_form_liputa
+msgid "Client directory"
+msgstr "Annuaire des clients"
+
+#. module: liputa_couture
+#: model_terms:ir.ui.view,arch_db:liputa_couture.view_review_search
+msgid "Hidden"
+msgstr "Masqués"
+
+#. module: liputa_couture
+#: model_terms:ir.ui.view,arch_db:liputa_couture.view_review_search
+msgid "1 or 2 stars"
+msgstr "1 ou 2 étoiles"
+
+#. module: liputa_couture
+#: model_terms:ir.ui.view,arch_db:liputa_couture.view_review_search
+msgid "Not verified"
+msgstr "Non vérifiés"
+
+#. module: liputa_couture
+#: model_terms:ir.ui.view,arch_db:liputa_couture.view_company_form_liputa
+msgid "Specialities, neighbourhood, opening hours..."
+msgstr "Spécialités, quartier, horaires..."
+
+#. module: liputa_couture
+#: model:ir.actions.act_window,name:liputa_couture.action_review
+#: model:ir.ui.menu,name:liputa_couture.menu_liputa_reviews
+msgid "Client reviews"
+msgstr "Avis clients"

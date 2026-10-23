@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============ Portail client (/c) : annuaire des ateliers, avis, commandes, application installable ============ -->
+
+    <!-- Barre d'onglets du portail client, en bas de l'écran, et script (installation, notifications). -->
+    <template id="client_tabbar" name="Liputa client tab bar">
+        <nav class="lp-tabbar lp-tabbar-client" aria-label="Navigation">
+            <a t-attf-class="lp-tab #{'lp-on' if client_tab == 'ateliers' else ''}" href="/c">
+                <svg class="lp-ico" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10l9-6 9 6v10H3z"/><path d="M9 20v-6h6v6"/></svg>
+                <span>Ateliers</span>
+            </a>
+            <a t-attf-class="lp-tab #{'lp-on' if client_tab == 'commandes' else ''}" href="/c/commandes">
+                <svg class="lp-ico" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12l2 5H4z"/><path d="M4 8h16v13H4z"/><path d="M9 12h6"/></svg>
+                <span>Mes commandes</span>
+            </a>
+            <a t-attf-class="lp-tab #{'lp-on' if client_tab == 'compte' else ''}" t-att-href="'/c/deconnexion' if client_user else '/c/connexion'">
+                <svg class="lp-ico" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>
+                <span t-if="client_user">Déconnexion</span><span t-else="">Connexion</span>
+            </a>
+        </nav>
+        <script src="/liputa_couture/static/src/client/client.js" defer="1"/>
+    </template>
+
+    <!-- Bandeaux affichés par client.js : installer l'application, activer les notifications. -->
+    <template id="client_banners" name="Liputa client banners">
+        <div id="lp-install" class="lp-banner lp-banner-install" hidden="1">
+            <img src="/liputa_couture/static/src/app/img/icon-512.png" alt="" width="40" height="40"/>
+            <div><b>Installez Liputa</b><br/><span class="lp-small" id="lp-install-text">Vos ateliers et vos commandes, sur l'écran d'accueil.</span></div>
+            <button type="button" class="lp-btn lp-btn-primary lp-btn-sm" id="lp-install-btn">Installer</button>
+        </div>
+        <div id="lp-push" class="lp-banner lp-banner-push" hidden="1" t-if="client_user">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>
+            <div><b>Soyez prévenu</b><br/><span class="lp-small">Une notification à chaque étape de votre commande, même téléphone verrouillé.</span></div>
+            <button type="button" class="lp-btn lp-btn-tape lp-btn-sm" id="lp-push-btn">Activer</button>
+        </div>
+    </template>
+
+    <!-- Note en étoiles (lecture seule). -->
+    <template id="client_rating" name="Liputa rating">
+        <span class="lp-rating">
+            <t t-if="company.liputa_rating_count">
+                <span class="lp-stars" t-att-aria-label="'%.1f sur 5' % company.liputa_rating_avg" t-out="stars(company.liputa_rating_avg)"/>
+                <b t-out="('%.1f' % company.liputa_rating_avg).replace('.', ',')"/>
+                <span class="lp-muted">(<t t-out="company.liputa_rating_count"/> avis)</span>
+            </t>
+            <span t-else="" class="lp-pill lp-neutral">Nouveau</span>
+        </span>
+    </template>
+
+    <template id="client_directory" name="Liputa workshop directory">
+        <t t-call="liputa_couture.public_layout">
+            <t t-set="client_tab" t-value="'ateliers'"/>
+            <main class="lp-public-wrap lp-client-wrap">
+                <header class="lp-client-hero">
+                    <img src="/liputa_couture/static/description/icon.svg" alt="" width="40" height="40"/>
+                    <h1 class="lp-title">Trouvez votre atelier de couture</h1>
+                    <p class="lp-muted">Les ateliers les mieux notés par leurs clients, en premier.</p>
+                </header>
+                <t t-call="liputa_couture.client_banners"/>
+                <form class="lp-search" method="get" action="/c" role="search">
+                    <svg class="lp-ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+                    <input class="lp-input" type="search" name="q" t-att-value="q" placeholder="Nom, quartier, ville…" aria-label="Rechercher un atelier"/>
+                </form>
+                <div t-if="not workshops" class="lp-sheet lp-pad lp-muted">Aucun atelier ne correspond à votre recherche.</div>
+                <ol class="lp-ws-list">
+                    <li t-foreach="workshops" t-as="company" class="lp-ws-card">
+                        <a class="lp-ws-main" t-attf-href="/c/atelier/#{company.id}">
+                            <span class="lp-ws-rank" t-out="company_index + 1"/>
+                            <img class="lp-ws-logo" t-attf-src="/c/atelier/#{company.id}/logo" alt="" width="56" height="56" loading="lazy"/>
+                            <div class="lp-row-main">
+                                <div class="lp-row-title" t-out="company.name"/>
+                                <div class="lp-row-sub"><t t-out="company.city or company.country_id.name or ''"/><t t-if="company.atelier_slogan"> · <t t-out="company.atelier_slogan"/></t></div>
+                                <t t-call="liputa_couture.client_rating"/>
+                            </div>
+                        </a>
+                        <t t-set="wa" t-value="company._liputa_whatsapp_url()"/>
+                        <a t-if="wa" class="lp-btn lp-btn-wa lp-btn-sm" t-att-href="wa" target="_blank" rel="noopener"
+                           t-att-aria-label="'Contacter %s sur WhatsApp' % company.name">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.2c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.5-3.9-4.7-4.1-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.3 0 .5l-.3.5-.4.4c-.1.2-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.1 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1.1c.2-.3.4-.2.6-.1l1.9.9c.3.1.5.2.5.3.1.2.1.7-.1 1.1z"/></svg>
+                            WhatsApp
+                        </a>
+                    </li>
+                </ol>
+                <p class="lp-small lp-muted lp-center" style="margin-top: 18px">Vous êtes couturier ? <a class="lp-link" href="/liputa/signup">Créez votre atelier virtuel</a></p>
+            </main>
+        </t>
+    </template>
+
+    <template id="client_workshop" name="Liputa workshop page">
+        <t t-call="liputa_couture.public_layout">
+            <t t-set="client_tab" t-value="'ateliers'"/>
+            <main class="lp-public-wrap lp-client-wrap">
+                <a class="lp-link lp-back" href="/c">‹ Tous les ateliers</a>
+                <section class="lp-sheet lp-pad lp-ws-head">
+                    <img class="lp-ws-logo lp-ws-logo-lg" t-attf-src="/c/atelier/#{company.id}/logo" alt="" width="88" height="88"/>
+                    <div>
+                        <h1 class="lp-hero-name" t-out="company.name"/>
+                        <div class="lp-muted" t-out="company.city or company.country_id.name or ''"/>
+                        <t t-call="liputa_couture.client_rating"/>
+                    </div>
+                </section>
+                <section class="lp-sheet lp-pad" t-if="company.atelier_slogan or company.atelier_description">
+                    <p class="lp-strong" t-if="company.atelier_slogan" t-out="company.atelier_slogan"/>
+                    <p class="lp-muted" style="white-space: pre-line" t-if="company.atelier_description" t-out="company.atelier_description"/>
+                </section>
+                <div class="lp-ws-actions">
+                    <a t-if="whatsapp_url" class="lp-btn lp-btn-wa lp-btn-block" t-att-href="whatsapp_url" target="_blank" rel="noopener">Écrire sur WhatsApp</a>
+                    <a t-if="company.phone" class="lp-btn lp-btn-line" t-attf-href="tel:#{company.phone}">Appeler</a>
+                </div>
+
+                <section t-if="orders" class="lp-sheet" style="margin-top: 12px">
+                    <h2 class="lp-h2 lp-pad-x">Mes commandes ici</h2>
+                    <ul class="lp-list">
+                        <li t-foreach="orders" t-as="o">
+                            <a class="lp-row" t-attf-href="/c/commande/#{o.id}">
+                                <div class="lp-row-main">
+                                    <div class="lp-row-title" t-out="o.garment_model_id.name"/>
+                                    <div class="lp-row-sub">Prévue le <t t-out="o.delivery_date_promised" t-options="{'widget': 'date', 'format': 'd MMMM'}"/></div>
+                                </div>
+                                <span class="lp-pill lp-neutral" t-out="o.stage_id.client_label or o.stage_id.name"/>
+                            </a>
+                        </li>
+                    </ul>
+                </section>
+
+                <section class="lp-sheet lp-pad" id="avis" style="margin-top: 12px">
+                    <h2 class="lp-h2">Avis des clients</h2>
+                    <p t-if="saved" class="lp-alert lp-alert-ok" role="status">Merci, votre avis est publié.</p>
+                    <p t-if="error == 'rating'" class="lp-alert lp-alert-danger" role="alert">Choisissez une note de 1 à 5 étoiles.</p>
+                    <p t-if="error == 'staff'" class="lp-alert lp-alert-danger" role="alert">Un atelier ne peut pas se noter lui-même.</p>
+                    <form t-if="can_rate" method="post" t-attf-action="/c/atelier/#{company.id}/avis" class="lp-rate-form">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <fieldset class="lp-rate">
+                            <legend class="lp-label"><t t-if="my_review">Modifier ma note</t><t t-else="">Notez cet atelier</t></legend>
+                            <t t-foreach="[5, 4, 3, 2, 1]" t-as="n">
+                                <input type="radio" name="rating" t-att-id="'r%s' % n" t-att-value="n" t-att-checked="my_review and my_review.rating == n"/>
+                                <label t-att-for="'r%s' % n" t-att-title="'%s étoile(s)' % n">★</label>
+                            </t>
+                        </fieldset>
+                        <textarea class="lp-textarea" name="comment" maxlength="600" rows="3" placeholder="Délais tenus, qualité des finitions, accueil…" t-out="my_review.comment if my_review else ''"/>
+                        <button class="lp-btn lp-btn-primary lp-btn-block" type="submit">Publier ma note</button>
+                    </form>
+                    <a t-elif="not client_user" class="lp-btn lp-btn-ghost lp-btn-block" t-attf-href="/c/connexion?redirect=/c/atelier/#{company.id}%23avis">Se connecter pour noter</a>
+                    <ul class="lp-reviews">
+                        <li t-foreach="reviews" t-as="r">
+                            <div class="lp-review-top">
+                                <b t-out="r.author_name"/>
+                                <span class="lp-stars" t-out="stars(r.rating)"/>
+                                <span t-if="r.verified" class="lp-pill lp-on_track">Client vérifié</span>
+                            </div>
+                            <p t-if="r.comment" t-out="r.comment"/>
+                        </li>
+                    </ul>
+                    <p t-if="not reviews" class="lp-muted">Pas encore d'avis : soyez le premier.</p>
+                </section>
+            </main>
+        </t>
+    </template>
+
+    <template id="client_orders" name="Liputa client orders">
+        <t t-call="liputa_couture.public_layout">
+            <t t-set="client_tab" t-value="'commandes'"/>
+            <main class="lp-public-wrap lp-client-wrap">
+                <h1 class="lp-title" style="margin: 12px 0 14px">Mes commandes</h1>
+                <t t-call="liputa_couture.client_banners"/>
+                <div t-if="not groups" class="lp-sheet lp-pad">
+                    <p class="lp-muted">Aucune commande pour l'instant. Ouvrez le lien de suivi reçu de votre atelier et touchez « Suivre dans mon application » : la commande apparaîtra ici.</p>
+                    <a class="lp-btn lp-btn-ghost lp-btn-block" href="/c">Trouver un atelier</a>
+                </div>
+                <section t-foreach="groups" t-as="g" class="lp-sheet">
+                    <div class="lp-ws-group">
+                        <img class="lp-ws-logo" t-attf-src="/c/atelier/#{g['company'].id}/logo" alt="" width="40" height="40"/>
+                        <a class="lp-row-main lp-strong" t-attf-href="/c/atelier/#{g['company'].id}" t-out="g['company'].name"/>
+                        <a t-if="g['whatsapp_url']" class="lp-btn lp-btn-wa lp-btn-sm" t-att-href="g['whatsapp_url']" target="_blank" rel="noopener">WhatsApp</a>
+                    </div>
+                    <ul class="lp-list">
+                        <li t-foreach="g['orders']" t-as="o">
+                            <a class="lp-row" t-attf-href="/c/commande/#{o.id}">
+                                <img class="lp-thumb" t-att-src="'/web/image/liputa.garment.model/%s/image_256' % o.garment_model_id.id" alt=""/>
+                                <div class="lp-row-main">
+                                    <div class="lp-row-title" t-out="o.garment_model_id.name"/>
+                                    <div class="lp-row-sub">Prévue le <t t-out="o.delivery_date_promised" t-options="{'widget': 'date', 'format': 'd MMMM'}"/> · <t t-out="int(o.progress)"/> %</div>
+                                </div>
+                                <span t-attf-class="lp-pill #{'lp-on_track' if o.stage_code == 'ready' else 'lp-neutral'}" t-out="o.stage_id.client_label or o.stage_id.name"/>
+                            </a>
+                        </li>
+                    </ul>
+                </section>
+            </main>
+        </t>
+    </template>
+
+    <template id="client_login" name="Liputa client login">
+        <t t-call="liputa_couture.public_layout">
+            <t t-set="client_tab" t-value="'compte'"/>
+            <t t-set="body_class" t-value="'lp-auth'"/>
+            <main class="lp-auth-wrap">
+                <header class="lp-auth-hero">
+                    <img src="/liputa_couture/static/description/icon.svg" alt="" width="52" height="52"/>
+                    <h1 class="lp-auth-title">Vos commandes, en un coup d'œil</h1>
+                    <p class="lp-auth-sub">Suivez vos tenues dans tous vos ateliers, sans appeler.</p>
+                    <div class="lp-tape lp-tape-deco" aria-hidden="true"/>
+                </header>
+                <form method="post" action="/c/connexion" class="lp-sheet lp-auth-form" novalidate="1">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    <input type="hidden" name="redirect" t-att-value="redirect"/>
+                    <p t-if="error" class="lp-alert lp-alert-danger" role="alert" t-esc="error"/>
+                    <label class="lp-field"><span class="lp-label">E-mail</span>
+                        <input class="lp-input" type="email" name="login" autocomplete="username" inputmode="email" required="1" t-att-value="login"/></label>
+                    <label class="lp-field"><span class="lp-label">Mot de passe</span>
+                        <input class="lp-input" type="password" name="password" autocomplete="current-password" required="1"/></label>
+                    <button type="submit" class="lp-btn lp-btn-primary lp-btn-block">Se connecter</button>
+                    <a class="lp-link lp-center" href="/web/reset_password">Mot de passe oublié</a>
+                    <hr class="lp-hr"/>
+                    <a class="lp-btn lp-btn-ghost lp-btn-block" t-attf-href="/c/inscription?redirect=#{redirect}">Créer mon compte client</a>
+                </form>
+            </main>
+        </t>
+    </template>
+
+    <template id="client_signup" name="Liputa client sign-up">
+        <t t-call="liputa_couture.public_layout">
+            <t t-set="client_tab" t-value="'compte'"/>
+            <t t-set="body_class" t-value="'lp-auth'"/>
+            <main class="lp-auth-wrap">
+                <header class="lp-auth-hero" style="padding-bottom: 24px">
+                    <img src="/liputa_couture/static/description/icon.svg" alt="" width="52" height="52"/>
+                    <h1 class="lp-auth-title">Mon compte client</h1>
+                    <p class="lp-auth-sub">Gratuit. Notez vos ateliers et recevez une notification à chaque étape de vos commandes.</p>
+                    <div class="lp-tape lp-tape-deco" aria-hidden="true"/>
+                </header>
+                <form method="post" action="/c/inscription" class="lp-sheet lp-auth-form">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    <input type="hidden" name="redirect" t-att-value="redirect"/>
+                    <p t-if="error" class="lp-alert lp-alert-danger" role="alert" t-out="error"/>
+                    <label class="lp-field"><span class="lp-label">Votre nom</span>
+                        <input class="lp-input" name="name" autocomplete="name" required="1" maxlength="120" t-att-value="name"/></label>
+                    <label class="lp-field"><span class="lp-label">E-mail</span>
+                        <input class="lp-input" name="email" type="email" inputmode="email" autocomplete="username" required="1" t-att-value="email"/></label>
+                    <label class="lp-field"><span class="lp-label">Téléphone ou WhatsApp</span>
+                        <input class="lp-input" name="phone" type="tel" inputmode="tel" autocomplete="tel" t-att-value="phone"/></label>
+                    <label class="lp-field"><span class="lp-label">Mot de passe (10 caractères minimum)</span>
+                        <input class="lp-input" name="password" type="password" required="1" minlength="10" autocomplete="new-password"/></label>
+                    <button class="lp-btn lp-btn-tape lp-btn-block" type="submit">Créer mon compte</button>
+                    <a class="lp-link lp-center" t-attf-href="/c/connexion?redirect=#{redirect}">J'ai déjà un compte</a>
+                </form>
+            </main>
+        </t>
+    </template>
+</odoo>

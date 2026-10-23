@@ -24,16 +24,14 @@ class LiputaPortal(CustomerPortal):
     def _prepare_home_portal_values(self, counters):
         values = super()._prepare_home_portal_values(counters)
         if "liputa_order_count" in counters:
-            partner = request.env.user.partner_id.commercial_partner_id
             values["liputa_order_count"] = request.env["liputa.order"].sudo().search_count(
-                [("partner_id", "child_of", partner.id)])
+                request.env.user.partner_id._liputa_order_domain())
         return values
 
     @http.route(["/my/couture"], type="http", auth="user", website=False)
     def portal_my_couture(self, **kw):
-        partner = request.env.user.partner_id.commercial_partner_id
         orders = request.env["liputa.order"].sudo().search(
-            [("partner_id", "child_of", partner.id)], order="id desc", limit=50)
+            request.env.user.partner_id._liputa_order_domain(), order="id desc", limit=50)
         return request.render("liputa_couture.portal_my_couture", {"orders": orders, "page_name": "couture"})
 
     @http.route(["/my/couture/<int:order_id>"], type="http", auth="public", website=False)

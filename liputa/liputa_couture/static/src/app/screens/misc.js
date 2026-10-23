@@ -5,6 +5,7 @@ import { Base, BottomSheet, Empty, Icon, Skeleton, Tape, TopBar } from "../core/
 import { go } from "../core/router";
 import { money, num, parseDate, today } from "../core/format";
 import { getLang } from "../core/i18n";
+import { disablePush, enablePush, pushState } from "../core/push";
 
 // ============================================================== catalogue
 export class CatalogueScreen extends Base {
@@ -195,6 +196,17 @@ export class AccountScreen extends Base {
         <button t-else="" class="lp-btn lp-btn-tape lp-btn-block" style="margin-top: 14px" t-on-click="() => state.pay = { step: 'form', method: 'mpesa', phone: '' }">
             <Icon name="'wallet'"/><t t-esc="t('Pay with Mobile Money')"/>
         </button>
+        <h2 class="lp-h2" t-esc="t('Notifications')"/>
+        <div class="lp-sheet">
+            <div class="lp-toggle-row">
+                <div>
+                    <div class="lp-strong" t-esc="t('Alerts on this phone')"/>
+                    <div class="lp-small lp-muted" t-esc="state.push === 'denied' ? t('Notifications are blocked in the browser settings.') : state.push === 'unsupported' ? t('Install Liputa on the home screen to receive alerts.') : t('Late orders, new reviews and payments, even with the app closed.')"/>
+                </div>
+                <button t-if="state.push === 'on' or state.push === 'off'" type="button" role="switch" t-att-aria-checked="state.push === 'on' ? 'true' : 'false'"
+                        t-att-class="'lp-switch' + (state.push === 'on' ? ' lp-on' : '')" t-att-aria-label="t('Alerts on this phone')" t-on-click="togglePush"/>
+            </div>
+        </div>
         <h2 class="lp-h2" t-esc="t('Language')"/>
         <div class="lp-sheet">
             <button t-foreach="langs" t-as="l" t-key="l[0]" class="lp-row" style="min-height: 52px" t-on-click="() => this.setLang(l[0])">
@@ -234,7 +246,8 @@ export class AccountScreen extends Base {
     setup() {
         this.money = money;
         this.store = useState(store);
-        this.state = useState({ pay: null, busy: false, returned: null });
+        this.state = useState({ pay: null, busy: false, returned: null, push: "unsupported" });
+        pushState().then((v) => (this.state.push = v)).catch(() => {});
         // Retour depuis la page CinetPay : /app#/account?payment=done|pending|failed|none&ref=…
         const query = this.store.route?.query || {};
         if (query.payment) {
@@ -291,6 +304,19 @@ export class AccountScreen extends Base {
     get operatorName() {
         return (this.operators.find((o) => o[0] === this.state.pay.method) || [])[1] || "";
     }
+    async togglePush() {
+        try {
+            if (this.state.push === "on") {
+                await disablePush();
+            } else {
+                await enablePush();
+            }
+            this.state.push = await pushState();
+        } catch (e) {
+            toast(e.message || String(e), "error");
+        }
+    }
+
     async pay() {
         if ((this.state.pay.phone || "").replace(/\D/g, "").length < 9) {
             toast(this.t("Enter a valid phone number"), "error");
