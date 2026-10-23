@@ -29,8 +29,11 @@ Skills installés dans `.claude/skills/` par `npx skills add` (versions figées 
 | `heygen-com/hyperframes` | `hyperframes`, `hyperframes-cli`, `hyperframes-registry`, `media-use`, `figma`, `slideshow`, `remotion-to-hyperframes` | Films en HTML rendus en MP4 (moteur du projet `film/`), musique, bruitages, voix, étalonnage |
 | `remotion-dev/skills` | `remotion-*` (dont `remotion-saas`, `remotion-captions`, `remotion-render`) | Vidéo programmatique en React, alternative à HyperFrames |
 
-- Lire `/hyperframes` avant toute vidéo. Rendu : `cd film && npm run check && npm run render` (FFmpeg et Chrome headless présents).
-- GSAP est servi en local (`film/assets/vendor/gsap.min.js`) : le Chrome de rendu n'atteint pas les CDN derrière le proxy, et un rendu ne doit rien charger du réseau.
+- Un projet HyperFrames par film : `film/liputa/`, `film/selecta/` (chacun : `SCRIPT.md`, `SPEC.md`, `REVIEW.md`, `voix.txt`). Lire `/hyperframes` avant toute vidéo. Rendu : `cd film/<film> && npm run check && npm run render` (FFmpeg et Chrome headless présents).
+- GSAP est servi en local (`assets/vendor/gsap.min.js` de chaque film) : le Chrome de rendu n'atteint pas les CDN derrière le proxy, et un rendu ne doit rien charger du réseau.
+- Voix off : `tools/voix_off.py` (sherpa-onnx + voix Piper françaises tirées des publications GitHub de `k2-fsa/sherpa-onnx`, Hugging Face étant bloqué). Environnement : `python3 -m venv .venv-voix && .venv-voix/bin/pip install sherpa-onnx soundfile numpy`. Usage : `.venv-voix/bin/python tools/voix_off.py film/<film>/voix.txt -o film/<film>/assets/audio/voix.wav --voix siwis --vitesse 0.88 --prises 4 --verifier --phrases film/<film>/assets/audio/phrases`. Écrire les noms comme ils se prononcent (« Lipouta », « Sélecta », « code Q R »).
+- Musique : aucune source accessible (Hugging Face, Openverse bloqués) ; à fournir ou à autoriser dans le réseau de l'environnement.
+- Liputa, atelier de démonstration et captures : `tools/liputa_film_seed.py` puis `tools/liputa_film_capture.mjs`.
 - Télémétrie HyperFrames coupée pour le projet (`HYPERFRAMES_NO_TELEMETRY=1` dans `.claude/settings.json`).
 - Images réelles des produits : `docs/captures/` (SELECTA fr/en, Liputa) ; nouvelles captures ou enregistrements d'écran avec `playwright`.
 - Connecteurs claude.ai déjà reliés : HyperFrames by HeyGen (projets hébergés et rendu cloud), Canva, Figma.

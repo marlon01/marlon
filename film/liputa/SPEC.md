@@ -4,6 +4,7 @@
 GOAL:    un chef d'atelier se reconnaît dans le samedi débordé de gauche et veut le calme de droite :
          il retient « mes dates tenues, mes clientes qui ne m'appellent plus pour demander ».
 OUTPUT:  HyperFrames, 1920 x 1080, 30 fps ; version française (voix off), anglaise ensuite.
+         Version 1 livrée : 44,5 s (la voix fixe le rythme, voir REVIEW.md).
 TIME:    54 s x 30 = 1620 images. La voix off est l'horloge : chaque plan commence sur son mot
          d'ancrage (SCRIPT.md). Musique sous la voix à 0,14.
 LOOK:    deux matières, une par moitié.

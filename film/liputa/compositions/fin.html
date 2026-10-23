@@ -1,0 +1,40 @@
+<template>
+  <style>
+    @font-face { font-family: "Bricolage Grotesque"; src: url("assets/fonts/BricolageGrotesque.ttf"); font-weight: 200 800; }
+    #root { position: absolute; inset: 0; overflow: hidden; background: #f5f6fa; }
+    #fi-marque { position: absolute; left: 0; right: 0; top: 330px; display: flex; justify-content: center; align-items: center; gap: 44px; }
+    #fi-logo { width: 200px; height: 200px; }
+    #fi-mot { font-family: "Bricolage Grotesque"; font-weight: 700; font-size: 168px; letter-spacing: -0.03em; color: #16213e; line-height: 1; }
+    #fi-mot span { display: inline-block; }
+    #fi-slogan { position: absolute; left: 0; right: 0; top: 600px; text-align: center; font-family: "Bricolage Grotesque"; font-weight: 600; font-size: 62px; color: #16213e; letter-spacing: -0.01em; }
+    #fi-essai { position: absolute; left: 0; right: 0; top: 712px; text-align: center; font-family: "Bricolage Grotesque"; font-size: 44px; color: #4a5372; }
+    /* Le mètre ruban souligne l'offre d'essai : seule place de l'accent jaune sur le carton. */
+    #fi-ruban {
+      position: absolute; left: 690px; top: 784px; width: 540px; height: 22px; background-color: #f2c230; border-radius: 3px;
+      background-image: repeating-linear-gradient(90deg, #16213e 0 2px, transparent 2px 27px);
+      background-size: 100% 11px; background-repeat: no-repeat; transform-origin: 0% 50%;
+    }
+  </style>
+
+  <div id="root" data-composition-id="fin" data-width="1920" data-height="1080">
+    <div id="fi-marque">
+      <img id="fi-logo" src="assets/brand/liputa.svg" alt="Logo Liputa" />
+      <div id="fi-mot"><span>L</span><span>i</span><span>p</span><span>u</span><span>t</span><span>a</span></div>
+    </div>
+    <div id="fi-slogan">Le sur-mesure, à l'heure</div>
+    <div id="fi-essai">Essai gratuit de 14 jours</div>
+    <div id="fi-ruban"></div>
+  </div>
+
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    // Le logo se pose avec du poids, le nom s'écrit lettre par lettre.
+    tl.fromTo("#fi-logo", { scale: 0.4, rotation: -12, opacity: 0 }, { scale: 1, rotation: 0, opacity: 1, duration: 0.55, ease: "back.out(1.4)" }, 0.6);
+    tl.fromTo("#fi-mot span", { opacity: 0.0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.16, stagger: 0.07, ease: "power3.out" }, 0.95);
+    // Le slogan arrive sur la voix (« Le sur-mesure, à l'heure »), puis l'offre et son ruban.
+    tl.fromTo("#fi-slogan", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 2.0);
+    tl.fromTo("#fi-essai", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "power2.out" }, 3.4);
+    tl.fromTo("#fi-ruban", { scaleX: 0 }, { scaleX: 1, duration: 0.6, ease: "expo.out" }, 3.5);
+    window.__timelines["fin"] = tl;
+  </script>
+</template>
