@@ -26,6 +26,9 @@ function loadScript(src) {
     });
 }
 
+// Images normales consécutives qui closent un épisode : une détection isolée ne remet pas le chronomètre à zéro.
+const CLOSE_FRAMES = { absent: 2, away: 3 };
+
 export function euclid(a, b) {
     let s = 0;
     for (let i = 0; i < a.length; i++) {
@@ -49,10 +52,14 @@ export class Proctor {
         this.reference = null;
         this.lastDescriptor = null;
         this.metrics = { faces: 0, yaw: 0, pitch: 0, brightness: 0, status: "init" };
-        this._absentSince = null;
-        this._absentReported = 0;
-        this._awaySince = null;
-        this._awayReported = false;
+        // Orientation « face à l'écran » propre au poste (caméra décalée, au-dessus ou sous l'écran),
+        // apprise pendant le contrôle caméra ; valeurs théoriques en attendant.
+        this.pose = { yaw: 0, pitch: 0.45 };
+        this._poseSamples = [];
+        this._episodes = {};
+        this._lastTime = -1;
+        this._lastTimeAt = 0;
+        this._failSince = null;
         this._multiCount = 0;
         this._darkSince = null;
         this._darkReported = false;
@@ -88,29 +95,57 @@ export class Proctor {
         await fa.nets.faceLandmark68TinyNet.loadFromUri(this.models);
         progress("Chargement de la reconnaissance d'identité…", 80);
         await fa.nets.faceRecognitionNet.loadFromUri(this.models);
-        this.options = new fa.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.45 });
+        // Entrée plus fine avec la carte graphique : visages petits ou de trois quarts mieux suivis.
+        this.options = new fa.TinyFaceDetectorOptions({ inputSize: this.backend === "webgl" ? 320 : 224, scoreThreshold: 0.45 });
         this.loaded = true;
         progress("Moteur de surveillance prêt", 100);
     }
 
-    async attach(video) {
-        this.video = video;
+    /**
+     * Ouvre la caméra. L'analyse lit une vidéo propre au surveillant, jamais celle d'un écran :
+     * un écran démonté retire sa vidéo de la page, le navigateur la met en pause et l'IA
+     * analyserait indéfiniment la dernière image (visage présent, regard sur l'écran).
+     * ``preview`` reçoit seulement le même flux pour l'affichage.
+     */
+    async attach(preview) {
         if (!navigator.mediaDevices?.getUserMedia) {
             throw new Error(
                 "Ce poste n'autorise pas l'accès caméra (contexte non sécurisé). Utilisez le lanceur « Poste candidat » fourni."
             );
         }
-        this.stream = await navigator.mediaDevices.getUserMedia({
-            video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" },
-            audio: false,
-        });
-        video.srcObject = this.stream;
-        video.muted = true;
-        video.playsInline = true;
-        await video.play();
-        for (const track of this.stream.getVideoTracks()) {
-            track.addEventListener("ended", () => this.emit("camera_lost", "Flux caméra interrompu", true));
+        if (!this.stream?.active) {
+            this.stream = await navigator.mediaDevices.getUserMedia({
+                video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" },
+                audio: false,
+            });
+            for (const track of this.stream.getVideoTracks()) {
+                track.addEventListener("ended", () => this.emit("camera_lost", "Flux caméra interrompu", true));
+            }
         }
+        if (!this.video) {
+            const v = document.createElement("video");
+            v.muted = true;
+            v.playsInline = true;
+            v.setAttribute("aria-hidden", "true");
+            // Dans la page mais invisible : une vidéo hors page peut être suspendue par le navigateur.
+            v.style.cssText = "position:fixed;left:0;top:0;width:160px;height:120px;opacity:0;pointer-events:none;z-index:-1";
+            this.video = v;
+        }
+        if (!this.video.isConnected) {
+            document.body.appendChild(this.video);
+        }
+        this.video.srcObject = this.stream;
+        await this.video.play();
+        if (preview) {
+            this.preview(preview);
+        }
+    }
+
+    preview(el) {
+        el.srcObject = this.stream;
+        el.muted = true;
+        el.playsInline = true;
+        el.play().catch(() => {});
     }
 
     /** Analyse instantanée d'une image : nombre de visages, orientation, luminosité. */
@@ -130,11 +165,15 @@ export class Proctor {
         }
         const brightness = lum / (px.length / 4);
         const strong = dets.filter((d) => d.detection.score > 0.55);
-        let yaw = 0;
-        let pitch = 0.45;
+        // Le candidat : un visage net et assez grand. Un visage minuscule (affiche, personne au fond)
+        // ne prouve pas sa présence devant l'écran.
+        const minWidth = (v.videoWidth || 640) * 0.08;
+        const present = dets.filter((d) => d.detection.score > 0.5 && d.detection.box.width >= minWidth);
+        let yaw = null;
+        let pitch = null;
         let box = null;
-        if (dets.length) {
-            const main = dets.reduce((a, b) => (a.detection.box.area > b.detection.box.area ? a : b));
+        if (present.length) {
+            const main = present.reduce((a, b) => (a.detection.box.area > b.detection.box.area ? a : b));
             const pts = main.landmarks.positions;
             const jawL = pts[0];
             const jawR = pts[16];
@@ -146,7 +185,7 @@ export class Proctor {
             pitch = (nose.y - eyeY) / (chin.y - eyeY || 1); // ~0,45 de face
             box = main.detection.box;
         }
-        const m = { faces: dets.length, strongFaces: strong.length, yaw, pitch, brightness, box };
+        const m = { faces: dets.length, present: present.length, strongFaces: strong.length, yaw, pitch, brightness, box };
         this.metrics = m;
         return m;
     }
@@ -174,8 +213,49 @@ export class Proctor {
         return this.canvas.toDataURL("image/jpeg", quality);
     }
 
+    /** Visage à peu près de face : seuil large du contrôle caméra, avant tout apprentissage. */
+    isFrontal(m) {
+        return m.yaw !== null && Math.abs(m.yaw) < 0.2 && m.pitch > 0.24 && m.pitch < 0.72;
+    }
+
+    /** Regard sur l'écran pendant l'épreuve, par rapport à l'orientation apprise du poste. */
     isLooking(m) {
-        return Math.abs(m.yaw) < 0.2 && m.pitch > 0.24 && m.pitch < 0.72;
+        return this.gaze(m) === null;
+    }
+
+    /** Direction du regard détourné, ou null si le candidat regarde l'écran. */
+    gaze(m) {
+        if (m.yaw === null) {
+            return null;
+        }
+        const dy = m.yaw - this.pose.yaw;
+        const dp = m.pitch - this.pose.pitch;
+        if (Math.abs(dy) > 0.13) {
+            return dy > 0 ? "vers la droite" : "vers la gauche";
+        }
+        if (dp > 0.17) {
+            return "vers le bas";
+        }
+        if (dp < -0.15) {
+            return "vers le haut";
+        }
+        return null;
+    }
+
+    /** Échantillon de pose « face à l'écran » pris pendant le contrôle caméra (médiane des 15 derniers). */
+    learnPose(m) {
+        if (!this.isFrontal(m)) {
+            return;
+        }
+        this._poseSamples.push([m.yaw, m.pitch]);
+        this._poseSamples = this._poseSamples.slice(-15);
+        const median = (k) => {
+            const xs = this._poseSamples.map((x) => x[k]).sort((a, b) => a - b);
+            return xs[Math.floor(xs.length / 2)];
+        };
+        if (this._poseSamples.length >= 3) {
+            this.pose = { yaw: median(0), pitch: median(1) };
+        }
     }
 
     emit(type, details, withSnapshot = true) {
@@ -202,12 +282,15 @@ export class Proctor {
         while (this.running) {
             const t0 = performance.now();
             try {
-                const m = await this.analyze();
+                const m = this.videoAlive() ? await this.analyze() : null;
                 if (m) {
+                    this._failSince = null;
                     this.evaluate(m, cfg);
                     this.onFrame(m);
+                } else {
+                    this.noImage(cfg);
                 }
-                if (cfg.identity_check && this.reference && Date.now() - this._lastIdentity > 8000) {
+                if (m && cfg.identity_check && this.reference && Date.now() - this._lastIdentity > 8000) {
                     this._lastIdentity = Date.now();
                     const d = await this.descriptor();
                     if (d) {
@@ -221,15 +304,76 @@ export class Proctor {
                     }
                 }
             } catch {
-                /* image indisponible : on réessaie */
+                this.noImage(cfg);
             }
             const wait = Math.max(120, 450 - (performance.now() - t0));
             await new Promise((r) => setTimeout(r, wait));
         }
     }
 
-    evaluate(m, cfg) {
+    /** La vidéo analysée avance-t-elle ? Relance une vidéo mise en pause ; une image figée n'est pas analysée. */
+    videoAlive() {
+        const v = this.video;
+        if (!v || v.readyState < 2) {
+            return false;
+        }
+        if (v.paused) {
+            v.play().catch(() => {});
+        }
         const now = Date.now();
+        if (v.currentTime !== this._lastTime) {
+            this._lastTime = v.currentTime;
+            this._lastTimeAt = now;
+            return true;
+        }
+        return now - this._lastTimeAt < 1500;
+    }
+
+    /** Aucune image exploitable : la surveillance ne doit jamais se taire en silence. */
+    noImage(cfg) {
+        if (document.visibilityState === "hidden") {
+            return; // onglet masqué : déjà signalé (tab_hidden), le navigateur y ralentit la vidéo
+        }
+        const now = Date.now();
+        this._failSince ??= now;
+        this.metrics.status = "frozen";
+        const limit = Math.max(8000, (cfg.face_absent_seconds || 5) * 1000);
+        if (now - this._failSince > limit) {
+            this._failSince = now;
+            this.emit("heartbeat_missing", "Image caméra figée ou illisible : surveillance impossible");
+        }
+    }
+
+    /**
+     * Suivi d'un épisode (absence, regard détourné). Il commence à la première image concernée et ne
+     * se clôt qu'après CLOSE_FRAMES images normales consécutives : une détection isolée (fausse
+     * détection, points faciaux bruités) ne remet plus le chronomètre à zéro. Renvoie l'épisode, ou null.
+     */
+    episode(key, active, now) {
+        const e = (this._episodes[key] ??= { since: null, clear: 0, reported: 0 });
+        if (active) {
+            e.since ??= now;
+            e.clear = 0;
+        } else if (e.since !== null && ++e.clear >= CLOSE_FRAMES[key]) {
+            Object.assign(e, { since: null, clear: 0, reported: 0 });
+        }
+        return e.since === null ? null : e;
+    }
+
+    /** Signale un épisode qui dépasse ``limit``, puis de nouveau tous les trois ``limit`` s'il dure. */
+    overdue(e, limit, now) {
+        if (!e) {
+            return false;
+        }
+        const dur = now - e.since;
+        const due = dur > limit && e.reported <= Math.floor(dur / (limit * 3));
+        if (due) {
+            e.reported = Math.floor(dur / (limit * 3)) + 1;
+        }
+        return due;
+    }
+
+    evaluate(m, cfg, now = Date.now()) {
         const absentLimit = (cfg.face_absent_seconds || 5) * 1000;
         const awayLimit = (cfg.look_away_seconds || 4) * 1000;
         // Caméra masquée
@@ -244,21 +388,27 @@ export class Proctor {
         }
         this._darkSince = null;
         this._darkReported = false;
-        // Absence
-        if (m.faces === 0) {
-            this._absentSince ??= now;
-            const dur = now - this._absentSince;
-            const episodes = Math.floor(dur / (absentLimit * 3));
-            if (dur > absentLimit && this._absentReported <= episodes) {
-                this._absentReported = episodes + 1;
-                this.emit("face_absent", `Aucun visage détecté depuis ${Math.round(dur / 1000)} s`);
+        const present = (m.present ?? m.faces) > 0;
+        const dir = present ? this.gaze(m) : null;
+        const absent = this.episode("absent", !present, now);
+        // Une tête trop tournée n'est plus détectée : l'image sans visage prolonge le regard détourné
+        // en cours au lieu de le remettre à zéro, sans en ouvrir un. Il est signalé au retour du
+        // visage ; si le visage ne revient pas, c'est l'absence qui est signalée.
+        const prev = this._episodes.away;
+        const away = this.episode("away", present ? dir !== null : !!prev?.since, now);
+        if (dir) {
+            this._awayDir = dir;
+        }
+        if (!present) {
+            if (this.overdue(absent, absentLimit, now)) {
+                this.emit("face_absent", `Aucun visage détecté depuis ${Math.round((now - absent.since) / 1000)} s`);
+                if (away) {
+                    away.reported = Math.max(away.reported, 1); // un seul avertissement pour le même épisode
+                }
             }
             this.metrics.status = "absent";
-            this._awaySince = null;
             return;
         }
-        this._absentSince = null;
-        this._absentReported = 0;
         // Plusieurs personnes
         if (m.strongFaces >= 2) {
             this._multiCount++;
@@ -271,19 +421,10 @@ export class Proctor {
         }
         this._multiCount = 0;
         // Regard détourné
-        if (!this.isLooking(m)) {
-            this._awaySince ??= now;
-            if (!this._awayReported && now - this._awaySince > awayLimit) {
-                this._awayReported = true;
-                const dir = Math.abs(m.yaw) >= 0.2 ? (m.yaw > 0 ? "vers la droite" : "vers la gauche") : m.pitch >= 0.72 ? "vers le bas" : "vers le haut";
-                this.emit("look_away", `Tête tournée ${dir} pendant plus de ${Math.round(awayLimit / 1000)} s`);
-            }
-            this.metrics.status = "away";
-            return;
+        if (this.overdue(away, awayLimit, now)) {
+            this.emit("look_away", `Tête tournée ${this._awayDir || "hors de l'écran"} pendant plus de ${Math.round(awayLimit / 1000)} s`);
         }
-        this._awaySince = null;
-        this._awayReported = false;
-        this.metrics.status = "ok";
+        this.metrics.status = dir ? "away" : "ok";
     }
 
     // ------------------------------------------------------------------ environnement verrouillé
@@ -355,5 +496,8 @@ export class Proctor {
             }
         }
         this.stream = null;
+        this.video?.remove();
+        this._episodes = {};
+        this._failSince = null;
     }
 }

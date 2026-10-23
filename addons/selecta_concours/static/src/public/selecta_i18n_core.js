@@ -554,6 +554,7 @@ register({
 "Illustration de la question": "Question illustration",
 "Ils ne sont affichés que tant que ce panneau est ouvert : remettez-les maintenant.": "They are shown only while this panel is open: hand them over now.",
 "Image": "Image",
+"Image caméra figée": "Camera image frozen",
 "Image enregistrée": "Image saved",
 "Image noire : caméra masquée ou obstruée": "Black image: camera covered or blocked",
 "Image trop lourde (3 Mo maximum).": "Image too large (3 MB maximum).",

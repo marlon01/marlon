@@ -253,11 +253,12 @@ export class CameraCheck extends Component {
             if (m) {
                 const c = this.state.checks;
                 c.light = m.brightness > 30;
-                c.face = m.faces >= 1;
-                c.single = m.faces === 1;
-                c.looking = m.faces === 1 && p.isLooking(m);
+                c.face = m.present >= 1;
+                c.single = m.present === 1 && m.strongFaces <= 1;
+                c.looking = c.single && p.isFrontal(m);
                 if (c.light && c.single && c.looking) {
                     stable++;
+                    p.learnPose(m);
                     if (stable >= 3) {
                         const d = await p.descriptor().catch(() => null);
                         if (d) {

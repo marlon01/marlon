@@ -211,6 +211,7 @@ export class ExamScreen extends Component {
                 away: "Regardez l'écran",
                 multiple: "Plusieurs personnes",
                 dark: "Caméra masquée",
+                frozen: "Image caméra figée",
                 init: "Initialisation…",
             }[this.camStatus] || "Surveillance IA active"
         );
