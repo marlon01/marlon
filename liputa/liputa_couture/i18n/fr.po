@@ -422,6 +422,7 @@ msgstr "Commande confirmée"
 
 #. module: liputa_couture
 #: model:liputa.order.stage,name:liputa_couture.stage_cutting
+#: model:ir.model.fields.selection,name:liputa_couture.selection__liputa_order_task__step__cutting
 msgid "Cutting"
 msgstr "Coupe"
 
@@ -432,6 +433,7 @@ msgstr "Le tissu est en cours de coupe"
 
 #. module: liputa_couture
 #: model:liputa.order.stage,name:liputa_couture.stage_sewing
+#: model:ir.model.fields.selection,name:liputa_couture.selection__liputa_order_task__step__sewing
 msgid "Sewing"
 msgstr "Couture"
 
@@ -442,6 +444,7 @@ msgstr "Votre tenue est en cours de couture"
 
 #. module: liputa_couture
 #: model:liputa.order.stage,name:liputa_couture.stage_fitting
+#: model:ir.model.fields.selection,name:liputa_couture.selection__liputa_order_task__step__fitting
 msgid "Fitting"
 msgstr "Essayage"
 
@@ -692,3 +695,13 @@ msgstr "Robe de deuil sobre"
 #: model:liputa.garment.model,name:liputa_couture.lib_girl_dress
 msgid "Girl's party dress"
 msgstr "Robe de fête fille"
+
+#. module: liputa_couture
+#: model:ir.model.fields.selection,name:liputa_couture.selection__liputa_order_task__step__embroidery
+msgid "Embroidery"
+msgstr "Broderie"
+
+#. module: liputa_couture
+#: model:ir.model.fields.selection,name:liputa_couture.selection__liputa_order_task__step__finishing
+msgid "Finishing & ironing"
+msgstr "Finitions et repassage"

@@ -161,7 +161,7 @@ class LiputaApp(http.Controller):
         tasks = request.env["liputa.order.task"].search([
             ("state", "!=", "done"), ("date_start", "<=", today),
             ("tailor_id", "=", tailor.id) if tailor else ("id", "!=", 0)], limit=8)
-        data["my_tasks"] = [{"id": t.id, "step": dict(t._fields["step"].selection)[t.step], "order_id": t.order_id.id,
+        data["my_tasks"] = [{"id": t.id, "step": dict(t._fields["step"]._description_selection(t.env))[t.step], "order_id": t.order_id.id,
                              "ref": t.order_id.name, "client": t.partner_id.name, "hours": t.planned_hours,
                              "state": t.state} for t in tasks]
         return data
@@ -214,7 +214,7 @@ class LiputaApp(http.Controller):
                         "residual": o.amount_residual if o.invoice_id else o.amount_total,
                         "invoiced": bool(o.invoice_id), "payment_state": o.payment_state or ""},
             "options": [{"name": x.name, "price": x.price} for x in o.option_ids],
-            "tasks": [{"id": t.id, "step": t.step, "label": dict(t._fields["step"].selection)[t.step],
+            "tasks": [{"id": t.id, "step": t.step, "label": dict(t._fields["step"]._description_selection(t.env))[t.step],
                        "tailor": t.tailor_id.name or "", "hours": t.planned_hours,
                        "start": fields.Date.to_string(t.date_start), "end": fields.Date.to_string(t.date_end),
                        "state": t.state} for t in o.task_ids.sorted("sequence")],
@@ -365,7 +365,7 @@ class LiputaApp(http.Controller):
                         for t in tailors],
             "tasks": [{"id": t.id, "order_id": t.order_id.id, "ref": t.order_id.name, "client": t.partner_id.name,
                        "model": t.order_id.garment_model_id.name, "step": t.step,
-                       "label": dict(t._fields["step"].selection)[t.step], "tailor_id": t.tailor_id.id,
+                       "label": dict(t._fields["step"]._description_selection(t.env))[t.step], "tailor_id": t.tailor_id.id,
                        "hours": t.planned_hours, "start": fields.Date.to_string(t.date_start),
                        "end": fields.Date.to_string(t.date_end), "state": t.state} for t in tasks],
         }
