@@ -4,7 +4,7 @@
     #root { position: absolute; inset: 0; overflow: hidden; background: linear-gradient(180deg, #fff3dc 0%, #f6e6c9 100%); }
     /* Le classement des ateliers : celui de Nadège monte à la première place. */
     #vi-titre { position: absolute; left: 120px; top: 170px; font-family: "Bricolage Grotesque"; font-weight: 800; font-size: 72px; letter-spacing: -0.02em; color: #16213e; }
-    #vi-titre span { display: inline-block; }
+    #vi-titre span { display: inline-block; margin-right: 0.24em; }
     .vi-rang { position: absolute; left: 120px; width: 70px; height: 120px; display: grid; place-items: center; font-family: "Bricolage Grotesque"; font-weight: 800; font-size: 64px; color: #c99a06; }
     .vi-carte { position: absolute; left: 210px; width: 720px; height: 120px; border-radius: 26px; background: #fbfcfe; box-shadow: 0 12px 28px rgba(22,33,62,.12);
       display: flex; align-items: center; gap: 22px; padding: 0 26px; }
@@ -39,7 +39,7 @@
   <div id="root" data-composition-id="vitrine" data-width="1920" data-height="1080">
     <div id="vi-sol"></div>
     <div id="vi-classement">
-      <div id="vi-titre"><span>Les</span> <span>mieux</span> <span>notés,</span> <span>en</span> <span>premier</span></div>
+      <div id="vi-titre"><span>Les</span><span>mieux</span><span>notés,</span><span>en</span><span>premier</span></div>
       <div class="vi-rang" style="top: 330px">1</div><div class="vi-rang" style="top: 480px">2</div><div class="vi-rang" style="top: 630px">3</div>
       <div class="vi-carte" id="vi-c1" style="top: 330px"><i style="background: #c4502a">KE</i><div><b>Couture Kin Élégance</b><span><em>★★★★☆</em> 4,1 · 12 avis</span></div></div>
       <div class="vi-carte" id="vi-c2" style="top: 480px"><i style="background: #1f7a72">BR</i><div><b>Atelier Bazin Royal</b><span><em>★★★★☆</em> 4,1 · 9 avis</span></div></div>
@@ -48,11 +48,11 @@
     <div id="vi-cliente"></div>
 
     <div id="vi-tel"><div id="vi-ecran">
-      <div id="vi-annuaire"><img src="assets/shots/annuaire.png" alt="Annuaire des ateliers sur Liputa" /><div id="vi-rep"></div><div id="vi-flash"></div></div>
+      <div id="vi-annuaire"><img src="assets/shots/annuaire.png" alt="Annuaire des ateliers sur Liputa" /><div id="vi-rep" style="left: 16px; top: 548px; width: 519px; height: 132px"></div><div id="vi-flash" style="left: 448px; top: 582px; width: 64px; height: 64px; border-radius: 50%"></div></div>
       <div id="vi-wa">
         <div id="vi-wa-tete"><img src="assets/brand/liputa.svg" alt="" /><b>Atelier Nadège Couture</b></div>
-        <div class="vi-bulle" id="vi-b1">Bonjour Nadège, je vous ai trouvée sur Liputa. Vous cousez les tenues de dot ?</div>
-        <div class="vi-bulle" id="vi-b2">Bien sûr ! Passez demain à l'atelier, je prends vos mesures.</div>
+        <div class="vi-bulle" id="vi-b1">Bonjour Nadège, je vous ai trouvée sur Liputa !</div>
+        <div class="vi-bulle" id="vi-b2">Avec plaisir, passez demain !</div>
       </div>
     </div></div>
   </div>
@@ -61,8 +61,8 @@
     LiputaRig.draw(document.querySelector("#vi-cliente"), { kind: "chantal", id: "vc" });
     const R = LiputaRig;
     const tl = gsap.timeline({ paused: true });
-    gsap.set("#vi-cliente", { x: -700 }); // état de l'image 0, avant le premier seek
-    tl.set("#vi-cliente", { x: -700 }, 0);
+    gsap.set("#vi-cliente", { x: -900 }); // état de l'image 0, avant le premier seek
+    tl.set("#vi-cliente", { x: -900 }, 0);
 
     // 0–6 s : le classement. Les clientes notent ; l'atelier de Nadège monte en tête.
     tl.fromTo("#vi-tel", { y: 1100 }, { y: 0, duration: 0.7, ease: "expo.out" }, 0.1);
@@ -86,9 +86,9 @@
     tl.to("#vc-armR", { rotation: -50, duration: 0.4, ease: "power2.out" }, 7.0);
     tl.to("#vi-flash", { keyframes: [{ opacity: 0.6, duration: 0.08 }, { opacity: 0, duration: 0.25 }] }, 7.5);
     tl.fromTo("#vi-wa", { opacity: 0, x: 120 }, { opacity: 1, x: 0, duration: 0.4, ease: "expo.out", immediateRender: false }, 7.8);
-    tl.fromTo("#vi-b1", { opacity: 0, y: 30, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.35, ease: "back.out(1.6)", immediateRender: false }, 8.2);
-    tl.fromTo("#vi-b2", { opacity: 0, y: 30, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.35, ease: "back.out(1.6)", immediateRender: false }, 9.6);
-    R.mood(tl, "vc", "joie", 9.9);
+    tl.fromTo("#vi-b1", { opacity: 0, y: 30, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.35, ease: "back.out(1.6)", immediateRender: false }, 8.0);
+    tl.fromTo("#vi-b2", { opacity: 0, y: 30, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.35, ease: "back.out(1.6)", immediateRender: false }, 9.2);
+    R.mood(tl, "vc", "joie", 9.5);
     window.__timelines["vitrine"] = tl;
   </script>
 </template>

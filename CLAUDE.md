@@ -35,6 +35,7 @@ Skills installés dans `.claude/skills/` par `npx skills add` (versions figées 
 - Personnages : dessin vectoriel animé par `assets/rig.js` de chaque film (`LiputaRig`, `SelectaRig` : humeurs, clignements, paroles, respiration). Pivots en `svgOrigin` (GSAP ignore le `transform-origin` CSS des groupes SVG). États de départ en CSS ou `gsap.set` : un `tl.set(…, 0)` seul ne s'affiche pas à la première image d'une scène.
 - Musique : aucune source accessible (Hugging Face, Openverse bloqués) ; à fournir ou à autoriser dans le réseau de l'environnement.
 - Liputa, atelier de démonstration et captures : `tools/liputa_film_seed.py` puis `tools/liputa_film_capture.mjs`.
+- Portail client Liputa (`/c`) pour le film : `tools/liputa_portal_seed.py` (après le seed de l'atelier) puis `tools/liputa_portal_capture.mjs`.
 - Télémétrie HyperFrames coupée pour le projet (`HYPERFRAMES_NO_TELEMETRY=1` dans `.claude/settings.json`).
 - Images réelles des produits : `docs/captures/` (SELECTA fr/en, Liputa) ; nouvelles captures ou enregistrements d'écran avec `playwright`.
 - Connecteurs claude.ai déjà reliés : HyperFrames by HeyGen (projets hébergés et rendu cloud), Canva, Figma.

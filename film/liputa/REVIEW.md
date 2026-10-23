@@ -1,6 +1,6 @@
-# Revue — Liputa « L'atelier respire » (version 2)
+# Revue — Liputa « L'atelier respire » (version 3)
 
-Rendu : `renders/liputa-l-atelier-respire.mp4` (72 s, 1920 × 1080, 30 i/s, H.264 + AAC),
+Rendu : `renders/liputa-l-atelier-respire.mp4` (90 s, 1920 × 1080, 30 i/s, H.264 + AAC),
 son normalisé après rendu à −14,9 LUFS intégrés, crête −1,5 dBFS.
 La v1 (« Un samedi à l'atelier », 44,5 s) est dans l'historique git (commit dc7cc3d).
 
@@ -12,6 +12,18 @@ La v1 (« Un samedi à l'atelier », 44,5 s) est dans l'historique git (commit d
   retournent en fiches, iris d'ouverture, lumière qui s'ouvre sur la respiration.
 - « Kinshasa mal prononcé » : espeak lisait kɛ̃ʃaza ; le lexique de `tools/voix_off.py` écrit
   « Kinnchassa », lu kinʃasa (vérifié au phonémiseur).
+
+## Version 3 : le portail client
+- Demande : un portail où les clients notent les ateliers, les choisissent et les contactent sur
+  WhatsApp, classés par note ; une application installable ; des notifications push même
+  téléphone verrouillé pour les clients, les ateliers et les administrateurs.
+- Scène `vitrine` (nouvelle) : le classement animé, puis l'annuaire réel (`/c`, base de
+  démonstration de `tools/liputa_portal_seed.py`, capture `tools/liputa_portal_capture.mjs`) et
+  la conversation WhatsApp. Scène `cliente` refaite : installation, écran verrouillé et
+  notification, suivi, cinq étoiles, notification « Nouvel avis » chez Nadège. Carton final à
+  double appel (clients et ateliers). Neuf phrases de voix nouvelles (13 à 21).
+- Corrigés à la relecture : espaces du titre « Les mieux notés », notification qui couvrait
+  Nadège, fond sous le suivi, bulles WhatsApp trop longues pour leur durée.
 
 ## Mesuré / regardé / non vérifié
 - `hyperframes check` : aucune erreur. Avertissements restants voulus : la vue par la fenêtre et
