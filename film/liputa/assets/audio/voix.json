@@ -1,0 +1,58 @@
+{
+  "voix": "siwis",
+  "modele": "fr_FR-siwis-medium",
+  "vitesse": 0.88,
+  "duree": 39.016,
+  "phrases": [
+    {
+      "texte": "Samedi, neuf heures. À Kinshasa, l'atelier de Nadège déborde déjà.",
+      "debut": 0.0,
+      "fin": 4.479
+    },
+    {
+      "texte": "Les mesures sont notées dans un carnet. Les clientes appellent pour savoir où en est leur tenue.",
+      "debut": 4.829,
+      "fin": 9.884
+    },
+    {
+      "texte": "Et la date promise, on espère la tenir.",
+      "debut": 10.234,
+      "fin": 12.8
+    },
+    {
+      "texte": "Avec Lipouta, chaque commande trouve sa place.",
+      "debut": 13.6,
+      "fin": 16.474
+    },
+    {
+      "texte": "Les mesures sont enregistrées une fois pour toutes, le patron est tracé et le tissu calculé.",
+      "debut": 16.824,
+      "fin": 21.847
+    },
+    {
+      "texte": "La date de livraison tient compte de la charge réelle de l'atelier.",
+      "debut": 22.197,
+      "fin": 25.566
+    },
+    {
+      "texte": "Chaque tailleur voit son travail de la journée.",
+      "debut": 25.916,
+      "fin": 28.296
+    },
+    {
+      "texte": "Et la cliente suit sa commande, sans avoir à appeler.",
+      "debut": 28.646,
+      "fin": 31.861
+    },
+    {
+      "texte": "L'atelier respire.",
+      "debut": 32.661,
+      "fin": 34.043
+    },
+    {
+      "texte": "Lipouta. Le sur-mesure, à l'heure. Essai gratuit de quatorze jours.",
+      "debut": 34.843,
+      "fin": 39.016
+    }
+  ]
+}
