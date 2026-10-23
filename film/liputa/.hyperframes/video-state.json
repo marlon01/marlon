@@ -3305,11 +3305,11 @@
   },
   "renders": {
     "latest": {
-      "id": "8077a019-a584-4108-adb4-be4dc51f2dbf",
-      "completedAt": 1792747708196,
+      "id": "0549d43d-22cd-487a-88db-2f946df99ba6",
+      "completedAt": 1792750958601,
       "output": "/home/user/marlon/film/liputa/renders/brut.mp4",
       "status": "completed",
-      "revision": "f897ae43-4066-4f5f-a8f5-4099049c686c"
+      "revision": null
     },
     "retainedRevisions": [
       "f897ae43-4066-4f5f-a8f5-4099049c686c",
