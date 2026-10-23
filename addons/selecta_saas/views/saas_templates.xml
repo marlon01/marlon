@@ -406,8 +406,7 @@
                         </address>
                     </div>
                     <div class="lp-container lp-foot-contact">
-                        <span>Pour plus d'informations, contactez
-                            <t t-foreach="phones" t-as="ph"><a t-att-href="'tel:%s' % ph.replace(' ', '')" t-out="ph"/><t t-if="not ph_last"> ou </t></t></span>
+                        <span>Pour plus d'informations, contactez&#160;<t t-foreach="phones" t-as="ph"><a t-att-href="'tel:%s' % ph.replace(' ', '')" t-out="ph"/><t t-if="not ph_last"> ou </t></t></span>
                         <strong>By <t t-out="issuer"/></strong>
                     </div>
                     <div class="lp-container lp-foot-legal">
