@@ -779,8 +779,8 @@
   },
   "checks": {
     "latest": {
-      "revision": "24b5c0b9-1cb9-4bba-a017-0f58a5ca5923",
-      "id": "8ac0bf61-520a-4087-abf2-01247861e9a0"
+      "revision": "3ac05faf-645e-4315-883e-7af2d2cdcb70",
+      "id": "e2c45c52-7ab4-4140-9c36-15650e75e4f7"
     },
     "revisions": {
       "db51e9a3-db0a-4686-a937-2553565a142a": [
@@ -906,7 +906,6 @@
         {
           "id": "32a92fe4-290d-4aa1-882b-42b3ffcdf263",
           "scope": "project",
-          "report": "/home/user/marlon/film/selecta/.hyperframes/artifacts/checks/32a92fe4-290d-4aa1-882b-42b3ffcdf263.json",
           "metadata": {
             "ok": false,
             "browserSkipped": false,
@@ -928,14 +927,15 @@
           "revision": "f263400f-842b-4b43-9829-c08dc649cc16",
           "inputFingerprint": "a0031d23620768aa3f593aa30f59fad6da927b62433032313c93c5234d06d2dd",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "df940621-2b9b-46dd-b5d8-fdde66053658"
         }
       ],
       "ade121d3-b71d-454a-96d4-9e33f42606f5": [
         {
           "id": "f5c9bd37-8899-46f0-8fdd-ab29e494ca66",
           "scope": "project",
-          "report": "/home/user/marlon/film/selecta/.hyperframes/artifacts/checks/f5c9bd37-8899-46f0-8fdd-ab29e494ca66.json",
           "metadata": {
             "ok": true,
             "browserSkipped": false,
@@ -957,14 +957,15 @@
           "revision": "ade121d3-b71d-454a-96d4-9e33f42606f5",
           "inputFingerprint": "5a82f64742f9868a69e91efb1baa33a5d734af95fac3f8b227f8530271325c5d",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "df940621-2b9b-46dd-b5d8-fdde66053658"
         }
       ],
       "628e2040-603a-4673-9c87-4cbd0ac9a001": [
         {
           "id": "c734103c-f1e2-4f7e-85b4-53dc329d12a8",
           "scope": "project",
-          "report": "/home/user/marlon/film/selecta/.hyperframes/artifacts/checks/c734103c-f1e2-4f7e-85b4-53dc329d12a8.json",
           "metadata": {
             "ok": true,
             "browserSkipped": false,
@@ -986,14 +987,15 @@
           "revision": "628e2040-603a-4673-9c87-4cbd0ac9a001",
           "inputFingerprint": "5dbe3cc375bfac6cf9317e57c2d0fe919a619ba9b25b892e3cefc7e28ad1362d",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "df940621-2b9b-46dd-b5d8-fdde66053658"
         }
       ],
       "30ed6b06-07fb-4834-a931-d0065e00ee02": [
         {
           "id": "41de8ad2-fd29-4533-8fb9-b76cbcc48870",
           "scope": "project",
-          "report": "/home/user/marlon/film/selecta/.hyperframes/artifacts/checks/41de8ad2-fd29-4533-8fb9-b76cbcc48870.json",
           "metadata": {
             "ok": false,
             "browserSkipped": false,
@@ -1015,14 +1017,15 @@
           "revision": "30ed6b06-07fb-4834-a931-d0065e00ee02",
           "inputFingerprint": "7ec5cbd391f97cc148d83d6bd7a64b5e057e9faa2c3534b9eb35baddb4b93916",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "df940621-2b9b-46dd-b5d8-fdde66053658"
         }
       ],
       "bc04f404-1c56-437e-af48-b0af324afd21": [
         {
           "id": "8148740c-68ca-4783-ac26-f433efc9097c",
           "scope": "project",
-          "report": "/home/user/marlon/film/selecta/.hyperframes/artifacts/checks/8148740c-68ca-4783-ac26-f433efc9097c.json",
           "metadata": {
             "ok": true,
             "browserSkipped": false,
@@ -1044,14 +1047,15 @@
           "revision": "bc04f404-1c56-437e-af48-b0af324afd21",
           "inputFingerprint": "98a2f02b5c045ab27d53ea6b218238f319df5b01349a8e24ea9e78b6e47c4019",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "df940621-2b9b-46dd-b5d8-fdde66053658"
         }
       ],
       "287a0a51-8902-4102-90fb-1af730583da8": [
         {
           "id": "28def2ee-53b0-4ae0-a803-af47d975af55",
           "scope": "project",
-          "report": "/home/user/marlon/film/selecta/.hyperframes/artifacts/checks/28def2ee-53b0-4ae0-a803-af47d975af55.json",
           "metadata": {
             "ok": true,
             "browserSkipped": false,
@@ -1073,14 +1077,15 @@
           "revision": "287a0a51-8902-4102-90fb-1af730583da8",
           "inputFingerprint": "28699069ee356fab7dc6fb686e125bbc4a701f5033dbed8a6c3cd1c06ec294c2",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "df940621-2b9b-46dd-b5d8-fdde66053658"
         }
       ],
       "24b5c0b9-1cb9-4bba-a017-0f58a5ca5923": [
         {
           "id": "8ac0bf61-520a-4087-abf2-01247861e9a0",
           "scope": "project",
-          "report": "/home/user/marlon/film/selecta/.hyperframes/artifacts/checks/8ac0bf61-520a-4087-abf2-01247861e9a0.json",
           "metadata": {
             "ok": true,
             "browserSkipped": false,
@@ -1102,7 +1107,9 @@
           "revision": "24b5c0b9-1cb9-4bba-a017-0f58a5ca5923",
           "inputFingerprint": "6605e12c501a208961e26a38d9bca1b48de1b7aa38f6b26ad72db7bf4fde1eb7",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "df940621-2b9b-46dd-b5d8-fdde66053658"
         }
       ]
     },
@@ -2734,13 +2741,14 @@
   },
   "renders": {
     "latest": {
-      "id": "b1cdb8b9-3e67-4b81-aa6b-3bd93884899f",
-      "completedAt": 1792753696652,
+      "id": "df940621-2b9b-46dd-b5d8-fdde66053658",
+      "completedAt": 1792754952335,
       "output": "/home/user/marlon/film/selecta/renders/brut.mp4",
       "status": "completed",
-      "revision": null
+      "revision": "d44ab2ea-3d31-4be6-bb9c-38a60b7a4552"
     },
     "retainedRevisions": [
+      "d44ab2ea-3d31-4be6-bb9c-38a60b7a4552",
       "3ac05faf-645e-4315-883e-7af2d2cdcb70"
     ]
   },
