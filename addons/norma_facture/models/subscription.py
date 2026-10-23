@@ -71,6 +71,8 @@ class ResCompany(models.Model):
     norma_trial_end = fields.Datetime("Fin de l'essai")
     norma_period_end = fields.Datetime("Abonnement payé jusqu'au")
     norma_payment_ids = fields.One2many('norma.subscription.payment', 'company_id')
+    norma_paid_sites = fields.Integer("Établissements payés", default=0,
+                                      help="Établissements couverts par la période payée en cours.")
 
     def _norma_trial(self):
         """Fin de l'essai ; pour une entreprise créée avant les abonnements : date de création + durée d'essai."""
@@ -108,13 +110,13 @@ class ResCompany(models.Model):
         self.ensure_one()
         return self.env['norma.site'].sudo().search_count([('company_id', '=', self.id), ('active', '=', True)])
 
-    def _norma_quote(self, months):
+    def _norma_quote(self, months, add_sites=0):
         """Montant d'une période : formule + établissements au-delà de ceux inclus."""
         self.ensure_one()
         plan = self._norma_plan()
         if not plan:
             raise UserError(_("Aucune formule n'est définie pour votre catégorie. Contactez le support."))
-        extra = max(0, self._norma_billable_sites() - plan.sites_included)
+        extra = max(0, self._norma_billable_sites() + add_sites - plan.sites_included)
         if months == 12:
             base = plan.price_year
             extra_amount = extra * plan.extra_site_price * 10  # deux mois offerts aussi sur les sites supplémentaires
@@ -183,7 +185,8 @@ class NormaSubscriptionPayment(models.Model):
         seq = self.env['ir.sequence'].sudo().next_by_code('norma.subscription.payment') or str(self.id)
         self.sudo().write({'state': 'validated', 'validated_by': user.id, 'validated_at': now,
                            'period_start': start, 'period_end': end, 'number': seq})
-        company.sudo().norma_period_end = end
+        company.sudo().write({'norma_period_end': end,
+                              'norma_paid_sites': (self.plan_id.sites_included or 1) + self.extra_sites})
         self.env['norma.audit']._log(company, 'subscription.paid',
                                      _("Abonnement prolongé jusqu'au %s (%s mois, %s USD)") %
                                      (fields.Date.to_string(end.date()), self.months, self.amount),

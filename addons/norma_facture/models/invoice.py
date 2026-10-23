@@ -119,7 +119,8 @@ class NormaInvoice(models.Model):
     _sql_constraints = [
         ('number_unique', 'unique(company_id, number)', "Numéro de facture déjà attribué."),
         ('verify_token_unique', 'unique(verify_token)', "Jeton déjà utilisé."),
-        ('request_key_unique', 'unique(company_id, request_key)', "Requête déjà traitée."),
+        # Unique sur toute la plateforme : la clé sert aussi d'adresse au ticket provisoire (/norma/r/<clé>).
+        ('request_key_unique', 'unique(request_key)', "Requête déjà traitée."),
     ]
 
     # ================================================================ garde-fous

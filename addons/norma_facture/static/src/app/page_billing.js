@@ -63,6 +63,9 @@ export class BillingPage extends Component {
                                 <small t-elif="b.quotes[m].extra_sites"><t t-esc="b.quotes[m].extra_sites"/> établissement(s) en plus</small>
                             </button>
                         </div>
+                        <label class="nm-field" style="max-width:320px"><span>Établissements à ajouter (facultatif)</span>
+                            <input class="nm-input" type="number" min="0" max="100" t-model.number="state.add" t-on-change="load"/>
+                            <small>Un établissement de plus se crée une fois son prix inclus dans l'abonnement.</small></label>
                         <div class="nm-note"><b>1.</b> Envoyez <b class="nm-num"><t t-esc="money(b.quotes[state.months].total)"/> $</b> (ou l'équivalent en CDF) : <t t-esc="b.instructions"/></div>
                         <div class="nm-grid-2">
                             <label class="nm-field"><span>Moyen de paiement</span>
@@ -98,14 +101,14 @@ export class BillingPage extends Component {
         this.date = date;
         this.dateTime = dateTime;
         this.session = session;
-        this.state = useState({ b: null, months: 1, method: "MPESA", phone: "", reference: "", proof: null });
+        this.state = useState({ b: null, add: 0, months: 1, method: "MPESA", phone: "", reference: "", proof: null });
         onWillStart(() => this.load());
     }
     get st() { return STATES[this.state.b.subscription.state] || STATES.expired; }
     pst(p) { return PAY_STATES[p.state] || ["", ""]; }
     async load() {
         try {
-            this.state.b = await api("billing");
+            this.state.b = await api("billing", { add_sites: this.state.add || 0 });
             session.subscription = this.state.b.subscription;
         } catch (err) { notifyError(err); }
     }
@@ -119,7 +122,7 @@ export class BillingPage extends Component {
     }
     async declare() {
         this.state.b = await api("billing_declare", { months: this.state.months, method: this.state.method, reference: this.state.reference,
-            payer_phone: this.state.phone, proof: this.state.proof || undefined });
+            payer_phone: this.state.phone, proof: this.state.proof || undefined, extra_sites: this.state.add || 0 });
         session.subscription = this.state.b.subscription;
         Object.assign(this.state, { reference: "", proof: null });
         notify("Paiement déclaré. L'équipe NORMA le valide et votre abonnement est prolongé.", "ok");

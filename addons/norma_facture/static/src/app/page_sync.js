@@ -29,13 +29,14 @@ export class SyncPage extends Component {
                     <tbody><tr t-foreach="state.sales" t-as="s" t-key="s.request_key">
                         <td t-esc="new Date(s.offline_at).toLocaleString('fr-FR')"/>
                         <td t-esc="s.ticket.lines.length + ' ligne(s)'"/>
-                        <td><span t-if="s.error" class="nm-tag nm-tag-bad" t-att-title="s.error">Refusée</span><span t-else="" class="nm-tag nm-tag-warn">À envoyer</span>
+                        <td><span t-if="s.uid !== session.user.id" class="nm-tag">Envoi à la connexion de son auteur</span>
+                            <span t-elif="s.error" class="nm-tag nm-tag-bad" t-att-title="s.error">Refusée</span><span t-else="" class="nm-tag nm-tag-warn">À envoyer</span>
                             <div t-if="s.error" class="nm-muted" style="font-size:12px;max-width:420px" t-esc="s.error"/></td>
                         <td class="nm-right nm-num" t-esc="money(s.ticket.total, s.ticket.currency)"/>
                         <td class="nm-row" style="justify-content:flex-end">
                             <button class="nm-btn nm-btn-sm" t-on-click="() => this.reprint(s)"><Icon name="'receipt'" size="15"/></button>
-                            <button t-if="s.error" class="nm-btn nm-btn-sm" t-on-click="() => this.retry(s)">Réessayer</button>
-                            <button t-if="s.error and can('manager')" class="nm-btn nm-btn-sm nm-btn-danger" t-on-click="() => this.drop(s)">Retirer</button>
+                            <button t-if="s.error and s.uid === session.user.id" class="nm-btn nm-btn-sm" t-on-click="() => this.retry(s)">Réessayer</button>
+                            <button t-if="s.error and can('manager') and s.uid === session.user.id" class="nm-btn nm-btn-sm nm-btn-danger" t-on-click="() => this.drop(s)">Retirer</button>
                         </td>
                     </tr></tbody>
                 </table></div>

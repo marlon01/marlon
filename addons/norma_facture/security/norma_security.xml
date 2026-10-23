@@ -152,4 +152,9 @@
         <field name="model_id" ref="model_norma_subscription_payment"/>
         <field name="domain_force">[('company_id', 'in', company_ids)]</field>
     </record>
+    <record id="rule_product_price" model="ir.rule">
+        <field name="name">NORMA : historique des prix de mon entreprise</field>
+        <field name="model_id" ref="model_norma_product_price"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
 </odoo>

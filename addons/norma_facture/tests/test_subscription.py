@@ -82,6 +82,31 @@ class TestSubscription(TransactionCase):
         self.assertGreater(self.shop.norma_period_end, trial_end + timedelta(days=360))
         self.assertTrue(self.shop.norma_payment_ids[0].number.startswith('ABO-'))
 
+    def test_paid_sites_limit_and_offline_rights(self):
+        b = self.call('billing_declare', months=1, method='ORANGE', reference='OM.SITES.0001')
+        self.env['norma.platform'].with_user(self.env.ref('base.user_admin')).payment_decide(b['payments'][0]['id'], True)
+        self.assertEqual(self.shop.norma_paid_sites, 1)
+        with self.assertRaises(UserError):
+            self.call('site_save', name='Annexe', code='BTQ-03')
+        b = self.call('billing_declare', months=1, method='ORANGE', reference='OM.SITES.0002', extra_sites=1)
+        self.assertEqual(b['payments'][0]['amount'], 7.0)
+        self.env['norma.platform'].with_user(self.env.ref('base.user_admin')).payment_decide(b['payments'][0]['id'], True)
+        self.call('site_save', name='Annexe', code='BTQ-03')
+        # Une vente hors ligne n'utilise pas les droits de prix ou de remise d'un gestionnaire.
+        with self.assertRaises(UserError):
+            self.sale(request_key='poste-0009-hors-ligne', offline_at=fields.Datetime.to_string(fields.Datetime.now() - timedelta(hours=1)),
+                      lines=[{'product_id': self.product.id, 'quantity': 1, 'discount_pct': 50}],
+                      payments=[{'method': 'ESPECES', 'amount': self.product.price / 2}])
+
+    def test_expired_admin_can_still_revoke_access(self):
+        users = self.call('user_save', name='Ex', login='ex@test.cd', role='cashier', password='Caisse2026ok')
+        uid = [u for u in users if u['login'] == 'ex@test.cd'][0]['id']
+        self.expire()
+        self.call('user_save', id=uid, name='Ex', login='ex@test.cd', role='cashier', active=False)
+        self.assertFalse(self.env['res.users'].with_context(active_test=False).browse(uid).active)
+        with self.assertRaises(AccessError):
+            self.call('user_save', name='Nouveau', login='new@test.cd', role='cashier', password='Caisse2026ok')
+
     def test_extra_sites_are_billed(self):
         self.call('site_save', name='Annexe', code='BTQ-02')
         q = self.shop._norma_quote(1)
@@ -108,8 +133,14 @@ class TestSubscription(TransactionCase):
                       offline_at=fields.Datetime.to_string(sold_at),
                       lines=[{'product_id': self.product.id, 'quantity': 1, 'price': 1}],
                       payments=[{'method': 'ESPECES', 'amount': 1}])
+        with self.assertRaises(AccessError):  # prix nouveau ou ancien, mais pas celui de l'heure annoncée
+            self.call('checkout', user=cashier, site_id=self.site.id, request_key='poste-0006-hors-ligne',
+                      offline_at=fields.Datetime.to_string(sold_at - timedelta(days=2)),
+                      lines=[{'product_id': self.product.id, 'quantity': 1, 'price': old_price + 1000}],
+                      payments=[{'method': 'ESPECES', 'amount': old_price + 1000}])
+        self.assertTrue(self.env['norma.audit'].sudo().search_count([('company_id', '=', self.shop.id), ('event', '=', 'offline.price')]))
         with self.assertRaises(UserError):  # trop ancienne
-            self.sale(request_key='poste-0003-hors-ligne', offline_at=fields.Datetime.to_string(fields.Datetime.now() - timedelta(days=8)))
+            self.sale(request_key='poste-0003-hors-ligne', offline_at=fields.Datetime.to_string(fields.Datetime.now() - timedelta(hours=73)))
         with self.assertRaises(UserError):  # sans clé
             self.sale(offline_at=fields.Datetime.to_string(sold_at))
 
@@ -140,5 +171,12 @@ class TestOfflineHttp(HttpCase):
         self.assertIn('en cours de normalisation', waiting.text)
         self.assertEqual(self.url_open('/norma/sw.js').headers.get('Service-Worker-Allowed'), '/norma/')
         self.assertIn('NORMA', self.url_open('/norma/manifest.webmanifest').text)
+        other = _signup(self.env, 'magasin', 'other@test.cd', 'O7654321T', 'OTH-01')
+        q = self.env['norma.product'].sudo().search([('company_id', '=', other.id)], limit=1)
+        api2 = self.env['norma.api'].with_user(other.norma_owner_id).with_company(other)
+        with self.assertRaises(UserError):  # la clé d'une autre entreprise ne peut ni être reprise ni renvoyer sa facture
+            api2._dispatch('checkout', {'site_id': other.norma_site_ids[0].id, 'request_key': 'abcdef0123456789abcd',
+                                        'lines': [{'product_id': q.id, 'quantity': 1}],
+                                        'payments': [{'method': 'ESPECES', 'amount': q.price}]})
         landing = self.url_open('/norma')
         self.assertIn('5 $', landing.text)

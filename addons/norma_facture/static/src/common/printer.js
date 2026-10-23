@@ -92,6 +92,7 @@ const enc = (t) => {
     for (const ch of String(t ?? "")) {
         const c = ch.charCodeAt(0);
         if (map[ch]) out.push(map[ch]);
+        else if (c < 32 || c === 127) out.push(32); // aucune commande d'imprimante ne passe par un texte
         else if (c < 128) out.push(c);
         else out.push(...Array.from(ch.normalize("NFD").replace(/[̀-ͯ]/g, "")).map((x) => (x.charCodeAt(0) < 128 ? x.charCodeAt(0) : 63)));
     }
@@ -212,9 +213,10 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 
 /** Ticket HTML local (vente hors ligne : le serveur est injoignable). */
 export function htmlTicket(t, width, qrSvgMarkup) {
+    width = Number(width) === 58 ? 58 : 80;
     const rows = t.lines.map((l) => `<tr><td colspan="2">${esc(l.name)} <b>[${esc(l.tax_group)}]</b></td></tr>
-        <tr><td>${n3(l.quantity)} × ${n2(l.price)}${l.discount_pct ? ` (−${l.discount_pct} %)` : ""}</td><td class="r">${n2(l.total)}</td></tr>`).join("");
-    const groups = t.groups.map((g) => `<tr><td>Gr. ${esc(g.code)} (${g.rate} %) HT ${n2(g.base)}</td><td class="r">TVA ${n2(g.tax)}</td></tr>`).join("");
+        <tr><td>${n3(l.quantity)} × ${n2(l.price)}${l.discount_pct ? ` (−${Number(l.discount_pct)} %)` : ""}</td><td class="r">${n2(l.total)}</td></tr>`).join("");
+    const groups = t.groups.map((g) => `<tr><td>Gr. ${esc(g.code)} (${Number(g.rate)} %) HT ${n2(g.base)}</td><td class="r">TVA ${n2(g.tax)}</td></tr>`).join("");
     const pays = t.payments.map((p) => `<tr><td>${esc(p.label)}</td><td class="r">${n2(p.amount)}</td></tr>`).join("");
     return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Ticket</title><style>
         @page{size:${width}mm auto;margin:2mm}body{margin:0;font:11px/1.4 Arial,sans-serif;color:#000;width:${width - 4}mm}

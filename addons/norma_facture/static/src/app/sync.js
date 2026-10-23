@@ -10,8 +10,9 @@ let running = false;
 
 export async function refreshCounts() {
     try {
-        session.outbox = (await outbox.all()).filter((s) => s.company_id === session.company.id && !s.error).length;
-        session.outboxErrors = (await outbox.all()).filter((s) => s.company_id === session.company.id && s.error).length;
+        const mine = (await outbox.all()).filter((s) => s.company_id === session.company.id && s.uid === session.user.id);
+        session.outbox = mine.filter((s) => !s.error).length;
+        session.outboxErrors = mine.filter((s) => s.error).length;
     } catch { /* IndexedDB indisponible */ }
 }
 
@@ -22,7 +23,8 @@ export async function flush() {
     session.syncing = true;
     let sent = 0;
     try {
-        const sales = (await outbox.all()).filter((s) => s.company_id === session.company.id && !s.error)
+        // Chaque vente part avec la session de son auteur : jamais avec les droits d'un autre utilisateur du poste.
+        const sales = (await outbox.all()).filter((s) => s.company_id === session.company.id && s.uid === session.user.id && !s.error)
             .sort((a, b) => a.offline_at.localeCompare(b.offline_at));
         for (const sale of sales) {
             try {

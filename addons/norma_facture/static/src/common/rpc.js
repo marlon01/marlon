@@ -33,6 +33,7 @@ export async function post(route, params = {}, { timeout = 60000 } = {}) {
     if (payload.error) {
         const data = payload.error.data || {};
         if (data.name === "odoo.http.SessionExpiredException") {
+            try { localStorage.removeItem("norma.boot"); localStorage.removeItem("norma.catalog"); } catch { /* ignoré */ }
             window.location.href = "/norma/login";
         }
         throw new ApiError(data.message || payload.error.message || "Erreur du serveur.");

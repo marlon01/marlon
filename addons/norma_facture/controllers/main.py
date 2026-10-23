@@ -23,7 +23,7 @@ from ..models.invoice import INVOICE_TYPES, REFERENCE_TYPES
 from ..models.subscription import setting
 
 _logger = logging.getLogger(__name__)
-VERSION = '18.0.1.0.0'
+VERSION = '18.0.1.1.0'
 SIGNUPS_PER_IP_PER_DAY = 5
 TITLES = {
     'FV': "FACTURE DE VENTE", 'FT': "FACTURE D'ACOMPTE", 'FA': "FACTURE D'AVOIR",
@@ -282,7 +282,8 @@ class NormaController(http.Controller):
         return request.make_response(base64.b64decode(pay.proof), [
             ('Content-Type', pay.proof_type or 'application/octet-stream'), ('X-Content-Type-Options', 'nosniff'),
             ('Content-Security-Policy', "default-src 'none'"), ('Cache-Control', 'no-store'),
-            ('Content-Disposition', 'inline; filename="justificatif-%s"' % pay.id)])
+            ('Content-Disposition', '%s; filename="justificatif-%s"' % (
+                'attachment' if pay.proof_type == 'application/pdf' else 'inline', pay.id))])
 
     # ================================================================ impression
     def _print_values(self, inv):

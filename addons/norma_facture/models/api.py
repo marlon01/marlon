@@ -18,6 +18,7 @@ from .res_users import ROLE_LABELS, ROLE_RANK
 
 EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$')
 PUBLIC = {}
+OFFLINE_MAX_HOURS = 72  # durée maximale d'une coupure couverte par la caisse hors ligne
 
 
 def role(minimum, active=False):
@@ -94,7 +95,12 @@ class NormaApi(models.AbstractModel):
         except UserError:
             return False
         grace = company.sudo()._norma_grace_end()
-        return bool(grace and when <= grace)
+        covered = bool(grace and when <= grace)
+        if covered:
+            self.env['norma.audit']._log(company.sudo(), 'offline.after_expiry',
+                                         _("Vente hors ligne du %s synchronisée après l'échéance de l'abonnement") %
+                                         fields.Datetime.to_string(when), {'sold_at': fields.Datetime.to_string(when)})
+        return covered
 
     # ---------------------------------------------------------------- utilitaires
     def _company(self):
@@ -162,12 +168,13 @@ class NormaApi(models.AbstractModel):
 
     # ================================================================ abonnement
     @role('cashier')
-    def billing(self):
+    def billing(self, add_sites=0):
         from .subscription import MOBILE_METHODS, setting
         company = self._company()
         quotes = {}
         try:
-            quotes = {m: {k: v for k, v in company._norma_quote(m).items() if k != 'plan'} for m in (1, 3, 12)}
+            add = int(_num(add_sites or 0, _('Établissements'), 0, 100))
+            quotes = {m: {k: v for k, v in company._norma_quote(m, add_sites=add).items() if k != 'plan'} for m in (1, 3, 12)}
         except UserError:
             pass
         payments = company.norma_payment_ids.sudo()[:30]
@@ -178,7 +185,7 @@ class NormaApi(models.AbstractModel):
                 'payments': payments._public_dict(), 'can_pay': self._is('admin')}
 
     @role('admin')
-    def billing_declare(self, months, method, reference, payer_phone='', proof=None):
+    def billing_declare(self, months, method, reference, payer_phone='', proof=None, extra_sites=0):
         from .subscription import MOBILE_METHODS
         company = self._company()
         months = int(_num(months, _('Durée'), 1, 12))
@@ -191,14 +198,16 @@ class NormaApi(models.AbstractModel):
             raise UserError(_("Indiquez la référence de la transaction reçue par SMS."))
         Pay = self.env['norma.subscription.payment'].sudo()
         if Pay.search_count([('method', '=', method), ('reference', '=', reference)]):
-            raise UserError(_("Cette référence de transaction a déjà été déclarée."))
+            raise UserError(_("Cette référence ne peut pas être enregistrée. Vérifiez-la ; si elle est exacte, contactez le support NORMA."))
         if Pay.search_count([('company_id', '=', company.id), ('state', '=', 'submitted')]) >= 3:
             raise UserError(_("Trois paiements attendent déjà la validation. Patientez ou contactez le support."))
-        quote = company._norma_quote(months)
+        quote = company._norma_quote(months, add_sites=int(_num(extra_sites or 0, _('Établissements'), 0, 100)))
         vals = {'company_id': company.id, 'plan_id': quote['plan'].id, 'months': months, 'extra_sites': quote['extra_sites'],
                 'amount': quote['total'], 'method': method, 'reference': reference,
                 'payer_phone': _txt(payer_phone, 32) or False, 'declared_by': self.env.user.id}
         if proof:
+            if len(str(proof)) > 4_300_000:
+                raise UserError(_("Justificatif trop lourd (3 Mo maximum)."))
             raw = base64.b64decode(str(proof).split(',')[-1], validate=False)
             if len(raw) > 3 * 1024 * 1024:
                 raise UserError(_("Justificatif trop lourd (3 Mo maximum)."))
@@ -210,7 +219,7 @@ class NormaApi(models.AbstractModel):
         pay = Pay.create(vals)
         self._audit('subscription.declared', _("Paiement déclaré : %s USD (%s mois), réf. %s") % (pay.amount, months, reference),
                     {'payment': pay.id})
-        return self.billing()
+        return self.billing(add_sites=extra_sites)
 
     def _company_dict(self, company):
         return {
@@ -340,14 +349,14 @@ class NormaApi(models.AbstractModel):
         except ValueError:
             raise UserError(_("Heure de vente hors ligne invalide."))
         now = fields.Datetime.now()
-        if when > now + timedelta(minutes=10) or when < now - timedelta(days=7):
-            raise UserError(_("Vente hors ligne trop ancienne (plus de 7 jours) ou datée dans le futur : "
-                              "un gestionnaire doit la saisir à nouveau."))
+        if when > now + timedelta(minutes=10) or when < now - timedelta(hours=OFFLINE_MAX_HOURS):
+            raise UserError(_("Vente hors ligne trop ancienne (plus de %s heures) ou datée dans le futur : "
+                              "un gestionnaire doit la saisir à nouveau.") % OFFLINE_MAX_HOURS)
         return when
 
     def _lines_from(self, raw_lines, allow_price, offline_at=None):
         company = self._company()
-        max_disc = 100 if self._is('manager') else company.norma_max_discount
+        max_disc = 100 if (self._is('manager') and not offline_at) else company.norma_max_discount
         if not isinstance(raw_lines, list) or not raw_lines:
             raise UserError(_("Ajoutez au moins un article."))
         if len(raw_lines) > 500:
@@ -365,8 +374,13 @@ class NormaApi(models.AbstractModel):
                 line['name'] = _txt(raw.get('name'), 120)
             if raw.get('price') not in (None, '') and float(raw.get('price')) != product.price:
                 price = _num(raw.get('price'), _('Prix'), 0.01, 1e12)
-                if offline_at and round(price, 2) in self.env['norma.product.price']._prices_since(product, offline_at):
-                    line['price'] = price  # prix affiché au moment de la vente hors ligne
+                if offline_at and round(price, 2) == round(self.env['norma.product.price']._price_at(product, offline_at), 2):
+                    # Seul le prix en vigueur à l'heure de la vente hors ligne est accepté ; l'écart est tracé.
+                    line['price'] = price
+                    self._audit('offline.price', _("Vente hors ligne au prix de l'époque : %s à %s au lieu de %s") %
+                                (product.name, price, product.price),
+                                {'product': product.id, 'price': price, 'current': product.price,
+                                 'sold_at': fields.Datetime.to_string(offline_at)})
                 elif not allow_price:
                     raise AccessError(_("Seul un gestionnaire peut modifier un prix."))
                 else:
@@ -386,9 +400,11 @@ class NormaApi(models.AbstractModel):
         key = _txt(request_key, 64)
         if not key:
             return None, False
-        if not re.match(r'^[A-Za-z0-9\-]{8,64}$', key):
+        if not re.match(r'^[A-Za-z0-9\-]{16,64}$', key):
             raise UserError(_("Clé de requête invalide."))
-        done = self.env['norma.invoice'].sudo().search([('company_id', '=', self._company().id), ('request_key', '=', key)], limit=1)
+        done = self.env['norma.invoice'].sudo().search([('request_key', '=', key)], limit=1)
+        if done and done.company_id != self._company():
+            raise UserError(_("Clé de requête déjà utilisée."))
         return done, key
 
     @role('cashier', active=True)
@@ -407,7 +423,7 @@ class NormaApi(models.AbstractModel):
         customer = self._own('norma.customer', customer_id, 'client') if customer_id else None
         inv = self.env['norma.invoice']._build(site, {
             'invoice_type': invoice_type, 'customer': customer, 'offline_at': sold_at,
-            'lines': self._lines_from(lines, allow_price=self._is('manager'), offline_at=sold_at),
+            'lines': self._lines_from(lines, allow_price=self._is('manager') and not sold_at, offline_at=sold_at),
             'payments': self._payments_from(payments), 'note': _txt(note, 200), 'origin': _txt(origin, 80),
             'request_key': key,
         }, self.env.user)
@@ -920,6 +936,11 @@ class NormaApi(models.AbstractModel):
                 # Nouveau jeton, nouvelle adresse ou nouveau mode : aucune transmission avant un test de connexion
                 # réussi qui confirme le NIF du jeton.
                 data.update(emcf_status='unknown', emcf_status_message=False, emcf_nim=False, emcf_nif_mismatch=True)
+        activating = data.get('active', True) and (not id or not site.active)
+        if activating and company._norma_sub_state() == 'active' and \
+                company._norma_billable_sites() >= max(company.norma_paid_sites, 1):
+            raise UserError(_("Votre abonnement couvre %s établissement(s). Ajoutez l'établissement depuis Abonnement : "
+                              "le montant est calculé avec ce nouvel établissement.") % max(company.norma_paid_sites, 1))
         if data.get('emcf_mode') in ('test', 'production') and not company.norma_verified:
             raise UserError(_("Votre entreprise doit d'abord être vérifiée par l'administration NORMA (NIF, RCCM, "
                               "mandat) avant de relier l'e-MCF de la DGI. Contactez le support."))
@@ -955,11 +976,17 @@ class NormaApi(models.AbstractModel):
                  'last_login': fields.Datetime.to_string(u.login_date) if u.login_date else ''}
                 for u in users if u._norma_role()]
 
-    @role('admin', active=True)
+    @role('admin')
     def user_save(self, id=None, name='', login='', role='cashier', site_ids=None, password='', active=True):
         company = self._company()
         if role not in ROLE_RANK:
             raise UserError(_("Rôle inconnu."))
+        if company._norma_access() != 'full':
+            # Abonnement échu : on peut encore retirer un accès ou changer un mot de passe, rien d'autre.
+            target = self.env['res.users'].sudo().browse(int(id)).exists() if id else None
+            if not target or (active and not target.active) or role != target._norma_role() or \
+                    _txt(login, 120).lower() != target.login:
+                raise AccessError(_("Abonnement échu : vous pouvez seulement désactiver un utilisateur ou changer son mot de passe."))
         name, login = _txt(name, 80), _txt(login, 120).lower()
         if not name or not EMAIL_RE.match(login):
             raise UserError(_("Nom et adresse e-mail (identifiant) obligatoires."))

@@ -52,7 +52,7 @@ Une politique de volume : des prix bas pour que toutes les entreprises puissent 
 | Hôtel | 12 $ | 120 $ | 5 $ / mois |
 | BTP, industrie, gros | 12 $ | 120 $ | 5 $ / mois |
 
-  Un établissement inclus ; factures et utilisateurs illimités.
+  Un établissement inclus ; factures et utilisateurs illimités. Un établissement supplémentaire se crée une fois son prix inclus dans l'abonnement (page Abonnement › établissements à ajouter). Une entreprise échue peut toujours désactiver un utilisateur ou changer un mot de passe.
 * **Paiement Mobile Money** (M-Pesa, Orange Money, Airtel Money, Afrimoney), virement ou espèces : l'administrateur de l'entreprise déclare la référence de la transaction (et peut joindre la capture du SMS) ; l'administration centrale la valide et l'abonnement est prolongé aussitôt. Les jours d'essai ou d'abonnement restants sont conservés. Une même référence ne peut pas être déclarée deux fois ; le montant est calculé par le serveur.
 * **Échéance** : 5 jours de grâce (réglable), puis **consultation seule** : plus de nouvelles factures, mais les factures restent consultables, imprimables, exportables, et celles déjà émises continuent d'être normalisées auprès de la DGI.
 * Administration centrale : revenu mensuel récurrent, file des paiements à valider (justificatif), prolongation d'essai, formules, durée d'essai et de grâce, instructions de paiement.
@@ -65,8 +65,9 @@ Une politique de volume : des prix bas pour que toutes les entreprises puissent 
 * chaque vente est gardée sur le poste (IndexedDB) avec sa clé d'idempotence et son heure réelle ;
 * un **ticket provisoire** est imprimé aussitôt, avec un QR code (`/norma/r/<clé>`) qui mènera le client à sa facture normalisée ;
 * au retour du réseau (et toutes les 20 secondes), les ventes partent seules au serveur puis à la DGI ; une vente rejouée ne crée jamais de seconde facture ;
-* le serveur vérifie l'heure de la vente (7 jours au plus, jamais dans le futur) et accepte le prix affiché à ce moment-là grâce à l'**historique des prix** : un caissier ne peut pas inventer un prix ;
-* une vente faite pendant la période d'abonnement se synchronise même si l'échéance est passée entre-temps ;
+* le serveur vérifie l'heure de la vente (72 heures au plus, jamais dans le futur) et n'accepte que le prix **en vigueur à cette heure-là** (historique des prix) ; toute vente hors ligne à un prix différent du prix actuel est inscrite au journal d'audit pour le gestionnaire ;
+* une vente faite pendant la période d'abonnement se synchronise même si l'échéance est passée entre-temps (inscrite au journal d'audit) ;
+* chaque vente part avec la session de **son auteur** : sur un poste partagé, la vente d'un caissier n'est jamais envoyée avec les droits d'un gestionnaire ; une vente hors ligne n'a jamais les droits de prix ou de remise d'un gestionnaire ;
 * la page **Synchronisation** montre les ventes du poste, celles refusées (à traiter par un gestionnaire) et les factures en attente DGI.
 
 La facture normalisée exige la confirmation de l'e-MCF, qui est un service en ligne : le ticket provisoire ne remplace pas la facture normalisée, il y donne accès dès la synchronisation. Pour une normalisation sans aucune connexion, il faudra un MCF physique homologué (boîtier relié au poste), dont le protocole reste à obtenir auprès de la DGI.
@@ -108,7 +109,7 @@ Réglage propre à chaque poste (Paramètres › Impression) :
 ```bash
 odoo-bin -d <base> -i norma_facture --test-tags /norma_facture --stop-after-init
 ```
-61 tests : moteur fiscal (arrondis SFE, taxe spécifique, groupe N, montant en lettres), normalisation, numérotation, immuabilité, avoirs, cloisonnement, rôles, devises, exportation, types de client, écart de calcul, coupure réseau, confirmation incertaine, intégrité, hôtel, restaurant, pages HTTP (impression, vérification, export, connexion), régressions de sécurité, abonnements (essai, grâce, consultation seule, paiement, établissements supplémentaires), ventes hors ligne (prix historique, ancienneté, échéance), lien du ticket provisoire.
+63 tests : moteur fiscal (arrondis SFE, taxe spécifique, groupe N, montant en lettres), normalisation, numérotation, immuabilité, avoirs, cloisonnement, rôles, devises, exportation, types de client, écart de calcul, coupure réseau, confirmation incertaine, intégrité, hôtel, restaurant, pages HTTP (impression, vérification, export, connexion), régressions de sécurité, abonnements (essai, grâce, consultation seule, paiement, établissements supplémentaires), ventes hors ligne (prix historique, ancienneté, échéance), lien du ticket provisoire.
 
 ## Avant l'homologation : ce qui reste à faire avec la DGI
 
