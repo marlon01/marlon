@@ -187,6 +187,11 @@ class NormaSubscriptionPayment(models.Model):
                            'period_start': start, 'period_end': end, 'number': seq})
         company.sudo().write({'norma_period_end': end,
                               'norma_paid_sites': (self.plan_id.sites_included or 1) + self.extra_sites})
+        unpaid = company._norma_billable_sites() - company.norma_paid_sites
+        if unpaid > 0:
+            self.env['norma.audit']._log(company, 'subscription.unpaid_sites',
+                                         _("%s établissement(s) actif(s) au-delà de la période payée : inclus au prochain paiement") % unpaid,
+                                         {'unpaid_sites': unpaid}, user=user)
         self.env['norma.audit']._log(company, 'subscription.paid',
                                      _("Abonnement prolongé jusqu'au %s (%s mois, %s USD)") %
                                      (fields.Date.to_string(end.date()), self.months, self.amount),

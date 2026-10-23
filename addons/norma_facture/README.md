@@ -63,7 +63,7 @@ Une politique de volume : des prix bas pour que toutes les entreprises puissent 
 
 **Internet coupé au magasin.** L'application de caisse est installée sur le poste (service worker) : elle s'ouvre et vend sans connexion, avec le dernier catalogue connu.
 * chaque vente est gardée sur le poste (IndexedDB) avec sa clé d'idempotence et son heure réelle ;
-* un **ticket provisoire** est imprimé aussitôt, avec un QR code (`/norma/r/<clé>`) qui mènera le client à sa facture normalisée ;
+* un **ticket provisoire** est imprimé aussitôt, avec un QR code (`/norma/r/<entreprise>/<clé>`) qui mènera le client à sa facture normalisée ;
 * au retour du réseau (et toutes les 20 secondes), les ventes partent seules au serveur puis à la DGI ; une vente rejouée ne crée jamais de seconde facture ;
 * le serveur vérifie l'heure de la vente (72 heures au plus, jamais dans le futur) et n'accepte que le prix **en vigueur à cette heure-là** (historique des prix) ; toute vente hors ligne à un prix différent du prix actuel est inscrite au journal d'audit pour le gestionnaire ;
 * une vente faite pendant la période d'abonnement se synchronise même si l'échéance est passée entre-temps (inscrite au journal d'audit) ;

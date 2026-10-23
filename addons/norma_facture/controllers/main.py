@@ -338,14 +338,14 @@ class NormaController(http.Controller):
         response.headers['Referrer-Policy'] = 'no-referrer'
         return response
 
-    @http.route('/norma/r/<string:key>', type='http', auth='public', sitemap=False)
-    def provisional(self, key, **kw):
+    @http.route('/norma/r/<int:company_id>/<string:key>', type='http', auth='public', sitemap=False)
+    def provisional(self, company_id, key, **kw):
         """QR du ticket provisoire (vente hors ligne ou DGI indisponible) : mène à la facture normalisée dès qu'elle existe."""
         Throttle = request.env['norma.throttle'].sudo()
         ip_key = 'verify:%s' % _ip()
         inv = None
         if not Throttle.is_locked(ip_key) and re.match(r'^[A-Za-z0-9\-]{16,64}$', key or ''):
-            inv = request.env['norma.invoice'].sudo().search([('request_key', '=', key)], limit=1)
+            inv = request.env['norma.invoice'].sudo().search([('company_id', '=', company_id), ('request_key', '=', key)], limit=1)
             if not inv:
                 Throttle.hit(ip_key, 30, 10)
         if inv and inv.verify_token:

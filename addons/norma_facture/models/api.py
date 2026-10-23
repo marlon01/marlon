@@ -402,9 +402,7 @@ class NormaApi(models.AbstractModel):
             return None, False
         if not re.match(r'^[A-Za-z0-9\-]{16,64}$', key):
             raise UserError(_("Clé de requête invalide."))
-        done = self.env['norma.invoice'].sudo().search([('request_key', '=', key)], limit=1)
-        if done and done.company_id != self._company():
-            raise UserError(_("Clé de requête déjà utilisée."))
+        done = self.env['norma.invoice'].sudo().search([('company_id', '=', self._company().id), ('request_key', '=', key)], limit=1)
         return done, key
 
     @role('cashier', active=True)
@@ -937,7 +935,7 @@ class NormaApi(models.AbstractModel):
                 # réussi qui confirme le NIF du jeton.
                 data.update(emcf_status='unknown', emcf_status_message=False, emcf_nim=False, emcf_nif_mismatch=True)
         activating = data.get('active', True) and (not id or not site.active)
-        if activating and company._norma_sub_state() == 'active' and \
+        if activating and company._norma_sub_state() != 'trial' and \
                 company._norma_billable_sites() >= max(company.norma_paid_sites, 1):
             raise UserError(_("Votre abonnement couvre %s établissement(s). Ajoutez l'établissement depuis Abonnement : "
                               "le montant est calculé avec ce nouvel établissement.") % max(company.norma_paid_sites, 1))

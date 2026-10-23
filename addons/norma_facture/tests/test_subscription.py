@@ -164,19 +164,21 @@ class TestOfflineHttp(HttpCase):
         inv = api._dispatch('checkout', {'site_id': shop.norma_site_ids[0].id, 'request_key': 'abcdef0123456789abcd',
                                          'lines': [{'product_id': p.id, 'quantity': 1}],
                                          'payments': [{'method': 'ESPECES', 'amount': p.price}]})
-        res = self.url_open('/norma/r/abcdef0123456789abcd', allow_redirects=False)
+        res = self.url_open('/norma/r/%s/abcdef0123456789abcd' % shop.id, allow_redirects=False)
         self.assertEqual(res.status_code, 303)
         self.assertIn('/norma/v/%s' % inv['verify_token'], res.headers['Location'])
-        waiting = self.url_open('/norma/r/ffffffffffffffffffff')
+        waiting = self.url_open('/norma/r/%s/ffffffffffffffffffff' % shop.id)
         self.assertIn('en cours de normalisation', waiting.text)
         self.assertEqual(self.url_open('/norma/sw.js').headers.get('Service-Worker-Allowed'), '/norma/')
         self.assertIn('NORMA', self.url_open('/norma/manifest.webmanifest').text)
         other = _signup(self.env, 'magasin', 'other@test.cd', 'O7654321T', 'OTH-01')
         q = self.env['norma.product'].sudo().search([('company_id', '=', other.id)], limit=1)
         api2 = self.env['norma.api'].with_user(other.norma_owner_id).with_company(other)
-        with self.assertRaises(UserError):  # la clé d'une autre entreprise ne peut ni être reprise ni renvoyer sa facture
-            api2._dispatch('checkout', {'site_id': other.norma_site_ids[0].id, 'request_key': 'abcdef0123456789abcd',
-                                        'lines': [{'product_id': q.id, 'quantity': 1}],
-                                        'payments': [{'method': 'ESPECES', 'amount': q.price}]})
+        # Une autre entreprise qui reprend la même clé ne détourne ni ne bloque rien.
+        api2._dispatch('checkout', {'site_id': other.norma_site_ids[0].id, 'request_key': 'abcdef0123456789abcd',
+                                    'lines': [{'product_id': q.id, 'quantity': 1}],
+                                    'payments': [{'method': 'ESPECES', 'amount': q.price}]})
+        res = self.url_open('/norma/r/%s/abcdef0123456789abcd' % shop.id, allow_redirects=False)
+        self.assertIn('/norma/v/%s' % inv['verify_token'], res.headers['Location'])
         landing = self.url_open('/norma')
         self.assertIn('5 $', landing.text)

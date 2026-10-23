@@ -275,7 +275,7 @@ export class PosPage extends Component {
         payload.offline_at = offline_at;
         payload.lines = lines.map((l) => ({ product_id: l.product_id, quantity: l.quantity, discount_pct: l.discount_pct, price: l.price }));
         const est = estimate(lines);
-        const url = `${location.origin}/norma/r/${payload.request_key}`;
+        const url = `${location.origin}/norma/r/${session.company.id}/${payload.request_key}`;
         const ticket = {
             provisional: true, company: session.company, site: this.site, type: "FV", number: "", date: new Date().toLocaleString("fr-FR"),
             operator: session.user.name, client_name: this.state.customer ? this.state.customer.name : "",
