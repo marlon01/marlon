@@ -33,7 +33,8 @@ class LiputaOrder(models.Model):
     user_id = fields.Many2one("res.users", "Taken by", default=lambda s: s.env.user)
 
     # client ------------------------------------------------------------------
-    partner_id = fields.Many2one("res.partner", "Client", required=True, tracking=True, index=True)
+    partner_id = fields.Many2one("res.partner", "Client", required=True, tracking=True, index=True,
+                                 check_company=True)
     client_phone = fields.Char(related="partner_id.phone", readonly=False)
     client_photo = fields.Image("Client photo", max_width=1280, max_height=1280, attachment=True)
     photo_consent = fields.Boolean("Photo consent",
@@ -47,11 +48,12 @@ class LiputaOrder(models.Model):
                                  help="Mannequin skin tone (1 = very light ... 6 = very deep).")
 
     # model & event -----------------------------------------------------------
-    garment_model_id = fields.Many2one("liputa.garment.model", "Model", required=True, tracking=True)
+    garment_model_id = fields.Many2one("liputa.garment.model", "Model", required=True, tracking=True,
+                                       check_company=True)
     category_id = fields.Many2one(related="garment_model_id.category_id", store=True)
     silhouette = fields.Selection(related="garment_model_id.silhouette")
     pattern_template = fields.Selection(related="garment_model_id.pattern_template")
-    event_type_id = fields.Many2one("liputa.event.type", "Event", tracking=True)
+    event_type_id = fields.Many2one("liputa.event.type", "Event", tracking=True, check_company=True)
     event_date = fields.Date(tracking=True)
     garment_color = fields.Char("Main colour", default="#C4502A")
     fabric_supplied_by = fields.Selection([("client", "Client"), ("atelier", "Workshop")],
@@ -91,7 +93,7 @@ class LiputaOrder(models.Model):
     # amounts -----------------------------------------------------------------
     amount_making = fields.Monetary("Making", compute="_compute_amounts", store=True, readonly=False)
     amount_fabric = fields.Monetary("Fabric", compute="_compute_amounts", store=True, readonly=False)
-    amount_options = fields.Monetary("Extras", compute="_compute_amounts", store=True)
+    amount_options = fields.Monetary("Extras amount", compute="_compute_amounts", store=True)
     amount_urgency = fields.Monetary("Express surcharge", compute="_compute_amounts", store=True)
     amount_total = fields.Monetary("Total", compute="_compute_total", store=True, tracking=True)
     deposit_amount = fields.Monetary("Deposit")
@@ -195,9 +197,16 @@ class LiputaOrder(models.Model):
         companies = self.env["res.company"].browse(
             {v.get("company_id") or self.env.company.id for v in vals_list})
         companies._liputa_ensure_active()
+        for company in companies:
+            company._liputa_check_order_quota(
+                len([v for v in vals_list if (v.get("company_id") or self.env.company.id) == company.id]))
+        Sequence = self.env["ir.sequence"].sudo()
         for vals in vals_list:
             if vals.get("name", "/") == "/":
-                vals["name"] = self.env["ir.sequence"].next_by_code("liputa.order") or "/"
+                # Numérotation propre à chaque atelier : une référence ne révèle rien des autres.
+                cid = vals.get("company_id") or self.env.company.id
+                own = Sequence.search([("code", "=", "liputa.order"), ("company_id", "=", cid)], limit=1)
+                vals["name"] = (own.next_by_id() if own else Sequence.next_by_code("liputa.order")) or "/"
         orders = super().create(vals_list)
         orders.mapped("garment_model_id").sudo().filtered(lambda m: m.exists())._liputa_bump_usage()
         return orders

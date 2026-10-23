@@ -253,12 +253,18 @@ class LiputaApp(http.Controller):
             if f in data:
                 data[f] = max(0.0, min(float(data[f] or 0), 300.0))
         partner_id = vals.get("partner_id")
-        if not partner_id:
+        company = request.env.company
+        if partner_id:
+            # Un client existant doit appartenir à l'atelier (jamais celui d'un autre atelier).
+            if not request.env["res.partner"].search_count(
+                    [("id", "=", int(partner_id)), ("company_id", "=", company.id)]):
+                raise ValidationError(_("This client does not belong to your workshop."))
+        else:
             name = (vals.get("client_name") or "").strip()[:120]
             if not name:
                 raise ValidationError(_("Enter the client's name."))
             partner_id = request.env["res.partner"].create({
-                "name": name, "mobile": (vals.get("client_phone") or "")[:40]}).id
+                "name": name, "mobile": (vals.get("client_phone") or "")[:40], "company_id": company.id}).id
         data["partner_id"] = int(partner_id)
         if vals.get("client_photo"):
             data["client_photo"] = _clean_image(vals["client_photo"])
@@ -287,9 +293,12 @@ class LiputaApp(http.Controller):
     @http.route("/liputa/api/clients", type="json", auth="user")
     def clients(self, search=""):
         Partner = request.env["res.partner"]
-        dom = [("liputa_order_ids", "!=", False)]
+        # Toujours limité aux clients de l'atelier, avec ou sans recherche.
+        dom = [("company_id", "=", request.env.company.id), ("is_company", "=", False)]
         if search:
-            dom = ["|", ("name", "ilike", str(search)[:80]), ("mobile", "ilike", str(search)[:40])]
+            dom += ["|", ("name", "ilike", str(search)[:80]), ("mobile", "ilike", str(search)[:40])]
+        else:
+            dom.append(("liputa_order_ids", "!=", False))
         out = []
         for p in Partner.search(dom, limit=20):
             prof = request.env["liputa.measurement.profile"].search([("partner_id", "=", p.id)], limit=1)

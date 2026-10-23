@@ -13,7 +13,7 @@
                             <field name="name" class="fw-bold"/>
                             <field name="phone" class="small text-muted"/>
                             <div class="small">
-                                <i class="fa fa-clock-o me-1"/><field name="open_hours" widget="float_time"/> h assigned
+                                <i class="fa fa-clock-o me-1" title="Hours"/><field name="open_hours" widget="float_time"/> h assigned
                             </div>
                         </main>
                     </t>

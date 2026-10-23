@@ -39,7 +39,8 @@ class ResCompany(models.Model):
     atelier_default_fabric_width = fields.Float("Default fabric width (cm)", default=115.0,
                                                 help="African wax-print is usually 115-120 cm wide.")
     atelier_whatsapp = fields.Char("WhatsApp number")
-    liputa_subscription_id = fields.Many2one("liputa.subscription", compute="_compute_liputa_subscription")
+    liputa_subscription_id = fields.Many2one("liputa.subscription", compute="_compute_liputa_subscription",
+                                             search="_search_liputa_subscription")
     liputa_subscription_state = fields.Selection(related="liputa_subscription_id.state")
 
     def _compute_liputa_subscription(self):
@@ -47,6 +48,58 @@ class ResCompany(models.Model):
         by_company = {s.company_id.id: s for s in subs}
         for rec in self:
             rec.liputa_subscription_id = by_company.get(rec.id, False)
+
+    @api.model
+    def _liputa_create_workshop(self, values, country=None, ip=None, lang=None):
+        """Create a workshop tenant: company, head of workshop, trial subscription, first tailor.
+
+        ``values``: atelier, name, email, phone, password (already validated by the caller).
+        """
+        env = self.env(su=True)
+        email = values["email"].lower()
+        company = env["res.company"].create({
+            "name": values["atelier"][:120], "is_atelier": True, "phone": (values.get("phone") or "")[:40],
+            "email": email, "country_id": country.id if country else False,
+            "currency_id": ((country and country.currency_id) or env.ref("base.CDF")).id,
+        })
+        groups = [env.ref("base.group_user").id,
+                  env.ref("liputa_couture.group_liputa_manager").id,
+                  env.ref("account.group_account_invoice").id]
+        user = env["res.users"].with_context(no_reset_password=True).create({
+            "name": values["name"][:120], "login": email, "email": email,
+            "password": values["password"], "company_id": company.id, "company_ids": [(6, 0, [company.id])],
+            "groups_id": [(6, 0, groups)], "lang": lang if lang and env["res.lang"]._lang_get(lang) else "en_US",
+        })
+        # Contacts de l'atelier rattachés à l'atelier : invisibles des autres ateliers.
+        (user.partner_id | company.partner_id).write({"company_id": company.id})
+        # Numérotation propre à l'atelier : une référence ne révèle rien de l'activité des autres.
+        env["ir.sequence"].create({
+            "name": "Liputa orders — %s" % company.name, "code": "liputa.order", "company_id": company.id,
+            "prefix": "CMD/%(year)s/", "padding": 4, "implementation": "no_gap",
+        })
+        env["liputa.subscription"].create({
+            "company_id": company.id, "plan_id": env.ref("liputa_couture.plan_standard").id, "signup_ip": ip,
+        })
+        env["liputa.tailor"].create({"name": values["name"][:120], "company_id": company.id, "user_id": user.id})
+        return company
+
+    def _search_liputa_subscription(self, operator, value):
+        subs = self.env["liputa.subscription"].sudo().search([("id", operator, value)])
+        return [("id", "in", subs.mapped("company_id").ids)]
+
+    def _liputa_check_order_quota(self, count=1):
+        """Monthly order quota of the plan (0 = unlimited)."""
+        for company in self.filtered("is_atelier"):
+            sub = company.sudo().liputa_subscription_id
+            limit = sub.plan_id.max_orders_month if sub else 0
+            if not limit:
+                continue
+            month_start = fields.Date.context_today(self).replace(day=1)
+            used = self.env["liputa.order"].sudo().search_count([
+                ("company_id", "=", company.id), ("create_date", ">=", month_start)])
+            if used + count > limit:
+                raise UserError(_("Your plan allows %(n)s orders per month. Upgrade your plan to take more orders.",
+                                  n=limit))
 
     def _liputa_working_weekdays(self):
         self.ensure_one()
@@ -209,6 +262,8 @@ class LiputaSubscriptionPayment(models.Model):
 
     def action_confirm(self):
         """Manual confirmation (agent/cash) by a platform administrator."""
+        if not self.env.su and not self.env.user.has_group("liputa_couture.group_liputa_saas_admin"):
+            raise UserError(_("Only platform administrators can confirm a payment manually."))
         for pay in self.filtered(lambda p: p.state == "pending"):
             pay.state = "done"
             pay.subscription_id._register_payment(pay)

@@ -100,24 +100,7 @@ class LiputaController(http.Controller):
                                   {"countries": countries, "values": values, "error": error})
 
         country = env["res.country"].sudo().browse(int(values["country_id"] or 0)).exists()
-        company = env["res.company"].sudo().create({
-            "name": values["atelier"][:120], "is_atelier": True, "phone": values["phone"][:40],
-            "email": values["email"].lower(), "country_id": country.id or False,
-            "currency_id": (country.currency_id or env.ref("base.CDF")).id,
-        })
-        groups = [env.ref("base.group_user").id,
-                  env.ref("liputa_couture.group_liputa_manager").id,
-                  env.ref("account.group_account_invoice").id]
-        env["res.users"].sudo().with_context(no_reset_password=True).create({
-            "name": values["name"][:120], "login": values["email"].lower(), "email": values["email"].lower(),
-            "password": values["password"], "company_id": company.id, "company_ids": [(6, 0, [company.id])],
-            "groups_id": [(6, 0, groups)], "lang": request.env.lang or "fr_FR",
-        })
-        env["liputa.subscription"].sudo().create({
-            "company_id": company.id, "plan_id": env.ref("liputa_couture.plan_standard").id,
-            "signup_ip": ip,
-        })
-        env["liputa.tailor"].sudo().create({"name": values["name"][:120], "company_id": company.id})
+        env["res.company"].sudo()._liputa_create_workshop(values, country, ip, lang=request.env.lang)
         return request.redirect("/app/login", 303)
 
     # ------------------------------------------------------------ payment webhook

@@ -26,7 +26,7 @@
                                 <span t-if="record.is_library.raw_value" class="badge text-bg-success">Library</span>
                                 <span t-else="" class="badge text-bg-secondary">My workshop</span>
                                 <span t-if="record.library_state.raw_value == 'submitted'" class="badge text-bg-warning ms-1">Submitted</span>
-                                <span class="ms-auto text-muted"><i class="fa fa-scissors"/> <field name="usage_count"/></span>
+                                <span class="ms-auto text-muted"><i class="fa fa-scissors" title="Uses"/> <field name="usage_count"/></span>
                             </footer>
                         </main>
                     </t>

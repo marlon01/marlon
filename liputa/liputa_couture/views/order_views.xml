@@ -51,7 +51,7 @@
                                 <field name="partner_id"/>
                                 <div class="text-muted small"><field name="garment_model_id"/></div>
                                 <div class="small" t-if="record.event_type_id.raw_value">
-                                    <i class="fa fa-calendar-o me-1"/><field name="event_type_id"/>
+                                    <i class="fa fa-calendar-o me-1" title="Event"/><field name="event_type_id"/>
                                 </div>
                             </div>
                         </div>
@@ -166,7 +166,7 @@
                         </group>
                     </group>
                     <div class="text-muted small" invisible="not estimation_note">
-                        <i class="fa fa-info-circle me-1"/><field name="estimation_note" nolabel="1"/>
+                        <i class="fa fa-info-circle me-1" title="Note"/><field name="estimation_note" nolabel="1"/>
                     </div>
                     <notebook>
                         <page string="AI stylist" name="ai">
@@ -335,7 +335,7 @@
                         <field name="order_id"/>
                         <field name="partner_id" class="text-muted small"/>
                         <footer class="small">
-                            <field name="date_start"/> <i class="fa fa-long-arrow-right mx-1"/> <field name="date_end"/>
+                            <field name="date_start"/> <i class="fa fa-long-arrow-right mx-1" title="to"/> <field name="date_end"/>
                             <field name="planned_hours" widget="float_time" class="ms-auto"/>
                         </footer>
                     </t>
@@ -348,7 +348,7 @@
         <field name="name">liputa.order.task.calendar</field>
         <field name="model">liputa.order.task</field>
         <field name="arch" type="xml">
-            <calendar date_start="date_start" date_stop="date_end" color="tailor_id" mode="week" all_day="1"
+            <calendar date_start="date_start" date_stop="date_end" color="tailor_id" mode="week"
                       quick_create="0">
                 <field name="order_id"/>
                 <field name="step"/>

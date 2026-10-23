@@ -50,7 +50,8 @@ class LiputaMeasurementProfile(models.Model):
     _check_company_auto = True
 
     name = fields.Char(compute="_compute_name", store=True)
-    partner_id = fields.Many2one("res.partner", "Client", required=True, index=True, ondelete="cascade")
+    partner_id = fields.Many2one("res.partner", "Client", required=True, index=True, ondelete="cascade",
+                                 check_company=True)
     company_id = fields.Many2one("res.company", required=True, default=lambda s: s.env.company, index=True)
     date = fields.Date(default=fields.Date.context_today, tracking=True)
     gender = fields.Selection([("women", "Woman"), ("men", "Man"), ("child", "Child")], default="women")

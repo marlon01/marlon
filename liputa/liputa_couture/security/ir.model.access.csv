@@ -23,5 +23,5 @@ access_plan_user,plan user,model_liputa_plan,base.group_user,1,0,0,0
 access_plan_admin,plan admin,model_liputa_plan,group_liputa_saas_admin,1,1,1,1
 access_sub_manager,subscription manager,model_liputa_subscription,group_liputa_manager,1,0,0,0
 access_sub_admin,subscription admin,model_liputa_subscription,group_liputa_saas_admin,1,1,1,1
-access_pay_manager,payment manager,model_liputa_subscription_payment,group_liputa_manager,1,0,1,0
+access_pay_manager,payment manager,model_liputa_subscription_payment,group_liputa_manager,1,0,0,0
 access_pay_admin,payment admin,model_liputa_subscription_payment,group_liputa_saas_admin,1,1,1,1

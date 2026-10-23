@@ -148,6 +148,10 @@ class LiputaGarmentModel(models.Model):
     def action_adopt(self):
         """Copy a library model into the current workshop to customise it."""
         self.ensure_one()
+        # Contrôles avant tout sudo : modèle lisible par l'atelier ET issu de la bibliothèque publique.
+        self.check_access("read")
+        if self.company_id:
+            raise UserError(_("Only models of the shared library can be adopted."))
         copy = self.sudo().copy({"company_id": self.env.company.id, "library_state": "private",
                                  "source_model_id": self.id, "is_featured": False})
         return {"type": "ir.actions.act_window", "res_model": self._name, "res_id": copy.id,

@@ -103,6 +103,7 @@ class LiputaOrderOption(models.Model):
     _description = "Order extra (embroidery, lining, beads...)"
 
     order_id = fields.Many2one("liputa.order", required=True, ondelete="cascade")
+    company_id = fields.Many2one(related="order_id.company_id", store=True, index=True)
     name = fields.Char(required=True)
     currency_id = fields.Many2one(related="order_id.currency_id")
     price = fields.Monetary()
