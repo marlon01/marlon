@@ -44,7 +44,7 @@ Chaque structure est une société Odoo distincte ; ses comptes n'appartiennent 
 * Personnel limité à sa structure ; le client Odoo générique (`/odoo`) est inaccessible au personnel des structures.
 * Paramètres communs au serveur (assistant LLM, anti force brute) réservés à l'administrateur système.
 * Limitation des tentatives fondée sur l'adresse réelle de la connexion (`proxy_mode` derrière le proxy), pas sur un en-tête falsifiable.
-* Tests automatisés : `odoo-bin -d <base> -i selecta_saas --test-tags /selecta_saas --stop-after-init` (38 tests : cloisonnement, quotas, consultation seule, facturation, proratisation, paiement en ligne simulé, courriels, conservation des données, régressions de sécurité).
+* Tests automatisés : `odoo-bin -d <base> -i selecta_saas --test-tags /selecta_saas --stop-after-init` (41 tests : cloisonnement, quotas, consultation seule, facturation, proratisation, paiement en ligne simulé, courriels, conservation des données, régressions de sécurité).
 
 ### Mise en ligne (Docker, HTTPS automatique)
 ```bash
@@ -68,6 +68,8 @@ Les courriels sont mis en file puis envoyés toutes les 5 minutes : une panne du
 * Configuration : administration centrale → Paramètres → Messagerie (serveur SMTP, expéditeur, e-mail d'alerte, envoi de test), puis activer l'envoi. Chaque rappel n'est envoyé qu'une fois par échéance.
 
 ### Paiement en ligne
+Choix automatique selon le pays de la structure : **FlexPay** pour le Mobile Money en RDC (demande envoyée sur le téléphone, validée par code PIN, sans quitter SELECTA), **CinetPay** dans les autres pays (et en RDC si FlexPay n'est pas activé), **Stripe** pour les cartes partout.
+* **FlexPay** : code marchand, jeton d'accès et environnement (production ou test) dans Paramètres › Paiement en ligne. CDF et USD.
 * **CinetPay** : Mobile Money (M-Pesa, Airtel Money, Orange Money) et cartes, Afrique francophone dont la RDC. Renseigner le Site ID et la clé API, activer les paiements en USD sur le compte CinetPay et déclarer l'URL de notification affichée dans les paramètres.
 * **Stripe** : cartes bancaires internationales (clé secrète `sk_live_…`).
 * Sécurité : un retour navigateur ou une notification ne valide jamais un paiement à eux seuls ; le serveur interroge le prestataire et vérifie statut, montant et devise avant d'activer l'abonnement. Une vérification automatique toutes les 15 minutes rattrape les notifications perdues (48 h).
@@ -86,7 +88,7 @@ Les courriels sont mis en file puis envoyés toutes les 5 minutes : une panne du
 * Logo par défaut : un monogramme aux initiales de la structure, remplaçable dans ses paramètres (catégories avec personnalisation).
 
 ### Limites actuelles
-* Paiement en ligne non testé contre les API réelles de CinetPay et Stripe (aucun compte marchand disponible pendant le développement) : les échanges sont couverts par des tests simulés. À valider avec un compte de test de chaque prestataire avant l'ouverture.
+* Paiement en ligne non testé contre les API réelles de FlexPay, CinetPay et Stripe (aucun compte marchand disponible pendant le développement) : les échanges sont couverts par des tests simulés. À valider avec un compte de test de chaque prestataire avant l'ouverture.
 * Pas de proratisation pour un passage à une catégorie inférieure (il prend effet à l'échéance, sans avoir).
 * Les courriels sont en français uniquement.
 

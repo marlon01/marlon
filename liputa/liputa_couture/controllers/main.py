@@ -120,6 +120,30 @@ class LiputaController(http.Controller):
             payment._liputa_check_flexpay()
         return request.make_json_response({"ok": True})
 
+    # ------------------------------------------------------------ CinetPay
+    @http.route("/liputa/payment/cinetpay/notify", type="http", auth="public", methods=["POST"], csrf=False)
+    def cinetpay_notify(self, **kw):
+        """Notification CinetPay : identifie la transaction, le statut est demandé à CinetPay."""
+        reference = str(kw.get("cpm_trans_id") or kw.get("transaction_id") or "")[:64]
+        Payment = request.env["liputa.subscription.payment"].sudo()
+        payment = Payment.search([("reference", "=", reference), ("provider", "=", "cinetpay")], limit=1) \
+            if reference else Payment.browse()
+        if payment:
+            payment._liputa_check_cinetpay()
+        return request.make_response("OK", [("Content-Type", "text/plain")])
+
+    @http.route("/liputa/payment/cinetpay/return", type="http", auth="public", methods=["GET", "POST"],
+                csrf=False, sitemap=False)
+    def cinetpay_return(self, ref="", **kw):
+        """Retour du client depuis la page CinetPay : vérification auprès de CinetPay, puis retour à l'application."""
+        Payment = request.env["liputa.subscription.payment"].sudo()
+        payment = Payment.search([("reference", "=", str(ref)[:64]), ("provider", "=", "cinetpay")], limit=1) \
+            if ref else Payment.browse()
+        if payment:
+            payment._liputa_check_cinetpay()
+        state = payment.state if payment else "none"
+        return request.redirect("/app#/account?payment=%s&ref=%s" % (state, payment.reference if payment else ""), 303)
+
     # ------------------------------------------------------------ payment webhook
     @http.route("/liputa/payment/webhook/<string:provider>", type="http", auth="public",
                 methods=["POST"], csrf=False)

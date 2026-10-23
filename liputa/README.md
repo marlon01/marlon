@@ -59,13 +59,22 @@ liputa/
 | `liputa.image_api_key`, `liputa.image_endpoint`, `liputa.image_model` | rendu photoréaliste (API d'édition d'image) |
 | `liputa.sms_provider` | `africastalking`, `twilio_sms`, `twilio_whatsapp` ou `none` |
 | `liputa.sms_username`, `liputa.sms_api_key`, `liputa.sms_sender` | identifiants passerelle |
-| `liputa.payment.provider` | `flexpay` pour encaisser les abonnements par Mobile Money (vide = confirmation manuelle par la plateforme) |
+| `liputa.payment.provider` | `auto` (par défaut) : agrégateur choisi selon le pays de l'atelier ; ou `flexpay` / `cinetpay` pour en forcer un. Sans agrégateur configuré : confirmation manuelle par la plateforme |
 | `liputa.flexpay.merchant`, `liputa.flexpay.token` | code marchand et jeton (Bearer) fournis par FlexPay |
 | `liputa.flexpay.environment` | `prod` (par défaut) ou `dev` (bac à sable `beta-backend.flexpay.cd`) |
+| `liputa.cinetpay.site_id`, `liputa.cinetpay.api_key` | identifiants CinetPay (Mobile Money et cartes, Afrique francophone) |
 | `liputa.payment.secret.<fournisseur>` | secret HMAC du webhook générique `/liputa/payment/webhook/<fournisseur>` (autres agrégateurs) |
 
 5. Inscription publique d'un atelier : `https://votre-domaine/liputa/signup`.
 6. Adresse publique : fixer `web.base.url` à `https://votre-domaine` et `web.base.url.freeze` = `True` (FlexPay rappelle `https://votre-domaine/liputa/payment/flexpay/callback`).
+
+### Choix automatique de l'agrégateur selon le pays
+| Pays de l'atelier | Agrégateur | Parcours dans l'application |
+|---|---|---|
+| RDC | **FlexPay** (si configuré, sinon CinetPay) | numéro Mobile Money puis code PIN sur le téléphone, sans quitter l'application |
+| Autres pays (Côte d'Ivoire, Sénégal, Cameroun, Guinée…) | **CinetPay** | bouton « Payer (Mobile Money ou carte) » → page CinetPay → retour dans l'application, confirmation automatique |
+
+Dans les deux cas, l'abonnement n'est prolongé qu'après vérification auprès de l'agrégateur (statut, montant, devise) ; une vérification toutes les 10 minutes rattrape les notifications perdues. CinetPay accepte XOF, XAF, CDF, GNF et USD ; notification à déclarer dans le back-office CinetPay : `https://votre-domaine/liputa/payment/cinetpay/notify`.
 
 ### Paiement des abonnements par FlexPay (Mobile Money, RDC)
 1. Le chef d'atelier choisit M-Pesa, Orange Money ou Airtel Money et saisit son numéro (`+243…` ou `0…`) dans *Compte › Renouveler*.
@@ -84,7 +93,7 @@ python3 tools/demo_patterns.py ./sortie   # 12 patrons SVG 1:1 + métrages
 ## État de validation
 
 - ✅ **Installé sur une base Odoo 18 réelle** (PostgreSQL 16, Community, français chargé), sans erreur ni avertissement propre au module.
-- ✅ **Tests automatisés** : `odoo-bin -d <base> -i liputa_couture --test-tags /liputa_couture --stop-after-init` — 19 tests (dont 7 pour FlexPay : demande de paiement, numéros locaux, validation vérifiée auprès de FlexPay, montant insuffisant, échec, attente, rappel falsifié) : inscription d'un atelier (formulaire réel), cloisonnement (commandes, clients, contacts, extras, modèles), paiements (confirmation réservée à la plateforme, webhook signé HMAC accepté / refusé), quota mensuel de commandes, cycle essai → grâce → suspension, moteur de patrons et estimation du délai.
+- ✅ **Tests automatisés** : `odoo-bin -d <base> -i liputa_couture --test-tags /liputa_couture --stop-after-init` — 22 tests (dont 10 pour les paiements : choix par pays, FlexPay — demande, numéros locaux, validation vérifiée, montant insuffisant, échec, attente, rappel falsifié — et CinetPay — redirection, vérification, retour et notification) : inscription d'un atelier (formulaire réel), cloisonnement (commandes, clients, contacts, extras, modèles), paiements (confirmation réservée à la plateforme, webhook signé HMAC accepté / refusé), quota mensuel de commandes, cycle essai → grâce → suspension, moteur de patrons et estimation du délai.
 - ✅ **Parcours vérifié dans le navigateur** (mobile 390 px) : inscription → connexion → application `/app` (accueil, commandes, catalogue, planning, compte, nouvelle commande) sans erreur ; commande d'un nouveau client par l'API de l'application : numérotée par atelier, confirmée, tâches planifiées, délai estimé, lien de suivi et patron SVG générés ; `/web` renvoie l'atelier vers `/app`.
 - ✅ Moteur de patrons exécuté sur les 12 gabarits (`tools/demo_patterns.py`).
 
@@ -101,5 +110,5 @@ python3 tools/demo_patterns.py ./sortie   # 12 patrons SVG 1:1 + métrages
 | Numérotation des commandes commune à tous les ateliers | Séquence propre à chaque atelier |
 
 ### Reste à faire
-- Valider FlexPay avec un compte marchand réel (environnement `dev`), les échanges étant testés par simulation.
+- Valider FlexPay et CinetPay avec des comptes marchands réels (environnements de test), les échanges étant testés par simulation.
 - Limite d'utilisateurs du plan (`max_users`) : les ateliers ne créent pas de comptes eux-mêmes aujourd'hui ; à appliquer le jour où ils pourront inviter leurs couturiers.

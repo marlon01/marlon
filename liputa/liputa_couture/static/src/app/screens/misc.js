@@ -186,7 +186,13 @@ export class AccountScreen extends Base {
             <div class="lp-kv"><span t-esc="t('Price')"/><span><t t-esc="money(me.subscription.price)"/> <span class="lp-muted" t-esc="t('per month')"/></span></div>
             <div class="lp-kv"><span t-esc="t('AI credits left this month')"/><span class="lp-strong" t-esc="me.subscription.ai_left"/></div>
         </div>
-        <button class="lp-btn lp-btn-tape lp-btn-block" style="margin-top: 14px" t-on-click="() => state.pay = { step: 'form', method: 'mpesa', phone: '' }">
+        <p t-if="state.returned === 'done'" class="lp-pay-result lp-pay-ok" role="status" style="margin-top: 14px" t-esc="t('Payment confirmed: your subscription is renewed.')"/>
+        <p t-elif="state.returned === 'failed'" class="lp-pay-result lp-pay-ko" role="alert" style="margin-top: 14px" t-esc="t('The payment was not completed. You can try again.')"/>
+        <p t-elif="state.returned === 'pending'" class="lp-pay-result" role="status" style="margin-top: 14px; background: #FCF1DE; color: #6E4408" t-esc="t('Waiting for the operator confirmation…')"/>
+        <button t-if="redirectFlow" class="lp-btn lp-btn-tape lp-btn-block" style="margin-top: 14px" t-att-disabled="state.busy" t-on-click="payRedirect">
+            <Icon name="'wallet'"/><t t-esc="state.busy ? t('Opening the payment page…') : t('Pay %s (Mobile Money or card)', money(me.subscription.price))"/>
+        </button>
+        <button t-else="" class="lp-btn lp-btn-tape lp-btn-block" style="margin-top: 14px" t-on-click="() => state.pay = { step: 'form', method: 'mpesa', phone: '' }">
             <Icon name="'wallet'"/><t t-esc="t('Pay with Mobile Money')"/>
         </button>
         <h2 class="lp-h2" t-esc="t('Language')"/>
@@ -228,13 +234,59 @@ export class AccountScreen extends Base {
     setup() {
         this.money = money;
         this.store = useState(store);
-        this.state = useState({ pay: null, busy: false });
+        this.state = useState({ pay: null, busy: false, returned: null });
+        // Retour depuis la page CinetPay : /app#/account?payment=done|pending|failed|none&ref=…
+        const query = this.store.route?.query || {};
+        if (query.payment) {
+            this.state.returned = query.payment;
+            if (query.payment === "pending" && query.ref) {
+                this.pollReturn(query.ref, 0);
+            }
+            history.replaceState(null, "", "/app#/account");
+            api.me().then((me) => (this.store.me = me));
+        }
         onWillUnmount(() => clearTimeout(this.pollTimer));
         this.langs = [["fr", "Français"], ["en", "English"]];
         this.operators = [["mpesa", "M-Pesa", "#E3262E"], ["orange_money", "Orange Money", "#FF7900"], ["airtel_money", "Airtel Money", "#ED1C24"]];
     }
     get me() {
         return this.store.me;
+    }
+    get redirectFlow() {
+        return this.me.subscription.payment_flow === "redirect";
+    }
+    async payRedirect() {
+        this.state.busy = true;
+        try {
+            const res = await api.pay("", "");
+            if (!res.redirect_url) {
+                throw new Error(this.t("The payment page is not available. Please try again later."));
+            }
+            window.location.assign(res.redirect_url);
+        } catch (e) {
+            this.state.busy = false;
+            toast(e.message, "error");
+        }
+    }
+    /** Paiement en attente au retour de CinetPay : nouvelle vérification toutes les 5 s pendant 2 minutes. */
+    pollReturn(reference, polls) {
+        clearTimeout(this.pollTimer);
+        if (polls >= 24) {
+            return;
+        }
+        this.pollTimer = setTimeout(async () => {
+            try {
+                const res = await api.paymentStatus(reference);
+                if (res.state === "done" || res.state === "failed") {
+                    this.state.returned = res.state;
+                    this.store.me = await api.me();
+                    return;
+                }
+            } catch {
+                // Réseau instable : nouvel essai au prochain tour.
+            }
+            this.pollReturn(reference, polls + 1);
+        }, 5000);
     }
     get operatorName() {
         return (this.operators.find((o) => o[0] === this.state.pay.method) || [])[1] || "";

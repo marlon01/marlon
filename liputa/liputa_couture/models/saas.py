@@ -17,6 +17,9 @@ _logger = logging.getLogger(__name__)
 FLEXPAY_URLS = {"prod": "https://backend.flexpay.cd/api/rest/v1", "dev": "https://beta-backend.flexpay.cd/api/rest/v1"}
 FLEXPAY_METHODS = ("mpesa", "orange_money", "airtel_money", "afrimoney")
 FLEXPAY_TIMEOUT = 30
+# CinetPay — Mobile Money et cartes, Afrique francophone (paiement sur la page CinetPay, puis retour).
+CINETPAY_API = "https://api-checkout.cinetpay.com/v2"
+CINETPAY_CURRENCIES = ("XOF", "XAF", "CDF", "GNF", "USD")
 
 PAYMENT_METHODS = [
     ("mpesa", "M-Pesa"),
@@ -26,6 +29,7 @@ PAYMENT_METHODS = [
     ("mtn_momo", "MTN MoMo"),
     ("wave", "Wave"),
     ("card", "Bank card"),
+    ("online", "Online (CinetPay: Mobile Money or card)"),
     ("bank", "Bank transfer"),
     ("cash", "Cash (agent)"),
 ]
@@ -244,6 +248,7 @@ class LiputaSubscriptionPayment(models.Model):
     provider = fields.Char(readonly=True, copy=False)
     provider_order = fields.Char("Provider order number", readonly=True, copy=False, index=True)
     provider_message = fields.Char(readonly=True, copy=False)
+    provider_url = fields.Char("Payment page", readonly=True, copy=False)
     date = fields.Datetime(default=fields.Datetime.now)
     state = fields.Selection([("pending", "Pending"), ("done", "Done"), ("failed", "Failed")],
                              default="pending", required=True, index=True)
@@ -259,9 +264,9 @@ class LiputaSubscriptionPayment(models.Model):
         parameter `liputa.payment.provider`. Without adapter the payment stays
         pending and can be confirmed by a platform administrator.
         """
-        provider = self.env["ir.config_parameter"].sudo().get_param("liputa.payment.provider", "")
-        adapter = getattr(self, "_liputa_initiate_%s" % provider, None) if provider else None
         for pay in self:
+            provider = self._liputa_provider_for(pay.subscription_id.company_id)
+            adapter = getattr(pay, "_liputa_initiate_%s" % provider, None) if provider else None
             if adapter:
                 adapter()
             else:
@@ -270,6 +275,101 @@ class LiputaSubscriptionPayment(models.Model):
             pay.subscription_id.message_post(body=_(
                 "Payment request %(ref)s sent to %(phone)s (%(method)s).",
                 ref=pay.reference, phone=pay.phone, method=pay.method))
+
+    @api.model
+    def _liputa_provider_for(self, company):
+        """Agrégateur selon le pays de l'atelier : FlexPay en RDC, CinetPay ailleurs (et en RDC si FlexPay
+        n'est pas configuré). Le paramètre ``liputa.payment.provider`` peut forcer un agrégateur ;
+        vide ou « auto » = choix automatique ; aucun agrégateur = confirmation manuelle."""
+        icp = self.env["ir.config_parameter"].sudo()
+        forced = (icp.get_param("liputa.payment.provider") or "auto").strip()
+        if forced not in ("", "auto"):
+            return forced
+        flexpay = bool(icp.get_param("liputa.flexpay.merchant") and icp.get_param("liputa.flexpay.token"))
+        cinetpay = bool(icp.get_param("liputa.cinetpay.site_id") and icp.get_param("liputa.cinetpay.api_key"))
+        country = company.country_id.code
+        if flexpay and country in ("CD", False, None):
+            return "flexpay"
+        if cinetpay:
+            return "cinetpay"
+        return ""
+
+    @api.model
+    def _liputa_flow_for(self, company):
+        """Parcours affiché par l'application : push (code PIN sur le téléphone), redirect ou manual."""
+        return {"flexpay": "push", "cinetpay": "redirect"}.get(self._liputa_provider_for(company), "manual")
+
+    # ------------------------------------------------------------------ CinetPay
+    def _cinetpay_config(self):
+        icp = self.env["ir.config_parameter"].sudo()
+        return {"site_id": (icp.get_param("liputa.cinetpay.site_id") or "").strip(),
+                "api_key": (icp.get_param("liputa.cinetpay.api_key") or "").strip(),
+                "base_url": (icp.get_param("web.base.url") or "").rstrip("/")}
+
+    def _liputa_initiate_cinetpay(self):
+        """Ouvre une transaction CinetPay ; le client paie sur la page CinetPay puis revient dans l'application."""
+        cfg = self._cinetpay_config()
+        if not cfg["site_id"] or not cfg["api_key"]:
+            raise UserError(_("CinetPay is not configured (site ID and API key)."))
+        for pay in self:
+            company = pay.subscription_id.company_id
+            currency = pay.currency_id.name
+            if currency not in CINETPAY_CURRENCIES:
+                raise UserError(_("CinetPay does not accept payments in %s.", currency))
+            payload = {
+                "apikey": cfg["api_key"], "site_id": cfg["site_id"], "transaction_id": pay.reference,
+                "amount": int(round(pay.amount)), "currency": currency, "channels": "ALL", "lang": "FR",
+                "description": ("Liputa %s" % company.name)[:100].replace("#", ""),
+                "return_url": "%s/liputa/payment/cinetpay/return?ref=%s" % (cfg["base_url"], pay.reference),
+                "notify_url": "%s/liputa/payment/cinetpay/notify" % cfg["base_url"],
+                "customer_name": (company.name or "")[:60], "customer_surname": (company.name or "")[:60],
+                "customer_email": company.email or "", "customer_phone_number": pay.phone or company.phone or "",
+                "customer_address": company.street or company.city or "-", "customer_city": company.city or "-",
+                "customer_country": company.country_id.code or "CD", "customer_state": company.country_id.code or "CD",
+                "customer_zip_code": company.zip or "00000",
+            }
+            pay.write({"provider": "cinetpay", "provider_message": False, "provider_order": pay.reference})
+            try:
+                data = requests.post(CINETPAY_API + "/payment", json=payload, timeout=FLEXPAY_TIMEOUT).json()
+            except (requests.RequestException, ValueError) as exc:
+                _logger.warning("CinetPay injoignable pour %s : %s", pay.reference, exc)
+                raise UserError(_("The payment service cannot be reached right now. Please try again in a few minutes."))
+            url = (data.get("data") or {}).get("payment_url")
+            if str(data.get("code")) != "201" or not url:
+                _logger.warning("CinetPay a refusé %s : %s", pay.reference, data)
+                raise UserError(_("The payment request was refused: %s",
+                                  data.get("description") or data.get("message") or "?"))
+            pay.provider_url = url
+
+    def _liputa_check_cinetpay(self):
+        """Interroge CinetPay : seule source de vérité (jamais le contenu d'une notification)."""
+        cfg = self._cinetpay_config()
+        for pay in self.filtered(lambda p: p.state == "pending" and p.provider == "cinetpay"):
+            try:
+                data = requests.post(CINETPAY_API + "/payment/check", timeout=FLEXPAY_TIMEOUT, json={
+                    "apikey": cfg["api_key"], "site_id": cfg["site_id"], "transaction_id": pay.reference}).json()
+            except (requests.RequestException, ValueError) as exc:
+                _logger.warning("CinetPay : vérification de %s impossible : %s", pay.reference, exc)
+                continue
+            info = data.get("data") or {}
+            status = (info.get("status") or "").upper()
+            if str(data.get("code")) == "00" and status == "ACCEPTED":
+                try:
+                    amount = float(info.get("amount") or 0)
+                except (TypeError, ValueError):
+                    amount = 0.0
+                if amount + 1e-6 < int(round(pay.amount)) or (info.get("currency") or "") != pay.currency_id.name:
+                    _logger.warning("CinetPay : transaction %s non conforme : %s", pay.reference, info)
+                    pay.write({"state": "failed", "provider_message": _("Amount or currency mismatch.")})
+                    continue
+                pay._liputa_webhook_update("success", info.get("operator_id") or pay.reference)
+            elif status in ("REFUSED", "CANCELED", "CANCELLED"):
+                pay.write({"provider_message": str(data.get("message") or status)[:200]})
+                pay._liputa_webhook_update("failed")
+
+    def _liputa_check_online(self):
+        self._liputa_check_flexpay()
+        self._liputa_check_cinetpay()
 
     # ------------------------------------------------------------------ FlexPay
     def _flexpay_config(self):
@@ -358,10 +458,11 @@ class LiputaSubscriptionPayment(models.Model):
 
     @api.model
     def _cron_check_flexpay(self):
-        """Filet de sécurité : rattrape les rappels perdus (paiements de moins de 48 h)."""
+        """Filet de sécurité : rattrape les rappels perdus (paiements de moins de 48 h), FlexPay et CinetPay.
+        Le nom est conservé pour la tâche planifiée des bases déjà installées."""
         since = fields.Datetime.now() - timedelta(hours=48)
-        self.sudo().search([("state", "=", "pending"), ("provider", "=", "flexpay"),
-                            ("provider_order", "!=", False), ("date", ">=", since)], limit=200)._liputa_check_flexpay()
+        self.sudo().search([("state", "=", "pending"), ("provider", "in", ("flexpay", "cinetpay")),
+                            ("provider_order", "!=", False), ("date", ">=", since)], limit=200)._liputa_check_online()
 
     def action_confirm(self):
         """Manual confirmation (agent/cash) by a platform administrator."""

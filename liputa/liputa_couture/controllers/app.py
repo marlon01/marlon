@@ -149,7 +149,8 @@ class LiputaApp(http.Controller):
             "subscription": {"state": sub.state if sub else False, "days_left": sub.days_left if sub else 0,
                              "plan": sub.plan_id.name if sub else "",
                              "price": sub.plan_id.price if sub else 0,
-                             "ai_left": max(sub.plan_id.ai_credits_month - sub.ai_credits_used, 0) if sub else 0},
+                             "ai_left": max(sub.plan_id.ai_credits_month - sub.ai_credits_used, 0) if sub else 0,
+                             "payment_flow": request.env["liputa.subscription.payment"].sudo()._liputa_flow_for(company)},
         }
 
     @http.route("/liputa/api/dashboard", type="json", auth="user")
@@ -370,7 +371,7 @@ class LiputaApp(http.Controller):
         }
 
     @http.route("/liputa/api/subscription/pay", type="json", auth="user")
-    def subscription_pay(self, method, phone):
+    def subscription_pay(self, method="", phone=""):
         """Create a pending Mobile Money payment and send the request to the operator.
 
         The subscription is only extended when the aggregator confirms the
@@ -378,11 +379,15 @@ class LiputaApp(http.Controller):
         """
         if not request.env.user.has_group("liputa_couture.group_liputa_manager"):
             raise UserError(_("Only the head of the workshop can pay the subscription."))
-        methods = dict(request.env["liputa.subscription.payment"]._fields["method"].selection)
-        if method not in methods:
+        Payment = request.env["liputa.subscription.payment"].sudo()
+        flow = Payment._liputa_flow_for(request.env.company)
+        methods = dict(Payment._fields["method"].selection)
+        if flow == "redirect":
+            method = "online"  # l'opérateur ou la carte est choisi sur la page CinetPay
+        elif method not in methods:
             raise ValidationError(_("Choose a payment operator."))
         digits = "".join(c for c in str(phone or "") if c.isdigit() or c == "+")
-        if len(digits.replace("+", "")) < 9:
+        if flow != "redirect" and len(digits.replace("+", "")) < 9:
             raise ValidationError(_("Enter a valid phone number."))
         sub = request.env.company.sudo().liputa_subscription_id
         if not sub:
@@ -390,7 +395,8 @@ class LiputaApp(http.Controller):
         payment = request.env["liputa.subscription.payment"].sudo().create({
             "subscription_id": sub.id, "amount": sub.plan_id.price, "method": method, "phone": digits[:20]})
         payment._liputa_initiate()
-        return {"reference": payment.reference, "amount": payment.amount}
+        return {"reference": payment.reference, "amount": payment.amount, "flow": flow,
+                "redirect_url": payment.provider_url or False}
 
     @http.route("/liputa/api/subscription/payment_status", type="json", auth="user")
     def subscription_payment_status(self, reference):
@@ -399,8 +405,8 @@ class LiputaApp(http.Controller):
             ("reference", "=", str(reference)[:64]), ("company_id", "=", request.env.company.id)], limit=1)
         if not pay:
             raise UserError(_("Payment not found."))
-        if pay.state == "pending" and pay.provider == "flexpay":
-            pay._liputa_check_flexpay()
+        if pay.state == "pending":
+            pay._liputa_check_online()
         sub = pay.subscription_id
         return {"state": pay.state, "message": pay.provider_message or "",
                 "next_due_date": fields.Date.to_string(sub.next_due_date) if pay.state == "done" else False}

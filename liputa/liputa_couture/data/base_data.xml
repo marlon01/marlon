@@ -113,7 +113,7 @@
             <field name="interval_type">days</field>
         </record>
         <record id="cron_flexpay_check" model="ir.cron">
-            <field name="name">Liputa: check pending FlexPay payments</field>
+            <field name="name">Liputa: check pending online payments (FlexPay, CinetPay)</field>
             <field name="model_id" ref="model_liputa_subscription_payment"/>
             <field name="state">code</field>
             <field name="code">model._cron_check_flexpay()</field>

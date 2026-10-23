@@ -277,3 +277,80 @@ class TestLiputaFlexpayHttp(HttpCase):
         pay.invalidate_recordset()
         self.assertEqual(pay.state, "failed")
         self.assertEqual(company.liputa_subscription_id.state, "trial")
+
+
+@tagged("post_install", "-at_install", "liputa")
+class TestLiputaPaymentRouting(LiputaCommon):
+    """Choix automatique de l'agrégateur selon le pays, et parcours CinetPay."""
+
+    def setUp(self):
+        super().setUp()
+        icp = self.env["ir.config_parameter"].sudo()
+        for key, value in (("liputa.payment.provider", "auto"), ("liputa.flexpay.merchant", "LIPUTA"),
+                           ("liputa.flexpay.token", "jeton"), ("liputa.cinetpay.site_id", "123"),
+                           ("liputa.cinetpay.api_key", "cle"), ("web.base.url", "https://app.liputa.test")):
+            icp.set_param(key, value)
+        self.Payment = self.env["liputa.subscription.payment"]
+
+    def test_provider_chosen_by_country(self):
+        self.assertEqual(self.Payment._liputa_provider_for(self.atelier_a), "flexpay")  # RDC
+        self.atelier_b.country_id = self.env.ref("base.sn")
+        self.assertEqual(self.Payment._liputa_provider_for(self.atelier_b), "cinetpay")  # Sénégal
+        self.assertEqual(self.Payment._liputa_flow_for(self.atelier_b), "redirect")
+        self.env["ir.config_parameter"].sudo().set_param("liputa.flexpay.token", "")
+        self.assertEqual(self.Payment._liputa_provider_for(self.atelier_a), "cinetpay")  # RDC sans FlexPay
+        self.env["ir.config_parameter"].sudo().set_param("liputa.cinetpay.api_key", "")
+        self.assertEqual(self.Payment._liputa_flow_for(self.atelier_a), "manual")
+
+    def _cinetpay_payment(self):
+        self.atelier_b.country_id = self.env.ref("base.sn")
+        sub = self.atelier_b.liputa_subscription_id
+        pay = self.Payment.create({"subscription_id": sub.id, "amount": 5000, "method": "online"})
+        created = FakeResponse({"code": "201", "data": {"payment_url": "https://checkout.cinetpay.com/payment/xyz"}})
+        with patch("odoo.addons.liputa_couture.models.saas.requests.post", return_value=created) as post:
+            pay._liputa_initiate()
+        return pay, post
+
+    def test_cinetpay_redirect_then_verified_payment(self):
+        pay, post = self._cinetpay_payment()
+        body = post.call_args.kwargs["json"]
+        self.assertEqual(post.call_args.args[0], "https://api-checkout.cinetpay.com/v2/payment")
+        self.assertEqual((body["transaction_id"], body["amount"], body["site_id"]), (pay.reference, 5000, "123"))
+        self.assertEqual(body["return_url"], "https://app.liputa.test/liputa/payment/cinetpay/return?ref=%s" % pay.reference)
+        self.assertEqual((pay.provider, pay.provider_url), ("cinetpay", "https://checkout.cinetpay.com/payment/xyz"))
+        low = FakeResponse({"code": "00", "data": {"status": "ACCEPTED", "amount": "10", "currency": pay.currency_id.name}})
+        with patch("odoo.addons.liputa_couture.models.saas.requests.post", return_value=low):
+            pay._liputa_check_cinetpay()
+        self.assertEqual(pay.state, "failed")
+        pay2, _post = self._cinetpay_payment()
+        ok = FakeResponse({"code": "00", "data": {"status": "ACCEPTED", "amount": "5000",
+                                                  "currency": pay2.currency_id.name, "operator_id": "OM-1"}})
+        with patch("odoo.addons.liputa_couture.models.saas.requests.post", return_value=ok):
+            pay2._liputa_check_online()
+        self.assertEqual((pay2.state, pay2.provider_reference), ("done", "OM-1"))
+        self.assertEqual(self.atelier_b.liputa_subscription_id.state, "active")
+
+
+@tagged("post_install", "-at_install", "liputa")
+class TestLiputaCinetpayHttp(HttpCase):
+
+    def test_return_and_notify_verify_with_cinetpay(self):
+        company = self.env["res.company"]._liputa_create_workshop(
+            {"atelier": "Atelier Dakar", "name": "D", "email": "d@dakar.sn", "password": "Motdepasse123"},
+            self.env.ref("base.sn"))
+        icp = self.env["ir.config_parameter"].sudo()
+        icp.set_param("liputa.cinetpay.site_id", "123")
+        icp.set_param("liputa.cinetpay.api_key", "cle")
+        pay = self.env["liputa.subscription.payment"].create({
+            "subscription_id": company.liputa_subscription_id.id, "amount": 5000, "method": "online",
+            "provider": "cinetpay", "provider_order": "x"})
+        waiting = FakeResponse({"code": "662", "data": {"status": "WAITING_FOR_CUSTOMER"}})
+        with patch("odoo.addons.liputa_couture.models.saas.requests.post", return_value=waiting):
+            resp = self.url_open("/liputa/payment/cinetpay/return?ref=%s" % pay.reference, allow_redirects=False)
+        self.assertIn("/app#/account?payment=pending", resp.headers.get("Location", ""))
+        ok = FakeResponse({"code": "00", "data": {"status": "ACCEPTED", "amount": "5000", "currency": pay.currency_id.name}})
+        with patch("odoo.addons.liputa_couture.models.saas.requests.post", return_value=ok):
+            notify = self.url_open("/liputa/payment/cinetpay/notify", data={"cpm_trans_id": pay.reference})
+        self.assertEqual(notify.status_code, 200)
+        pay.invalidate_recordset()
+        self.assertEqual(pay.state, "done")
