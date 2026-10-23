@@ -347,7 +347,30 @@ class NormaInvoice(models.Model):
                 return inv
             return inv._transmit_locked()
         finally:
-            self.env.cr.execute('SELECT pg_advisory_unlock(%s, %s)', (7072, inv.id))
+            self._release_lock(inv.id)
+
+    def _release_lock(self, invoice_id):
+        """Libère le verrou de session même si la transaction a échoué (sinon il resterait sur la connexion du pool)."""
+        cr = self.env.cr
+        try:
+            with cr.savepoint(flush=False):
+                cr.execute('SELECT pg_advisory_unlock(%s, %s)', (7072, invoice_id))
+            return
+        except Exception:
+            _logger.warning("NORMA : transaction interrompue pendant la transmission de la facture %s", invoice_id)
+        if self.env.registry.in_test_mode() or getattr(threading.current_thread(), 'testing', False):
+            return
+        try:
+            cr.rollback()
+            cr.execute('SELECT pg_advisory_unlock(%s, %s)', (7072, invoice_id))
+            cr.commit()
+        except Exception:
+            # Dernier recours : connexion fermée, ce qui libère tous ses verrous de session.
+            _logger.exception("NORMA : verrou de la facture %s non libéré, fermeture de la connexion", invoice_id)
+            try:
+                cr._cnx.close()
+            except Exception:
+                pass
 
     def _transmit_locked(self):
         inv = self
