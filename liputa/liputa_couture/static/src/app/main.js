@@ -16,7 +16,7 @@ async function boot() {
     startRouter();
     document.getElementById("lp-boot")?.remove();
     await mount(LiputaApp, document.body, { dev: false });
-    if ("serviceWorker" in navigator && location.protocol === "https:") {
+    if ("serviceWorker" in navigator && window.isSecureContext) {
         navigator.serviceWorker.register("/app/sw.js", { scope: "/app" }).catch(() => {});
     }
 }

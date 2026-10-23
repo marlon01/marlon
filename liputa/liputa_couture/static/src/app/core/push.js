@@ -11,10 +11,12 @@ function b64ToBytes(base64) {
 }
 
 async function registration() {
-    if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
+    if (!window.isSecureContext || !("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
         return null;
     }
-    return navigator.serviceWorker.getRegistration("/app");
+    // register() est idempotent : il renvoie l'enregistrement existant, même si l'écran
+    // s'ouvre avant que main.js ait fini d'enregistrer le service worker.
+    return navigator.serviceWorker.register("/app/sw.js", { scope: "/app" }).catch(() => null);
 }
 
 /** "on" | "off" | "denied" | "unsupported" */
