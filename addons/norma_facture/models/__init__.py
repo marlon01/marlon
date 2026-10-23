@@ -9,3 +9,4 @@ from . import emcf
 from . import throttle
 from . import api
 from . import platform
+from . import subscription

@@ -27,12 +27,57 @@ NORMA est un **SFE** (système de facturation d'entreprise) relié à l'**e-MCF*
 
 | Catégorie | Espace de vente |
 |---|---|
-| Supermarché, magasin, pharmacie, station-service | **Caisse rapide** : lecteur de codes-barres (`3*code` = trois unités), F2 recherche, F9 encaissement, paiement mixte, rendu de monnaie, ticket 80 mm |
+| Supermarché, magasin, pharmacie, station-service | **Caisse rapide** : lecteur de codes-barres (`3*code` = trois unités), F2 recherche, F9 encaissement, paiement mixte, rendu de monnaie, impression directe du ticket, vente sans connexion |
 | Hôtel | **Plan des chambres** par étage : arrivée (client enregistré), nuitées portées automatiquement, consommations et services sur la note, départ = une facture, chambre « à nettoyer » ensuite |
 | Restaurant, bar | **Plan de salle** : ouverture de table, commandes, envoi en cuisine, changement de table, encaissement ; vente au comptoir |
 | Services, BTP, commerce de gros | **Éditeur de facture** : client identifié, FV, FT (acompte), EV/ET (exportation), facture à crédit, référence de commande |
 
 À l'inscription, un catalogue de départ adapté au métier est créé (rayons, articles, chambres ou tables) : l'entreprise facture immédiatement en mode simulation.
+
+## Abonnements
+
+Une politique de volume : des prix bas pour que toutes les entreprises puissent se mettre en règle.
+
+* **Essai gratuit de 14 jours** (réglable) avec toutes les fonctions, sans moyen de paiement.
+* **Une formule par catégorie** (USD, modifiables dans l'administration centrale ; annuel = 10 mois, deux mois offerts) :
+
+| Catégorie | Mensuel | Annuel | Établissement en plus |
+|---|---|---|---|
+| Magasin / boutique | 5 $ | 50 $ | 2 $ / mois |
+| Prestataire de services | 5 $ | 50 $ | 2 $ / mois |
+| Pharmacie | 7 $ | 70 $ | 3 $ / mois |
+| Restaurant / bar | 7 $ | 70 $ | 3 $ / mois |
+| Station-service | 10 $ | 100 $ | 4 $ / mois |
+| Supermarché | 10 $ | 100 $ | 4 $ / mois |
+| Hôtel | 12 $ | 120 $ | 5 $ / mois |
+| BTP, industrie, gros | 12 $ | 120 $ | 5 $ / mois |
+
+  Un établissement inclus ; factures et utilisateurs illimités.
+* **Paiement Mobile Money** (M-Pesa, Orange Money, Airtel Money, Afrimoney), virement ou espèces : l'administrateur de l'entreprise déclare la référence de la transaction (et peut joindre la capture du SMS) ; l'administration centrale la valide et l'abonnement est prolongé aussitôt. Les jours d'essai ou d'abonnement restants sont conservés. Une même référence ne peut pas être déclarée deux fois ; le montant est calculé par le serveur.
+* **Échéance** : 5 jours de grâce (réglable), puis **consultation seule** : plus de nouvelles factures, mais les factures restent consultables, imprimables, exportables, et celles déjà émises continuent d'être normalisées auprès de la DGI.
+* Administration centrale : revenu mensuel récurrent, file des paiements à valider (justificatif), prolongation d'essai, formules, durée d'essai et de grâce, instructions de paiement.
+
+## Continuité de service
+
+**DGI indisponible.** La vente n'est jamais bloquée : la facture est enregistrée et numérotée, le ticket imprimé porte « en attente de normalisation — ne vaut pas facture » et un QR code de vérification. NORMA renvoie automatiquement toutes les 2 minutes (sans doublon : les demandes en attente à la DGI sont relues avant tout nouvel envoi). Dès la confirmation, la page du QR code affiche la facture normalisée. L'indicateur de la barre latérale compte les factures en attente.
+
+**Internet coupé au magasin.** L'application de caisse est installée sur le poste (service worker) : elle s'ouvre et vend sans connexion, avec le dernier catalogue connu.
+* chaque vente est gardée sur le poste (IndexedDB) avec sa clé d'idempotence et son heure réelle ;
+* un **ticket provisoire** est imprimé aussitôt, avec un QR code (`/norma/r/<clé>`) qui mènera le client à sa facture normalisée ;
+* au retour du réseau (et toutes les 20 secondes), les ventes partent seules au serveur puis à la DGI ; une vente rejouée ne crée jamais de seconde facture ;
+* le serveur vérifie l'heure de la vente (7 jours au plus, jamais dans le futur) et accepte le prix affiché à ce moment-là grâce à l'**historique des prix** : un caissier ne peut pas inventer un prix ;
+* une vente faite pendant la période d'abonnement se synchronise même si l'échéance est passée entre-temps ;
+* la page **Synchronisation** montre les ventes du poste, celles refusées (à traiter par un gestionnaire) et les factures en attente DGI.
+
+La facture normalisée exige la confirmation de l'e-MCF, qui est un service en ligne : le ticket provisoire ne remplace pas la facture normalisée, il y donne accès dès la synchronisation. Pour une normalisation sans aucune connexion, il faudra un MCF physique homologué (boîtier relié au poste), dont le protocole reste à obtenir auprès de la DGI.
+
+## Impression directe à la caisse
+
+Réglage propre à chaque poste (Paramètres › Impression) :
+* **Imprimante thermique USB ou série** (ESC/POS, 58 ou 80 mm) : Chrome ou Edge envoie le ticket directement à l'imprimante, **sans aucune fenêtre** ; l'imprimante dessine elle-même le QR code. Le poste est appairé une fois (bouton « Choisir l'imprimante »).
+* **Imprimante du système** : le ticket part depuis une page cachée, sans ouvrir d'onglet. Pour supprimer aussi la confirmation du navigateur, lancer NORMA en mode kiosque :
+  `chrome.exe --kiosk-printing --app=https://<votre-domaine>/norma/app`
+* Nombre d'exemplaires, impression à chaque vente (activée par défaut), ticket de test.
 
 ## Conformité DGI
 
@@ -63,7 +108,7 @@ NORMA est un **SFE** (système de facturation d'entreprise) relié à l'**e-MCF*
 ```bash
 odoo-bin -d <base> -i norma_facture --test-tags /norma_facture --stop-after-init
 ```
-52 tests : moteur fiscal (arrondis SFE, taxe spécifique, groupe N, montant en lettres), normalisation, numérotation, immuabilité, avoirs, cloisonnement, rôles, devises, exportation, types de client, écart de calcul, coupure réseau, confirmation incertaine, intégrité, hôtel, restaurant, pages HTTP (impression, vérification, export, connexion), régressions de sécurité.
+61 tests : moteur fiscal (arrondis SFE, taxe spécifique, groupe N, montant en lettres), normalisation, numérotation, immuabilité, avoirs, cloisonnement, rôles, devises, exportation, types de client, écart de calcul, coupure réseau, confirmation incertaine, intégrité, hôtel, restaurant, pages HTTP (impression, vérification, export, connexion), régressions de sécurité, abonnements (essai, grâce, consultation seule, paiement, établissements supplémentaires), ventes hors ligne (prix historique, ancienneté, échéance), lien du ticket provisoire.
 
 ## Avant l'homologation : ce qui reste à faire avec la DGI
 

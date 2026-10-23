@@ -85,6 +85,8 @@ class NormaInvoice(models.Model):
     total = fields.Float(readonly=True, digits=(16, 2))
     total_currency = fields.Float("Total en devise", readonly=True, digits=(16, 2))
     note = fields.Char(readonly=True)
+    offline_at = fields.Datetime("Vente hors ligne du", readonly=True,
+                                 help="Heure de la vente enregistrée par le poste pendant une coupure de connexion.")
 
     # ---------------------------------------------------------------- avoir
     reversed_id = fields.Many2one('norma.invoice', string="Facture d'origine", readonly=True, index=True)
@@ -225,6 +227,7 @@ class NormaInvoice(models.Model):
             raise UserError(str(exc))
         vals = {
             'request_key': data.get('request_key') or False,
+            'offline_at': data.get('offline_at') or False,
             'company_id': company.id, 'site_id': site.id, 'invoice_type': itype, 'operator_id': user.id,
             'origin': (data.get('origin') or '')[:80] or False, 'note': (data.get('note') or '')[:200] or False,
             'currency': currency, 'currency_rate': float(rate_d),
@@ -495,6 +498,7 @@ class NormaInvoice(models.Model):
                     'emcf_nim': inv.emcf_nim or '', 'emcf_counters': inv.emcf_counters or '',
                     'emcf_datetime': inv.emcf_datetime or '', 'emcf_qr': inv.emcf_qr or '',
                     'emcf_uid': inv.emcf_uid or '', 'verify_token': inv.verify_token or '',
+                    'offline_at': fields.Datetime.to_string(inv.offline_at) if inv.offline_at else '',
                     'chain_hash': inv.chain_hash or '', 'print_count': inv.print_count,
                     'lines': [{'id': l.id, 'name': l.name, 'quantity': l.quantity, 'unit_price': l.unit_price,
                                'net_price': l.net_price, 'price_currency': l.price_currency,

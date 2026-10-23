@@ -5,6 +5,7 @@ import csv
 import io
 import json
 import logging
+import os
 import re
 from datetime import timedelta
 
@@ -19,6 +20,7 @@ from odoo.addons.web.controllers.home import Home
 from ..lib import fiscal
 from ..lib.qr import qr_svg
 from ..models.invoice import INVOICE_TYPES, REFERENCE_TYPES
+from ..models.subscription import setting
 
 _logger = logging.getLogger(__name__)
 VERSION = '18.0.1.0.0'
@@ -91,6 +93,8 @@ class NormaController(http.Controller):
         html = request.env['ir.qweb']._render('norma_facture.landing', {
             'categories': cats, 'space': space, 'year': fields.Date.today().year,
             'tax_groups': request.env['norma.tax.group'].sudo().search([('rate', '>', 0)]),
+            'plans': request.env['norma.plan'].sudo().search([]),
+            'trial_days': setting(request.env, 'norma.trial_days', int),
         })
         return _html(html, cache=True)
 
@@ -99,8 +103,10 @@ class NormaController(http.Controller):
         if _norma_user():
             return request.redirect('/norma/app')
         cats = request.env['norma.category'].sudo().search([])
+        plans = {p.category_id.code: p.price_month for p in request.env['norma.plan'].sudo().search([])}
         return render_app('signup', "NORMA — Créer le compte de votre entreprise", {
-            'categories': cats._public_dict(), 'category': category or '',
+            'categories': [dict(c, price=plans.get(c['code'])) for c in cats._public_dict()], 'category': category or '',
+            'trial_days': setting(request.env, 'norma.trial_days', int),
         })
 
     @http.route('/norma/login', type='http', auth='public', sitemap=False)
@@ -122,6 +128,22 @@ class NormaController(http.Controller):
         if not request.session.uid or not request.env.user._norma_is_platform():
             return request.redirect('/norma/login')
         return render_app('platform', "NORMA — Administration centrale", {})
+
+    @http.route('/norma/sw.js', type='http', auth='public', sitemap=False)
+    def service_worker(self, **kw):
+        path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static', 'src', 'sw', 'sw.js')
+        with open(path, 'rb') as f:
+            body = f.read()
+        return request.make_response(body, [('Content-Type', 'text/javascript; charset=utf-8'),
+                                            ('Service-Worker-Allowed', '/norma/'), ('Cache-Control', 'no-cache')])
+
+    @http.route('/norma/manifest.webmanifest', type='http', auth='public', sitemap=False)
+    def manifest(self, **kw):
+        data = {'name': 'NORMA — Facturation normalisée', 'short_name': 'NORMA', 'start_url': '/norma/app#/',
+                'scope': '/norma/', 'display': 'standalone', 'background_color': '#10212B', 'theme_color': '#10212B',
+                'lang': 'fr', 'icons': [{'src': '/norma_facture/static/description/icon.png', 'sizes': '256x256', 'type': 'image/png'}]}
+        return request.make_response(json.dumps(data), [('Content-Type', 'application/manifest+json'),
+                                                        ('Cache-Control', 'public, max-age=3600')])
 
     @http.route('/norma/logout', type='http', auth='public', sitemap=False)
     def logout(self, **kw):
@@ -219,10 +241,11 @@ class NormaController(http.Controller):
         return {'ok': True, 'redirect': '/norma/app#/welcome'}
 
     # ================================================================ API
-    @http.route('/norma/api/<string:method>', type='json', auth='user', csrf=False)
-    def api(self, method, **params):
+    @http.route('/norma/api/<string:op>', type='json', auth='user', csrf=False)
+    def api(self, op, **params):
+        # « op » et non « method » : un paramètre JSON peut s'appeler method (moyen de paiement).
         try:
-            return {'result': request.env['norma.api']._dispatch(method, params)}
+            return {'result': request.env['norma.api']._dispatch(op, params)}
         except (UserError, ValidationError, AccessError) as exc:
             request.env.cr.rollback()
             return {'error': exc.args[0] if exc.args else str(exc)}
@@ -230,9 +253,11 @@ class NormaController(http.Controller):
             request.env.cr.rollback()
             return {'error': _("Paramètres invalides.")}
 
-    @http.route('/norma/platform/api/<string:method>', type='json', auth='user', csrf=False)
-    def platform_api(self, method, **params):
-        if method not in ('overview', 'set_state', 'set_verified', 'tax_group_save', 'sync_tax_groups'):
+    @http.route('/norma/platform/api/<string:op>', type='json', auth='user', csrf=False)
+    def platform_api(self, op, **params):
+        method = op
+        if method not in ('overview', 'set_state', 'set_verified', 'tax_group_save', 'sync_tax_groups', 'settings_save',
+                          'payment_decide', 'extend_trial', 'plan_save'):
             return {'error': _("Opération inconnue.")}
         Platform = request.env['norma.platform']
         try:
@@ -247,6 +272,18 @@ class NormaController(http.Controller):
             request.env.cr.rollback()
             return {'error': exc.args[0] if exc.args else str(exc)}
 
+    @http.route('/norma/platform/proof/<int:payment_id>', type='http', auth='user', sitemap=False)
+    def payment_proof(self, payment_id, **kw):
+        if not request.env.user._norma_is_platform():
+            return request.not_found()
+        pay = request.env['norma.subscription.payment'].sudo().browse(payment_id).exists()
+        if not pay or not pay.proof:
+            return request.not_found()
+        return request.make_response(base64.b64decode(pay.proof), [
+            ('Content-Type', pay.proof_type or 'application/octet-stream'), ('X-Content-Type-Options', 'nosniff'),
+            ('Content-Security-Policy', "default-src 'none'"), ('Cache-Control', 'no-store'),
+            ('Content-Disposition', 'inline; filename="justificatif-%s"' % pay.id)])
+
     # ================================================================ impression
     def _print_values(self, inv):
         company, site = inv.company_id, inv.site_id
@@ -259,7 +296,8 @@ class NormaController(http.Controller):
             'verify_qr': qr_svg('%s/norma/v/%s' % (base, inv.verify_token)) if inv.verify_token else Markup(''),
             'words': fiscal.amount_in_words(inv.total),
             'fmt': lambda v, d=2: ('{:,.%df}' % d).format(v or 0).replace(',', ' ').replace('.', ','),
-            'local_date': fields.Datetime.context_timestamp(inv, inv.date).strftime('%d/%m/%Y %H:%M') if inv.date else '',
+            'local_date': fields.Datetime.context_timestamp(inv.with_context(tz=inv.company_id.norma_tz or 'Africa/Kinshasa'), inv.date).strftime('%d/%m/%Y %H:%M') if inv.date else '',
+            'offline_date': fields.Datetime.context_timestamp(inv.with_context(tz=inv.company_id.norma_tz or 'Africa/Kinshasa'), inv.offline_at).strftime('%d/%m/%Y %H:%M') if inv.offline_at else '',
             'simulation': inv.emcf_mode == 'simulation', 'version': VERSION,
             'payments_label': dict(request.env['norma.invoice.payment']._fields['method'].selection),
         }
@@ -274,7 +312,11 @@ class NormaController(http.Controller):
             return request.not_found()
         template = 'norma_facture.print_ticket' if format == 'ticket' else 'norma_facture.print_a4'
         html = request.env['ir.qweb']._render(template, dict(self._print_values(inv), auto=kw.get('auto')))
-        return _html(html)
+        response = _html(html)
+        # Impression directe depuis la caisse : la page est chargée dans un cadre caché de NORMA lui-même.
+        response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+        response.headers['Content-Security-Policy'] = "frame-ancestors 'self'"
+        return response
 
     # ================================================================ vérification publique
     @http.route('/norma/v/<string:token>', type='http', auth='public', sitemap=False)
@@ -289,8 +331,25 @@ class NormaController(http.Controller):
                 Throttle.hit(key, 30, 10)
         values = {'inv': inv, 'title': TITLES.get(inv.invoice_type, '') if inv else '',
                   'fmt': lambda v: '{:,.2f}'.format(v or 0).replace(',', ' ').replace('.', ','),
-                  'local_date': fields.Datetime.context_timestamp(inv, inv.date).strftime('%d/%m/%Y %H:%M') if inv else ''}
+                  'local_date': fields.Datetime.context_timestamp(inv.with_context(tz=inv.company_id.norma_tz or 'Africa/Kinshasa'), inv.date).strftime('%d/%m/%Y %H:%M') if inv else ''}
         html = request.env['ir.qweb']._render('norma_facture.verify', values)
+        response = _html(html)
+        response.headers['Referrer-Policy'] = 'no-referrer'
+        return response
+
+    @http.route('/norma/r/<string:key>', type='http', auth='public', sitemap=False)
+    def provisional(self, key, **kw):
+        """QR du ticket provisoire (vente hors ligne ou DGI indisponible) : mène à la facture normalisée dès qu'elle existe."""
+        Throttle = request.env['norma.throttle'].sudo()
+        ip_key = 'verify:%s' % _ip()
+        inv = None
+        if not Throttle.is_locked(ip_key) and re.match(r'^[A-Za-z0-9\-]{16,64}$', key or ''):
+            inv = request.env['norma.invoice'].sudo().search([('request_key', '=', key)], limit=1)
+            if not inv:
+                Throttle.hit(ip_key, 30, 10)
+        if inv and inv.verify_token:
+            return request.redirect('/norma/v/%s' % inv.verify_token, 303)
+        html = request.env['ir.qweb']._render('norma_facture.provisional', {})
         response = _html(html)
         response.headers['Referrer-Policy'] = 'no-referrer'
         return response

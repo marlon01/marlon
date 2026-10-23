@@ -1,5 +1,5 @@
 /** @odoo-module */
-import { Component, mount, onWillStart, useState, whenReady, xml } from "@odoo/owl";
+import { Component, mount, onMounted, onWillStart, useState, whenReady, xml } from "@odoo/owl";
 import { Icon, UiHost, notifyError } from "@norma_facture/common/ui";
 import { initials } from "@norma_facture/common/format";
 import { can, currentSite, loadSession, route, session, setSite } from "@norma_facture/app/store";
@@ -10,6 +10,10 @@ import { EditorPage } from "@norma_facture/app/page_editor";
 import { InvoiceDetail, InvoicesPage } from "@norma_facture/app/page_invoices";
 import { CatalogPage, CustomersPage } from "@norma_facture/app/page_catalog";
 import { AuditPage, SettingsPage } from "@norma_facture/app/page_settings";
+import { BillingPage } from "@norma_facture/app/page_billing";
+import { SyncPage } from "@norma_facture/app/page_sync";
+import { startSync } from "@norma_facture/app/sync";
+import { date } from "@norma_facture/common/format";
 
 /* Navigation : l'espace de vente dépend de la catégorie de l'entreprise. */
 const SELL = {
@@ -52,6 +56,11 @@ class App extends Component {
                     </select>
                 </label>
                 <div t-else="" class="nm-nav-site is-single"><span>Établissement</span><b t-esc="site ? site.code + ' — ' + site.name : 'Aucun'"/></div>
+                <a href="#/sync" class="nm-sync" t-att-class="syncClass" t-on-click="() => this.state.nav = false">
+                    <span class="nm-sync-dot"/>
+                    <span class="nm-grow" t-esc="syncLabel"/>
+                    <span t-if="session.outbox" class="nm-sync-badge" t-esc="session.outbox"/>
+                </a>
                 <nav>
                     <t t-foreach="nav" t-as="group" t-key="group_index">
                         <div class="nm-nav-group">
@@ -65,7 +74,7 @@ class App extends Component {
                 <div class="nm-nav-user">
                     <span class="nm-avatar" t-esc="initials(session.user.name)"/>
                     <div class="nm-grow"><b t-esc="session.user.name"/><small t-esc="session.user.role_label"/></div>
-                    <a href="/norma/logout" class="nm-btn nm-btn-ghost nm-btn-icon" title="Se déconnecter" aria-label="Se déconnecter"><Icon name="'logout'"/></a>
+                    <a href="/norma/logout" class="nm-btn nm-btn-ghost nm-btn-icon" title="Se déconnecter" aria-label="Se déconnecter" t-on-click="logout"><Icon name="'logout'"/></a>
                 </div>
             </aside>
             <div class="nm-main">
@@ -73,8 +82,14 @@ class App extends Component {
                     <button class="nm-btn nm-btn-ghost nm-btn-icon" aria-label="Menu" t-on-click="() => this.state.nav = !this.state.nav"><Icon name="'menu'"/></button>
                     <b t-esc="session.company.name"/>
                 </div>
+                <a t-if="subBanner" class="nm-subbar" t-att-class="'is-' + session.subscription.state" href="#/billing" t-esc="subBanner"/>
+                <div t-if="session.offline and !['sell', 'sync'].includes(route.name)" class="nm-subbar is-offline">
+                    Connexion coupée : la caisse continue de vendre et garde les ventes sur ce poste. Les autres écrans reviendront avec le réseau.
+                </div>
                 <t t-set="r" t-value="route"/>
                 <Welcome t-if="r.name === 'welcome'"/>
+                <BillingPage t-elif="r.name === 'billing'"/>
+                <SyncPage t-elif="r.name === 'sync'"/>
                 <PosPage t-elif="r.name === 'sell'" t-key="'pos' + session.siteId"/>
                 <FolioPage t-elif="r.name === 'rooms'" kind="'room'" t-key="'rooms' + session.siteId"/>
                 <FolioPage t-elif="r.name === 'tables'" kind="'table'" t-key="'tables' + session.siteId"/>
@@ -91,7 +106,7 @@ class App extends Component {
             <UiHost/>
         </div>`;
     static components = { Icon, UiHost, Welcome, DashboardPage, PosPage, FolioPage, EditorPage, InvoiceDetail, InvoicesPage,
-        CustomersPage, CatalogPage, ReportsPage, AuditPage, SettingsPage };
+        CustomersPage, CatalogPage, ReportsPage, AuditPage, SettingsPage, BillingPage, SyncPage };
     static props = {};
     setup() {
         this.session = useState(session);
@@ -99,6 +114,26 @@ class App extends Component {
         this.state = useState({ nav: false });
         this.initials = initials;
         this.can = can;
+        onMounted(() => startSync());
+    }
+    get syncClass() {
+        if (session.offline) return "is-offline";
+        if (session.outbox || session.dgiPending) return "is-pending";
+        return "is-ok";
+    }
+    get syncLabel() {
+        if (session.offline) return "Hors ligne · ventes gardées";
+        if (session.syncing) return "Synchronisation…";
+        if (session.outbox) return "Envoi des ventes en cours";
+        if (session.dgiPending) return `${session.dgiPending} facture(s) en attente DGI`;
+        return "En ligne · synchronisé";
+    }
+    get subBanner() {
+        const sub = session.subscription || {};
+        if (sub.state === "trial" && sub.days_left <= 5) return `Essai gratuit : ${sub.days_left} jour(s) restant(s). Choisir mon abonnement`;
+        if (sub.state === "grace") return `Abonnement échu : renouvelez avant le ${date(sub.grace_end)} pour continuer à facturer.`;
+        if (sub.state === "expired") return "Abonnement échu : espace en consultation seule. Renouveler maintenant";
+        return "";
     }
     get site() { return currentSite(); }
     get focusMode() { return ["sell"].includes(this.route.name); }
@@ -111,10 +146,15 @@ class App extends Component {
             manage.push({ key: "catalog", label: "Catalogue", icon: "box" }, { key: "reports", label: "Rapports fiscaux", icon: "chart" },
                 { key: "audit", label: "Intégrité", icon: "shield" });
         }
-        manage.push({ key: "settings", label: "Paramètres", icon: "settings" });
+        manage.push({ key: "billing", label: "Abonnement", icon: "key" }, { key: "settings", label: "Paramètres", icon: "settings" });
         return [main, manage];
     }
     changeSite(id) { setSite(parseInt(id)); }
+    logout() {
+        // Les informations de l'entreprise gardées pour le mode hors ligne ne restent pas sur un poste partagé.
+        // Les ventes non envoyées, elles, restent : elles partiront à la prochaine connexion de l'entreprise.
+        try { localStorage.removeItem("norma.boot"); localStorage.removeItem("norma.catalog"); } catch { /* ignoré */ }
+    }
 }
 
 whenReady(async () => {
@@ -128,5 +168,11 @@ whenReady(async () => {
     }
     root.replaceChildren();
     document.documentElement.style.setProperty("--brand", session.company.color || "#0E4D64");
+    if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/norma/sw.js", { scope: "/norma/" }).catch(() => {});
+    }
+    if (session.offline && !["#/sell", "#/sync"].some((h) => location.hash.startsWith(h))) {
+        location.hash = ["pos", "restaurant", "invoice"].includes(session.category.workspace) ? "#/sell" : "#/sync";
+    }
     mount(App, root, { dev: false });
 });

@@ -65,6 +65,9 @@ class ResCompany(models.Model):
     norma_usd_rate = fields.Float("Taux du jour (CDF pour 1 USD)", digits=(16, 4), default=0)
     norma_verified = fields.Boolean("Entreprise vérifiée par la plateforme", default=False, copy=False,
                                     help="Identité et NIF contrôlés par l'administration centrale : condition pour relier l'e-MCF de la DGI.")
+    norma_tz = fields.Selection([('Africa/Kinshasa', "Ouest (Kinshasa, Kongo-Central, Équateur…) — UTC+1"),
+                                 ('Africa/Lubumbashi', "Est (Lubumbashi, Goma, Bukavu, Kisangani…) — UTC+2")],
+                                default='Africa/Kinshasa', string="Fuseau horaire")
     norma_max_discount = fields.Float("Remise maximale du caissier (%)", default=10)
     norma_owner_id = fields.Many2one('res.users', string="Administrateur principal")
     norma_signup_ip = fields.Char()

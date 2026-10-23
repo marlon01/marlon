@@ -155,6 +155,7 @@ export class InvoiceDetail extends Component {
                         <dl class="nm-dl">
                             <dt>Établissement</dt><dd><t t-esc="inv.site_code"/> — <t t-esc="inv.site"/></dd>
                             <dt>Opérateur</dt><dd t-esc="inv.operator"/>
+                            <dt t-if="inv.offline_at">Vente hors ligne</dt><dd t-if="inv.offline_at" t-esc="dateTime(inv.offline_at)"/>
                             <dt>Client</dt><dd><t t-esc="inv.client_name or 'Client comptant'"/><t t-if="inv.client_nif"> · NIF <t t-esc="inv.client_nif"/></t></dd>
                             <dt t-if="inv.origin">Référence</dt><dd t-if="inv.origin" t-esc="inv.origin"/>
                             <dt t-if="inv.reversed_number">Facture d'origine</dt><dd t-if="inv.reversed_number"><a t-att-href="'#/invoices/' + inv.reversed_id" t-esc="inv.reversed_number"/> (<t t-esc="inv.reference_type"/>) — <t t-esc="inv.reversal_reason"/></dd>

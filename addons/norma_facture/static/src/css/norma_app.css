@@ -213,3 +213,29 @@
 .nm-editor-lines td:first-child { min-width: 260px; }
 .nm-pos > *, .nm-folio > *, .nm-editor > *, .nm-detail > *, .nm-dash > * { min-width: 0; }
 @media (max-width: 860px) { body.nm-body { overflow-x: hidden; } .nm-scan-in::placeholder { font-size: 14px; } }
+
+/* ================================================================ synchronisation et abonnement */
+.nm-sync { display: flex; align-items: center; gap: 9px; padding: 9px 10px; border-radius: var(--r-s); background: rgba(255, 255, 255, .06); color: #DCE6E9; text-decoration: none; font-size: 13px; }
+.nm-sync-dot { flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 3px rgba(15, 123, 95, .3); }
+.nm-sync.is-pending .nm-sync-dot { background: var(--gold); box-shadow: 0 0 0 3px rgba(242, 183, 5, .3); }
+.nm-sync.is-offline { background: rgba(180, 35, 24, .25); color: #fff; }
+.nm-sync.is-offline .nm-sync-dot { background: #F97066; box-shadow: 0 0 0 3px rgba(249, 112, 102, .35); animation: nm-blink 1.2s ease-in-out infinite; }
+.nm-sync-badge { min-width: 22px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--gold); color: var(--ink); font: 700 12px/20px var(--num); text-align: center; }
+@keyframes nm-blink { 50% { opacity: .35; } }
+.nm-subbar { display: block; padding: 10px 24px; background: var(--river-soft); color: var(--river-2); font-weight: 600; text-decoration: none; border-bottom: 1px solid #C9DDE3; }
+.nm-subbar.is-grace { background: var(--warn-soft); color: #7C3A06; border-color: #F3D3A4; }
+.nm-subbar.is-expired, .nm-subbar.is-offline { background: var(--bad-soft); color: #7A1A12; border-color: #F0B4AE; }
+.nm-billing { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; }
+.nm-sub h2 { font-size: 24px; margin: 12px 0 6px; }
+.nm-sub p { margin: 0; color: var(--ink-2); max-width: 60ch; }
+.nm-plan h2 { font-size: 18px; }
+.nm-plan-price { margin: 8px 0 10px; font-size: 16px; color: var(--muted); }
+.nm-plan-price b { font-size: 40px; color: var(--ink); }
+.nm-plan ul { margin: 0 0 12px; padding-left: 18px; color: var(--ink-2); }
+.nm-pay-grid { max-width: 760px; }
+.nm-durations { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.nm-duration { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 14px; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--surface); cursor: pointer; text-align: left; }
+.nm-duration span { font-size: 22px; font-weight: 600; }
+.nm-duration small { color: var(--ok); font-weight: 600; }
+.nm-duration.is-on { border-color: var(--river); box-shadow: inset 0 0 0 1px var(--river); background: #F6FAFB; }
+@media (max-width: 860px) { .nm-billing { grid-template-columns: 1fr; } .nm-durations { grid-template-columns: 1fr; } }

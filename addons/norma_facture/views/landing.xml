@@ -53,18 +53,22 @@
                     .rates span{display:inline-flex;gap:8px;align-items:center;padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:var(--paper);font-size:13px}
                     .final{background:var(--river);color:#fff;border-radius:var(--r-l);padding:48px;display:flex;gap:30px;align-items:center;justify-content:space-between;flex-wrap:wrap}
                     .final h2{color:#fff;max-width:20ch}.final p{color:#CFE1E6;margin:10px 0 0;max-width:52ch}
+                    .prices{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+                    .price{display:flex;flex-direction:column;gap:4px;padding:18px;border:1px solid var(--line);border-radius:var(--r-m);background:var(--paper)}
+                    .price .pc{font-weight:600}.price b{font:600 34px/1.1 var(--num);color:var(--ink)}.price b small{font:500 14px var(--text);color:var(--muted)}
+                    .price .ph{color:var(--ink-2);font-size:14px}.price .py{color:var(--muted);font-size:13px}
                     footer{padding:34px 0 46px;color:var(--muted);font-size:14px}
                     footer .w{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
                     footer a{color:var(--ink-2)}
-                    @media (max-width:960px){.hero .w{grid-template-columns:1fr}.ticket{transform:none}.trades,.flow,.proof{grid-template-columns:1fr 1fr}.top nav{display:none}}
-                    @media (max-width:600px){.trades,.flow,.proof{grid-template-columns:1fr}.stamp{right:-6px}.final{padding:28px}.top .act .hide-s{display:none}}
+                    @media (max-width:960px){.prices{grid-template-columns:1fr 1fr}.hero .w{grid-template-columns:1fr}.ticket{transform:none}.trades,.flow,.proof{grid-template-columns:1fr 1fr}.top nav{display:none}}
+                    @media (max-width:600px){.prices,.trades,.flow,.proof{grid-template-columns:1fr}.stamp{right:-6px}.final{padding:28px}.top .act .hide-s{display:none}}
                     @media (prefers-reduced-motion:reduce){.stamp{animation:none}}
                 </style>
             </head>
             <body class="nm-body">
                 <header class="top"><div class="w">
                     <a class="logo" href="/norma"><img src="/norma_facture/static/description/icon.png" alt=""/><b>NORMA</b></a>
-                    <nav aria-label="Navigation"><a href="#metiers">Métiers</a><a href="#fonctionnement">Fonctionnement</a><a href="#conformite">Conformité</a></nav>
+                    <nav aria-label="Navigation"><a href="#metiers">Métiers</a><a href="#fonctionnement">Fonctionnement</a><a href="#conformite">Conformité</a><a href="#tarifs">Tarifs</a></nav>
                     <div class="act">
                         <a t-if="space" class="nm-btn nm-btn-primary" t-att-href="space">Mon espace</a>
                         <t t-else=""><a class="nm-btn nm-btn-ghost hide-s" href="/norma/login">Se connecter</a><a class="nm-btn nm-btn-primary" href="/norma/signup">Créer un compte</a></t>
@@ -81,9 +85,10 @@
                                 <a class="nm-btn ghost" href="/norma/login">Se connecter</a>
                             </div>
                             <div class="facts">
+                                <span><b>dès 5 $</b>par mois</span>
                                 <span><b>e-MCF v1.3</b>API de la DGI</span>
                                 <span><b>A → S</b>groupes de taxation</span>
-                                <span><b>FV · FT · FA · EV · ET · EA</b>tous les types de facture</span>
+
                             </div>
                         </div>
                         <div class="ticket" aria-hidden="true">
@@ -132,7 +137,7 @@
                             <div><h3>Calcul SFE exact</h3><p>Total par groupe de taxation, TVA arrondie au centime supérieur, taxe spécifique dans la base, montants transmis en CDF même pour une facture en dollars.</p></div>
                             <div><h3>Factures définitives</h3><p>Une facture normalisée ne se modifie ni ne se supprime. Les corrections passent par une facture d'avoir (COR, RAN, RAM, RRR), plafonnée à la facture d'origine.</p></div>
                             <div><h3>Numérotation sans trou</h3><p>Une série par établissement et par type de facture. Une facture abandonnée garde son numéro et son motif.</p></div>
-                            <div><h3>Coupures maîtrisées</h3><p>Reprise automatique sans double envoi ; une confirmation restée sans réponse est signalée pour vérification, jamais renvoyée à l'aveugle.</p></div>
+                            <div><h3>Coupures maîtrisées</h3><p>Internet coupé : la caisse continue, garde les ventes sur le poste et imprime un ticket provisoire à QR code. DGI indisponible : les factures attendent en file. Tout se synchronise seul au retour, sans doublon.</p></div>
                             <div><h3>Traçabilité scellée</h3><p>Journal d'audit et chaîne des factures scellés par empreintes SHA-256 ; chaque échange avec la DGI est conservé.</p></div>
                             <div><h3>Accès par rôle et par site</h3><p>Caissiers limités à leurs établissements, remises plafonnées, prix modifiables par le seul gestionnaire, données cloisonnées entre entreprises.</p></div>
                         </div>
@@ -141,9 +146,23 @@
                         </div>
                     </div></section>
 
-                    <section class="band" style="padding-top:0"><div class="w">
+                    <section class="band alt" id="tarifs"><div class="w">
+                        <h2>Un prix pensé pour toutes les entreprises.</h2>
+                        <p class="lead"><t t-out="trial_days"/> jours d'essai gratuit avec toutes les fonctions, puis un abonnement selon votre activité. Factures illimitées, utilisateurs illimités, mises à jour de la DGI incluses. Paiement par Mobile Money.</p>
+                        <div class="prices">
+                            <div t-foreach="plans" t-as="p" class="price">
+                                <span class="pc" t-out="p.category_id.name"/>
+                                <b><t t-out="'%g' % p.price_month"/> $<small> / mois</small></b>
+                                <span class="ph" t-out="p.highlight or ''"/>
+                                <span class="py">ou <t t-out="'%g' % p.price_year"/> $ par an (2 mois offerts)</span>
+                            </div>
+                        </div>
+                        <p style="color:var(--muted);font-size:14px;margin-top:16px">Un établissement inclus ; chaque établissement supplémentaire s'ajoute au tarif de la formule.</p>
+                    </div></section>
+
+                    <section class="band"><div class="w">
                         <div class="final">
-                            <div><h2>Facturez dès aujourd'hui, en démonstration.</h2><p>Créez le compte de votre entreprise, testez la caisse ou la réception, puis reliez vos établissements à l'e-MCF de la DGI.</p></div>
+                            <div><h2>Essayez gratuitement pendant <t t-out="trial_days"/> jours.</h2><p>Créez le compte de votre entreprise, testez la caisse ou la réception, puis reliez vos établissements à l'e-MCF de la DGI.</p></div>
                             <a class="nm-btn nm-btn-gold nm-btn-lg" href="/norma/signup">Créer un compte</a>
                         </div>
                     </div></section>

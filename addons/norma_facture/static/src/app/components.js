@@ -2,8 +2,36 @@
 import { Component, onWillStart, useState, xml } from "@odoo/owl";
 import { api } from "@norma_facture/common/rpc";
 import { BusyButton, Dialog, Icon, notify, notifyError, openDialog } from "@norma_facture/common/ui";
-import { money, STATE_LABELS, TYPE_SHORT } from "@norma_facture/common/format";
+import { dateTime, money, STATE_LABELS, TYPE_SHORT } from "@norma_facture/common/format";
+import { printerSettings, printTicket } from "@norma_facture/common/printer";
 import { session } from "@norma_facture/app/store";
+
+/** Données d'impression d'un ticket à partir d'une facture renvoyée par le serveur. */
+export function ticketFromInvoice(inv, change = 0) {
+    const site = session.sites.find((x) => x.id === inv.site_id) || { name: inv.site, code: inv.site_code };
+    return {
+        company: session.company, site, type: inv.type, number: inv.number, date: dateTime(inv.date), operator: inv.operator,
+        client_name: inv.client_name, client_nif: inv.client_nif,
+        lines: inv.lines.map((l) => ({ name: l.name, tax_group: l.tax_group, quantity: l.quantity, price: l.net_price,
+            discount_pct: l.discount_pct, total: l.total })),
+        groups: inv.groups, total_ht: inv.total_ht, total_tax: inv.total_tax, total: inv.total, currency: "CDF",
+        payments: inv.payments.map((p) => ({ label: p.label, amount: p.amount_cdf })), change,
+        emcf_code: inv.state === "normalized" ? inv.emcf_code : "", emcf_qr: inv.emcf_qr, emcf_nim: inv.emcf_nim,
+        emcf_counters: inv.emcf_counters, emcf_datetime: inv.emcf_datetime, simulation: inv.emcf_mode !== "production",
+        verify_url: `${location.origin}/norma/v/${inv.verify_token}`,
+    };
+}
+
+/** Impression directe du ticket d'une facture selon le réglage du poste (sans ouvrir d'onglet). */
+export async function autoPrint(inv, change = 0) {
+    if (!printerSettings().auto) return;
+    try {
+        await printTicket(ticketFromInvoice(inv, change), { serverUrl: `/norma/print/${inv.id}?format=ticket` });
+        api("invoice_printed", { id: inv.id }).catch(() => {});
+    } catch (err) {
+        notifyError(err);
+    }
+}
 
 export function printInvoice(id, format = "a4", auto = true) {
     window.open(`/norma/print/${id}?format=${format}${auto ? "&auto=1" : ""}`, "_blank", "noopener");
@@ -165,7 +193,9 @@ export class PaymentDialog extends Component {
         this.state.lines.push({ method: code, amount: rest });
     }
     confirm() {
-        this.props.close(this.state.lines.filter((l) => Number(l.amount) > 0).map((l) => ({ method: l.method, amount: this.round(l.amount) })));
+        const out = this.state.lines.filter((l) => Number(l.amount) > 0).map((l) => ({ method: l.method, amount: this.round(l.amount) }));
+        out.change = this.cashLine ? this.change : 0;
+        this.props.close(out);
     }
 }
 
@@ -197,7 +227,7 @@ export class IssuedDialog extends Component {
                 <button class="nm-btn" t-on-click="() => this.print('a4')"><Icon name="'print'"/> A4</button>
                 <button class="nm-btn" t-on-click="() => this.print('ticket')"><Icon name="'receipt'"/> Ticket</button>
                 <button t-if="!ok and inv.state === 'failed'" class="nm-btn" t-on-click="retry"><Icon name="'refresh'"/> Réessayer</button>
-                <button class="nm-btn nm-btn-primary" t-on-click="() => props.close('next')" t-esc="props.nextLabel or 'Vente suivante'"/>
+                <button class="nm-btn nm-btn-primary" data-autofocus="1" t-on-click="() => props.close('next')" t-esc="props.nextLabel or 'Vente suivante'"/>
             </t>
         </Dialog>`;
     static components = { Dialog, Icon };
@@ -205,9 +235,7 @@ export class IssuedDialog extends Component {
     setup() {
         this.money = money;
         this.state = useState({ inv: this.props.invoice });
-        if (this.props.autoPrint) {
-            printInvoice(this.inv.id, this.props.autoPrint, true);
-        }
+
     }
     get inv() { return this.state.inv; }
     get ok() { return this.inv.state === "normalized"; }

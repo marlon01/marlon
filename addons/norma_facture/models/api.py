@@ -20,14 +20,15 @@ EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$')
 PUBLIC = {}
 
 
-def role(minimum):
+def role(minimum, active=False):
     """Déclare une opération de la façade et son rôle minimal.
 
     La méthode devient privée pour l'ORM : seul ``_dispatch`` (route /norma/api) peut l'appeler, après le contrôle
     du rôle, de l'entreprise et de son état. /web/dataset/call_kw la refuse.
+    ``active`` : l'opération crée ou modifie des données et exige un abonnement en cours (essai, payé ou grâce).
     """
     def deco(fn):
-        PUBLIC[fn.__name__] = minimum
+        PUBLIC[fn.__name__] = (minimum, active)
         return api.private(fn)
     return deco
 
@@ -67,9 +68,9 @@ class NormaApi(models.AbstractModel):
     # ================================================================ aiguillage
     @api.model
     def _dispatch(self, method, params):
-        minimum = PUBLIC.get(method)
-        if not minimum:
+        if method not in PUBLIC:
             raise AccessError(_("Opération inconnue."))
+        minimum, needs_active = PUBLIC[method]
         user = self.env.user
         company = user.company_id
         current = user._norma_role()
@@ -79,8 +80,21 @@ class NormaApi(models.AbstractModel):
             raise AccessError(_("Le compte de votre entreprise est suspendu. Contactez le support."))
         if ROLE_RANK[current] < ROLE_RANK[minimum]:
             raise AccessError(_("Votre rôle ne permet pas cette opération."))
+        if needs_active and company.sudo()._norma_access() != 'full' and not self._covered_offline_sale(method, params, company):
+            raise AccessError(_("Votre abonnement est arrivé à échéance : l'espace est en consultation seule. "
+                                "Renouvelez-le dans Abonnement pour reprendre la facturation."))
         params = params if isinstance(params, dict) else {}
         return getattr(self, method)(**params)
+
+    def _covered_offline_sale(self, method, params, company):
+        if method != 'checkout' or not isinstance(params, dict) or not params.get('offline_at'):
+            return False
+        try:
+            when = self._offline_at(params['offline_at'])
+        except UserError:
+            return False
+        grace = company.sudo()._norma_grace_end()
+        return bool(grace and when <= grace)
 
     # ---------------------------------------------------------------- utilitaires
     def _company(self):
@@ -133,7 +147,70 @@ class NormaApi(models.AbstractModel):
             'client_types': [{'code': c, 'label': l} for c, l in CLIENT_TYPES],
             'item_types': [{'code': c, 'label': l} for c, l in ITEM_TYPES],
             'max_discount': company.norma_max_discount if not self._is('manager') else 100,
+            'subscription': self._subscription_dict(company),
         }
+
+    def _subscription_dict(self, company):
+        plan = company._norma_plan()
+        state = company._norma_sub_state()
+        return {'state': state, 'access': company._norma_access(), 'days_left': company._norma_days_left(),
+                'trial_end': fields.Datetime.to_string(company._norma_trial()) if company._norma_trial() else '',
+                'period_end': fields.Datetime.to_string(company.norma_period_end) if company.norma_period_end else '',
+                'grace_end': fields.Datetime.to_string(company._norma_grace_end()) if company._norma_grace_end() else '',
+                'plan': plan._public_dict()[0] if plan else None,
+                'pending': bool(company.norma_payment_ids.filtered(lambda p: p.state == 'submitted'))}
+
+    # ================================================================ abonnement
+    @role('cashier')
+    def billing(self):
+        from .subscription import MOBILE_METHODS, setting
+        company = self._company()
+        quotes = {}
+        try:
+            quotes = {m: {k: v for k, v in company._norma_quote(m).items() if k != 'plan'} for m in (1, 3, 12)}
+        except UserError:
+            pass
+        payments = company.norma_payment_ids.sudo()[:30]
+        return {'subscription': self._subscription_dict(company), 'quotes': quotes,
+                'sites': company._norma_billable_sites(),
+                'methods': [{'code': c, 'label': l} for c, l in MOBILE_METHODS],
+                'instructions': setting(self.env, 'norma.pay_instructions'),
+                'payments': payments._public_dict(), 'can_pay': self._is('admin')}
+
+    @role('admin')
+    def billing_declare(self, months, method, reference, payer_phone='', proof=None):
+        from .subscription import MOBILE_METHODS
+        company = self._company()
+        months = int(_num(months, _('Durée'), 1, 12))
+        if months not in (1, 3, 12):
+            raise UserError(_("Durée proposée : 1, 3 ou 12 mois."))
+        if method not in dict(MOBILE_METHODS):
+            raise UserError(_("Moyen de paiement inconnu."))
+        reference = _txt(reference, 60).upper()
+        if len(reference) < 4:
+            raise UserError(_("Indiquez la référence de la transaction reçue par SMS."))
+        Pay = self.env['norma.subscription.payment'].sudo()
+        if Pay.search_count([('method', '=', method), ('reference', '=', reference)]):
+            raise UserError(_("Cette référence de transaction a déjà été déclarée."))
+        if Pay.search_count([('company_id', '=', company.id), ('state', '=', 'submitted')]) >= 3:
+            raise UserError(_("Trois paiements attendent déjà la validation. Patientez ou contactez le support."))
+        quote = company._norma_quote(months)
+        vals = {'company_id': company.id, 'plan_id': quote['plan'].id, 'months': months, 'extra_sites': quote['extra_sites'],
+                'amount': quote['total'], 'method': method, 'reference': reference,
+                'payer_phone': _txt(payer_phone, 32) or False, 'declared_by': self.env.user.id}
+        if proof:
+            raw = base64.b64decode(str(proof).split(',')[-1], validate=False)
+            if len(raw) > 3 * 1024 * 1024:
+                raise UserError(_("Justificatif trop lourd (3 Mo maximum)."))
+            kind = 'image/png' if raw[:8] == b'\x89PNG\r\n\x1a\n' else ('image/jpeg' if raw[:3] == b'\xff\xd8\xff' else (
+                'application/pdf' if raw[:5] == b'%PDF-' else None))
+            if not kind:
+                raise UserError(_("Justificatif : image PNG, JPEG ou PDF."))
+            vals.update(proof=base64.b64encode(raw), proof_type=kind)
+        pay = Pay.create(vals)
+        self._audit('subscription.declared', _("Paiement déclaré : %s USD (%s mois), réf. %s") % (pay.amount, months, reference),
+                    {'payment': pay.id})
+        return self.billing()
 
     def _company_dict(self, company):
         return {
@@ -145,6 +222,7 @@ class NormaApi(models.AbstractModel):
             'color': company.norma_brand_color or '#0E4D64', 'footer': company.norma_invoice_footer or '',
             'logo': '/norma/logo/%s' % company.id, 'max_discount': company.norma_max_discount,
             'category': company.norma_category_id.code or '', 'verified': company.norma_verified,
+            'tz': company.norma_tz or 'Africa/Kinshasa',
         }
 
     # ================================================================ catalogue
@@ -162,7 +240,7 @@ class NormaApi(models.AbstractModel):
             [('company_id', '=', self._company().id)])
         return products._public_dict()
 
-    @role('manager')
+    @role('manager', active=True)
     def product_save(self, id=None, **vals):
         company = self._company()
         group = self.env['norma.tax.group'].sudo().search([('code', '=', _txt(vals.get('tax_group'), 2))], limit=1)
@@ -193,7 +271,7 @@ class NormaApi(models.AbstractModel):
                     {'product': product.id, 'price': product.price, 'group': group.code})
         return product._public_dict()[0]
 
-    @role('manager')
+    @role('manager', active=True)
     def category_save(self, id=None, name='', color='#0E4D64'):
         name = _txt(name, 60)
         if not name:
@@ -207,7 +285,7 @@ class NormaApi(models.AbstractModel):
                 {'name': name, 'color': color, 'company_id': self._company().id})
         return {'id': cat.id, 'name': cat.name, 'color': cat.color}
 
-    @role('manager')
+    @role('manager', active=True)
     def category_delete(self, id):
         cat = self._own('norma.product.category', id)
         self.env['norma.product'].sudo().with_context(active_test=False).search(
@@ -226,7 +304,7 @@ class NormaApi(models.AbstractModel):
         recs = self.env['norma.customer'].sudo().search(domain, limit=min(int(limit or 50), 200))
         return recs._public_dict()
 
-    @role('cashier')
+    @role('cashier', active=True)
     def customer_save(self, id=None, **vals):
         ctype = vals.get('client_type') if vals.get('client_type') in dict(CLIENT_TYPES) else 'PP'
         email = _txt(vals.get('email'), 120)
@@ -253,7 +331,21 @@ class NormaApi(models.AbstractModel):
         return cust._public_dict()[0]
 
     # ================================================================ vente directe (caisse, éditeur)
-    def _lines_from(self, raw_lines, allow_price):
+    def _offline_at(self, value):
+        """Heure d'une vente faite hors ligne (horloge du poste) : ni dans le futur, ni plus vieille que 7 jours."""
+        if not value:
+            return None
+        try:
+            when = fields.Datetime.to_datetime(str(value).replace('T', ' ').replace('Z', '')[:19])
+        except ValueError:
+            raise UserError(_("Heure de vente hors ligne invalide."))
+        now = fields.Datetime.now()
+        if when > now + timedelta(minutes=10) or when < now - timedelta(days=7):
+            raise UserError(_("Vente hors ligne trop ancienne (plus de 7 jours) ou datée dans le futur : "
+                              "un gestionnaire doit la saisir à nouveau."))
+        return when
+
+    def _lines_from(self, raw_lines, allow_price, offline_at=None):
         company = self._company()
         max_disc = 100 if self._is('manager') else company.norma_max_discount
         if not isinstance(raw_lines, list) or not raw_lines:
@@ -272,9 +364,13 @@ class NormaApi(models.AbstractModel):
             if raw.get('name') and product.item_type == 'SER':
                 line['name'] = _txt(raw.get('name'), 120)
             if raw.get('price') not in (None, '') and float(raw.get('price')) != product.price:
-                if not allow_price:
+                price = _num(raw.get('price'), _('Prix'), 0.01, 1e12)
+                if offline_at and round(price, 2) in self.env['norma.product.price']._prices_since(product, offline_at):
+                    line['price'] = price  # prix affiché au moment de la vente hors ligne
+                elif not allow_price:
                     raise AccessError(_("Seul un gestionnaire peut modifier un prix."))
-                line['price'] = _num(raw.get('price'), _('Prix'), 0.01, 1e12)
+                else:
+                    line['price'] = price
             lines.append(line)
         return lines
 
@@ -295,8 +391,9 @@ class NormaApi(models.AbstractModel):
         done = self.env['norma.invoice'].sudo().search([('company_id', '=', self._company().id), ('request_key', '=', key)], limit=1)
         return done, key
 
-    @role('cashier')
-    def checkout(self, site_id, lines, payments=None, customer_id=None, invoice_type='FV', note='', origin='', request_key=None):
+    @role('cashier', active=True)
+    def checkout(self, site_id, lines, payments=None, customer_id=None, invoice_type='FV', note='', origin='', request_key=None,
+                 offline_at=None):
         """Vente immédiate : création, numérotation, normalisation DGI. Retourne la facture complète."""
         done, key = self._replayed(request_key)
         if done:
@@ -304,10 +401,13 @@ class NormaApi(models.AbstractModel):
         if invoice_type not in ('FV', 'FT', 'EV', 'ET'):
             raise UserError(_("Type de facture non autorisé ici (utilisez « Avoir » pour un remboursement)."))
         site = self._site(site_id)
+        sold_at = self._offline_at(offline_at)
+        if sold_at and not key:
+            raise UserError(_("Une vente hors ligne doit porter sa clé de poste."))
         customer = self._own('norma.customer', customer_id, 'client') if customer_id else None
         inv = self.env['norma.invoice']._build(site, {
-            'invoice_type': invoice_type, 'customer': customer,
-            'lines': self._lines_from(lines, allow_price=self._is('manager')),
+            'invoice_type': invoice_type, 'customer': customer, 'offline_at': sold_at,
+            'lines': self._lines_from(lines, allow_price=self._is('manager'), offline_at=sold_at),
             'payments': self._payments_from(payments), 'note': _txt(note, 200), 'origin': _txt(origin, 80),
             'request_key': key,
         }, self.env.user)
@@ -379,7 +479,7 @@ class NormaApi(models.AbstractModel):
         inv._release_uncertain()
         return inv._public_dict(full=True)[0]
 
-    @role('manager')
+    @role('manager', active=True)
     def credit_note(self, id, lines, reference_type='COR', reason='', payment_method='ESPECES', request_key=None):
         done, key = self._replayed(request_key)
         if done:
@@ -411,6 +511,16 @@ class NormaApi(models.AbstractModel):
         return credit._public_dict(full=True)[0]
 
     @role('cashier')
+    def sync_status(self):
+        """Factures pas encore normalisées (DGI injoignable ou confirmation à vérifier) sur les établissements de l'utilisateur."""
+        domain = [('company_id', '=', self._company().id), ('state', 'in', ('failed', 'uncertain'))]
+        if not self._is('manager'):
+            domain.append(('site_id', 'in', self.env.user._norma_sites().ids))
+        Inv = self.env['norma.invoice'].sudo()
+        return {'pending': Inv.search_count(domain), 'blocked': Inv.search_count(domain + [('emcf_blocked', '=', True)]),
+                'subscription': self._subscription_dict(self._company())}
+
+    @role('cashier')
     def invoice_printed(self, id):
         inv = self._invoice(id)
         inv.with_context(norma_engine=True).sudo().write({'print_count': inv.print_count + 1})
@@ -425,7 +535,7 @@ class NormaApi(models.AbstractModel):
         recs = self.env['norma.place'].sudo().search([('site_id', '=', site.id), ('kind', '=', kind), ('active', '=', True)])
         return recs._public_dict()
 
-    @role('manager')
+    @role('manager', active=True)
     def place_save(self, site_id, kind, name, id=None, zone='', capacity=2, rate_product_id=None, active=True):
         site = self._site(site_id)
         if kind not in ('room', 'table') or not _txt(name, 30):
@@ -448,7 +558,7 @@ class NormaApi(models.AbstractModel):
             place = self.env['norma.place'].sudo().create(dict(vals, site_id=site.id, kind=kind))
         return place._public_dict()[0]
 
-    @role('cashier')
+    @role('cashier', active=True)
     def housekeeping(self, id, state):
         place = self._own('norma.place', id)
         self._site(place.site_id.id)
@@ -462,7 +572,7 @@ class NormaApi(models.AbstractModel):
         self._site(folio.site_id.id)
         return folio
 
-    @role('cashier')
+    @role('cashier', active=True)
     def folio_open(self, place_id, customer_id=None, guests=1, checkout_planned=None, note=''):
         place = self._own('norma.place', place_id)
         self._site(place.site_id.id)
@@ -490,7 +600,7 @@ class NormaApi(models.AbstractModel):
             folio._post_nights()
         return folio._public_dict()
 
-    @role('cashier')
+    @role('cashier', active=True)
     def folio_add(self, id, product_id, quantity=1):
         folio = self._folio(id)
         if folio.state != 'open':
@@ -507,7 +617,7 @@ class NormaApi(models.AbstractModel):
                                                         'name': product.name, 'price': product.price, 'quantity': qty})
         return folio._public_dict()
 
-    @role('cashier')
+    @role('cashier', active=True)
     def folio_remove(self, id, line_id):
         folio = self._folio(id)
         line = folio.line_ids.filtered(lambda l: l.id == _int(line_id, 'ligne'))
@@ -522,13 +632,13 @@ class NormaApi(models.AbstractModel):
         line.unlink()
         return folio._public_dict()
 
-    @role('cashier')
+    @role('cashier', active=True)
     def folio_send(self, id):
         folio = self._folio(id)
         folio.line_ids.filtered(lambda l: not l.sent and not l.is_night).write({'sent': True})
         return folio._public_dict()
 
-    @role('cashier')
+    @role('cashier', active=True)
     def folio_move(self, id, place_id):
         folio = self._folio(id)
         place = self._own('norma.place', place_id)
@@ -537,7 +647,7 @@ class NormaApi(models.AbstractModel):
         folio.place_id = place
         return folio._public_dict()
 
-    @role('cashier')
+    @role('cashier', active=True)
     def folio_checkout(self, id, payments=None, customer_id=None, invoice_type='FV'):
         folio = self._folio(id)
         if folio.state != 'open':
@@ -562,7 +672,7 @@ class NormaApi(models.AbstractModel):
         inv._issue()
         return inv._public_dict(full=True)[0]
 
-    @role('manager')
+    @role('manager', active=True)
     def folio_cancel(self, id, reason=''):
         folio = self._folio(id)
         if folio.state != 'open':
@@ -577,7 +687,8 @@ class NormaApi(models.AbstractModel):
 
     # ================================================================ tableau de bord et rapports
     def _day_bounds(self, day):
-        tz_now = fields.Datetime.context_timestamp(self, fields.Datetime.now())
+        tz_now = fields.Datetime.context_timestamp(self.with_context(tz=self._company().norma_tz or 'Africa/Kinshasa'),
+                                                   fields.Datetime.now())
         offset = tz_now.utcoffset() or timedelta(0)
         start = datetime.combine(day, time.min) - offset
         return start, start + timedelta(days=1)
@@ -591,7 +702,8 @@ class NormaApi(models.AbstractModel):
             base.append(('site_id', '=', self._site(site_id).id))
         elif not self._is('manager'):
             base.append(('site_id', 'in', self.env.user._norma_sites().ids))
-        today = fields.Datetime.context_timestamp(self, fields.Datetime.now()).date()
+        today = fields.Datetime.context_timestamp(self.with_context(tz=company.norma_tz or 'Africa/Kinshasa'),
+                                                  fields.Datetime.now()).date()
         start, end = self._day_bounds(today)
         month_start, _e = self._day_bounds(today.replace(day=1))
 
@@ -731,6 +843,8 @@ class NormaApi(models.AbstractModel):
             data['norma_tax_regime'] = vals['regime']
         if vals.get('currency') in ('CDF', 'USD'):
             data['norma_currency'] = vals['currency']
+        if vals.get('tz') in ('Africa/Kinshasa', 'Africa/Lubumbashi'):
+            data['norma_tz'] = vals['tz']
         if re.match(r'^#[0-9A-Fa-f]{6}$', vals.get('color') or ''):
             data['norma_brand_color'] = vals['color']
         if data['email'] and not EMAIL_RE.match(data['email']):
@@ -768,7 +882,7 @@ class NormaApi(models.AbstractModel):
             d['has_token'] = bool(s.emcf_token)
         return out
 
-    @role('admin')
+    @role('admin', active=True)
     def site_save(self, id=None, **vals):
         company = self._company()
         data = {'name': _txt(vals.get('name'), 80), 'code': _txt(vals.get('code'), 24).upper(),
@@ -841,7 +955,7 @@ class NormaApi(models.AbstractModel):
                  'last_login': fields.Datetime.to_string(u.login_date) if u.login_date else ''}
                 for u in users if u._norma_role()]
 
-    @role('admin')
+    @role('admin', active=True)
     def user_save(self, id=None, name='', login='', role='cashier', site_ids=None, password='', active=True):
         company = self._company()
         if role not in ROLE_RANK:
@@ -882,7 +996,7 @@ class NormaApi(models.AbstractModel):
                 'name': name, 'login': login, 'email': login, 'password': password,
                 'company_id': company.id, 'company_ids': [(6, 0, [company.id])],
                 'groups_id': [(6, 0, groups)], 'norma_site_ids': [(6, 0, sites.ids)],
-                'lang': self.env.user.lang,
+                'lang': self.env.user.lang, 'tz': company.norma_tz or 'Africa/Kinshasa',
             })
             user.partner_id.company_id = company
         if password and id:

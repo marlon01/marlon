@@ -2,6 +2,7 @@
 """Inscription des entreprises et administration centrale de la plateforme."""
 import logging
 import re
+from datetime import timedelta
 
 from odoo import api, fields, models, _
 from odoo.exceptions import AccessError, UserError, ValidationError
@@ -116,7 +117,9 @@ class NormaPlatform(models.AbstractModel):
     @api.model
     def _signup(self, vals, ip=None):
         env = self.env(su=True)
+        from .subscription import setting
         company = env['res.company'].create({
+            'norma_trial_end': fields.Datetime.now() + timedelta(days=setting(env, 'norma.trial_days', int)),
             'name': vals['company'], 'email': vals['email'], 'phone': vals['phone'] or False,
             'street': vals['address'], 'city': vals['city'], 'country_id': env.ref('base.cd').id,
             'currency_id': (env.ref('base.CDF', raise_if_not_found=False) or env.ref('base.USD')).id,
@@ -133,7 +136,7 @@ class NormaPlatform(models.AbstractModel):
         lang = 'fr_FR' if env['res.lang']._lang_get('fr_FR') else (env.lang or 'en_US')
         user = env['res.users'].with_context(no_reset_password=True).create({
             'name': vals['contact'], 'login': vals['email'], 'email': vals['email'], 'password': vals['password'],
-            'company_id': company.id, 'company_ids': [(6, 0, [company.id])], 'lang': lang,
+            'company_id': company.id, 'company_ids': [(6, 0, [company.id])], 'lang': lang, 'tz': company.norma_tz,
             'groups_id': [(6, 0, [env.ref('base.group_portal').id, env.ref('norma_facture.group_norma_admin').id])],
         })
         user.partner_id.write({'company_id': company.id, 'phone': vals['phone'] or False})
@@ -196,7 +199,13 @@ class NormaPlatform(models.AbstractModel):
                                                     ('date', '>=', month)]),
                 'attention': Inv.search_count([('company_id', '=', c.id), ('state', 'in', ('failed', 'uncertain'))]),
                 'owner': c.norma_owner_id.login or '', 'verified': c.norma_verified,
+                'sub_state': c._norma_sub_state(), 'plan': c._norma_plan().name or '',
+                'trial_end': fields.Datetime.to_string(c._norma_trial()) if c._norma_trial() else '',
+                'period_end': fields.Datetime.to_string(c.norma_period_end) if c.norma_period_end else '',
+                'monthly': self._monthly_value(c),
             })
+        Pay = self.env['norma.subscription.payment'].sudo()
+        month_paid = Pay.search([('state', '=', 'validated'), ('validated_at', '>=', month)])
         by_cat = {}
         for r in rows:
             by_cat[r['category']] = by_cat.get(r['category'], 0) + 1
@@ -205,7 +214,88 @@ class NormaPlatform(models.AbstractModel):
             'invoices_month': sum(r['invoices_month'] for r in rows), 'attention': sum(r['attention'] for r in rows),
             'by_category': [{'name': k, 'count': v} for k, v in by_cat.items()],
             'tax_groups': self.env['norma.tax.group'].sudo().with_context(active_test=False).search([])._public_dict(),
+            'mrr': round(sum(r['monthly'] for r in rows if r['sub_state'] in ('active', 'grace')), 2),
+            'paying': len([r for r in rows if r['sub_state'] in ('active', 'grace')]),
+            'trials': len([r for r in rows if r['sub_state'] == 'trial']),
+            'expired': len([r for r in rows if r['sub_state'] == 'expired']),
+            'collected_month': round(sum(month_paid.mapped('amount')), 2),
+            'payments': Pay.search([('state', '=', 'submitted')], order='id')._public_dict(),
+            'recent_payments': Pay.search([('state', '!=', 'submitted')], limit=20)._public_dict(),
+            'plans': self.env['norma.plan'].sudo().with_context(active_test=False).search([])._public_dict(),
+            'settings': self._settings(),
         }
+
+    def _monthly_value(self, company):
+        try:
+            return company._norma_quote(1)['total']
+        except UserError:
+            return 0.0
+
+    def _settings(self):
+        from .subscription import setting
+        return {'trial_days': setting(self.env, 'norma.trial_days', int), 'grace_days': setting(self.env, 'norma.grace_days', int),
+                'pay_instructions': setting(self.env, 'norma.pay_instructions')}
+
+    @api.private
+    @api.model
+    def settings_save(self, trial_days, grace_days, pay_instructions):
+        self._check_platform()
+        trial_days, grace_days = int(trial_days), int(grace_days)
+        if not (0 <= trial_days <= 90 and 0 <= grace_days <= 60):
+            raise UserError(_("Durées hors limites (essai 0 à 90 jours, grâce 0 à 60 jours)."))
+        icp = self.env['ir.config_parameter'].sudo()
+        icp.set_param('norma.trial_days', str(trial_days))
+        icp.set_param('norma.grace_days', str(grace_days))
+        icp.set_param('norma.pay_instructions', (pay_instructions or '').strip()[:500])
+        return self._settings()
+
+    @api.private
+    @api.model
+    def payment_decide(self, payment_id, approve, reason=''):
+        self._check_platform()
+        pay = self.env['norma.subscription.payment'].sudo().browse(int(payment_id)).exists()
+        if not pay:
+            raise UserError(_("Paiement introuvable."))
+        if approve:
+            pay._validate(self.env.user)
+        else:
+            reason = (reason or '').strip()
+            if len(reason) < 3:
+                raise UserError(_("Indiquez le motif du refus (l'entreprise le verra)."))
+            if pay.state != 'submitted':
+                raise UserError(_("Ce paiement a déjà été traité."))
+            pay.write({'state': 'refused', 'refusal_reason': reason[:200], 'validated_by': self.env.user.id,
+                       'validated_at': fields.Datetime.now()})
+            self.env['norma.audit']._log(pay.company_id, 'subscription.refused', _("Paiement refusé : %s") % reason, {'payment': pay.id})
+        return self.overview()
+
+    @api.private
+    @api.model
+    def extend_trial(self, company_id, days):
+        self._check_platform()
+        company = self.env['res.company'].sudo().browse(int(company_id)).exists()
+        days = int(days)
+        if not company or not company.norma_enabled or not (1 <= days <= 90):
+            raise UserError(_("Prolongation invalide (1 à 90 jours)."))
+        base = max(filter(None, [fields.Datetime.now(), company._norma_trial()]))
+        company.norma_trial_end = base + timedelta(days=days)
+        self.env['norma.audit']._log(company, 'platform.trial', _("Essai prolongé de %s jour(s)") % days, {'days': days})
+        return self.overview()
+
+    @api.private
+    @api.model
+    def plan_save(self, id, name, price_month, price_year, sites_included, extra_site_price, highlight='', active=True):
+        self._check_platform()
+        plan = self.env['norma.plan'].sudo().with_context(active_test=False).browse(int(id)).exists()
+        if not plan:
+            raise UserError(_("Formule introuvable."))
+        vals = {'name': (name or plan.name)[:60], 'price_month': float(price_month), 'price_year': float(price_year),
+                'sites_included': int(sites_included), 'extra_site_price': float(extra_site_price),
+                'highlight': (highlight or '')[:80], 'active': bool(active)}
+        if min(vals['price_month'], vals['price_year'], vals['extra_site_price']) < 0 or vals['sites_included'] < 1:
+            raise UserError(_("Valeurs invalides."))
+        plan.write(vals)
+        return self.overview()['plans']
 
     @api.private
     @api.model

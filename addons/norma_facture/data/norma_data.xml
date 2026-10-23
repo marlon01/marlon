@@ -30,6 +30,17 @@
         <record id="category_restaurant" model="norma.category"><field name="code">restaurant</field><field name="name">Restaurant / bar</field><field name="description">Plan de salle, additions par table, cuisine</field><field name="workspace">restaurant</field><field name="icon">utensils</field><field name="sequence">60</field></record>
         <record id="category_services" model="norma.category"><field name="code">services</field><field name="name">Prestataire de services</field><field name="description">Factures détaillées aux entreprises, acomptes</field><field name="workspace">invoice</field><field name="icon">briefcase</field><field name="sequence">70</field></record>
         <record id="category_btp" model="norma.category"><field name="code">btp</field><field name="name">BTP / industrie / commerce de gros</field><field name="description">Factures B2B, acomptes, exportation</field><field name="workspace">invoice</field><field name="icon">factory</field><field name="sequence">80</field></record>
+
+        <!-- Formules d'abonnement par défaut (USD, modifiables par la plateforme). Annuel = 10 mois. -->
+        <record id="plan_magasin" model="norma.plan"><field name="category_id" ref="category_magasin"/><field name="name">Boutique</field><field name="price_month">5</field><field name="price_year">50</field><field name="sites_included">1</field><field name="extra_site_price">2</field><field name="highlight">Le prix d'un repas par mois</field><field name="sequence">0</field></record>
+        <record id="plan_services" model="norma.plan"><field name="category_id" ref="category_services"/><field name="name">Prestataire</field><field name="price_month">5</field><field name="price_year">50</field><field name="sites_included">1</field><field name="extra_site_price">2</field><field name="highlight">Factures B2B illimitées</field><field name="sequence">10</field></record>
+        <record id="plan_pharmacie" model="norma.plan"><field name="category_id" ref="category_pharmacie"/><field name="name">Pharmacie</field><field name="price_month">7</field><field name="price_year">70</field><field name="sites_included">1</field><field name="extra_site_price">3</field><field name="highlight">Caisse rapide et taux réduits</field><field name="sequence">20</field></record>
+        <record id="plan_restaurant" model="norma.plan"><field name="category_id" ref="category_restaurant"/><field name="name">Restaurant</field><field name="price_month">7</field><field name="price_year">70</field><field name="sites_included">1</field><field name="extra_site_price">3</field><field name="highlight">Salle, cuisine et caisse</field><field name="sequence">30</field></record>
+        <record id="plan_station" model="norma.plan"><field name="category_id" ref="category_station"/><field name="name">Station-service</field><field name="price_month">10</field><field name="price_year">100</field><field name="sites_included">1</field><field name="extra_site_price">4</field><field name="highlight">Caisse rapide multi-pistes</field><field name="sequence">40</field></record>
+        <record id="plan_supermarche" model="norma.plan"><field name="category_id" ref="category_supermarche"/><field name="name">Supermarché</field><field name="price_month">10</field><field name="price_year">100</field><field name="sites_included">1</field><field name="extra_site_price">4</field><field name="highlight">Caisses illimitées au lecteur</field><field name="sequence">50</field></record>
+        <record id="plan_hotel" model="norma.plan"><field name="category_id" ref="category_hotel"/><field name="name">Hôtel</field><field name="price_month">12</field><field name="price_year">120</field><field name="sites_included">1</field><field name="extra_site_price">5</field><field name="highlight">Chambres, séjours et restaurant</field><field name="sequence">60</field></record>
+        <record id="plan_btp" model="norma.plan"><field name="category_id" ref="category_btp"/><field name="name">Entreprise B2B</field><field name="price_month">12</field><field name="price_year">120</field><field name="sites_included">1</field><field name="extra_site_price">5</field><field name="highlight">Acomptes, export, multi-sites</field><field name="sequence">70</field></record>
+        <record id="seq_subscription_payment" model="ir.sequence"><field name="name">NORMA reçus d'abonnement</field><field name="code">norma.subscription.payment</field><field name="prefix">ABO-%(year)s-</field><field name="padding">5</field></record>
     </data>
 
     <record id="cron_retry" model="ir.cron">
@@ -37,7 +48,7 @@
         <field name="model_id" ref="model_norma_invoice"/>
         <field name="state">code</field>
         <field name="code">model._cron_retry()</field>
-        <field name="interval_number">5</field>
+        <field name="interval_number">2</field>
         <field name="interval_type">minutes</field>
     </record>
     <record id="cron_status" model="ir.cron">

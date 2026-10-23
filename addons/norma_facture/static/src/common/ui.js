@@ -101,7 +101,7 @@ export class Dialog extends Component {
     setup() {
         this.box = useRef("box");
         onMounted(() => {
-            const first = this.box.el.querySelector("input:not([type=hidden]), select, textarea");
+            const first = this.box.el.querySelector("[data-autofocus]") || this.box.el.querySelector("input:not([type=hidden]), select, textarea");
             (first || this.box.el).focus();
         });
     }

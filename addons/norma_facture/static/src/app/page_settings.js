@@ -5,6 +5,7 @@ import { BusyButton, Dialog, Icon, notify, notifyError, openDialog } from "@norm
 import { dateTime, money } from "@norma_facture/common/format";
 import { can, loadSession, session } from "@norma_facture/app/store";
 import { PageHead } from "@norma_facture/app/components";
+import { PrinterSettings } from "@norma_facture/app/page_sync";
 
 const MODES = { simulation: "Simulation", test: "Test DGI (homologation)", production: "Production DGI" };
 
@@ -104,6 +105,7 @@ export class SettingsPage extends Component {
                 </div>
             </PageHead>
 
+            <PrinterSettings t-if="state.tab === 'printer'"/>
             <div t-if="state.tab === 'rate'" class="nm-panel nm-panel-body nm-stack" style="max-width:520px">
                 <h2 style="font-size:17px">Taux du jour</h2>
                 <p class="nm-muted" style="margin:0">Utilisé pour convertir en CDF les factures en dollars (les montants transmis à la DGI sont en CDF). Il est enregistré sur chaque facture.</p>
@@ -120,6 +122,7 @@ export class SettingsPage extends Component {
                     <label class="nm-field"><span>Centre des impôts</span><input class="nm-input" t-model="state.c.tax_center" placeholder="DGE, CIS Gombe…"/></label>
                     <label class="nm-field"><span>Régime</span><select class="nm-select" t-model="state.c.regime"><option value="reel">Assujetti à la TVA</option><option value="ipr">Non assujetti</option></select></label>
                     <label class="nm-field"><span>Devise des prix</span><select class="nm-select" t-model="state.c.currency"><option value="CDF">CDF</option><option value="USD">USD</option></select></label>
+                    <label class="nm-field"><span>Fuseau horaire</span><select class="nm-select" t-model="state.c.tz"><option value="Africa/Kinshasa">Ouest — Kinshasa (UTC+1)</option><option value="Africa/Lubumbashi">Est — Lubumbashi, Goma (UTC+2)</option></select></label>
                     <label class="nm-field nm-span-2"><span>Adresse</span><input class="nm-input" t-model="state.c.address"/></label>
                     <label class="nm-field"><span>Ville</span><input class="nm-input" t-model="state.c.city"/></label>
                     <label class="nm-field"><span>Téléphone</span><input class="nm-input" t-model="state.c.phone"/></label>
@@ -169,15 +172,15 @@ export class SettingsPage extends Component {
                 </div>
             </t>
         </div>`;
-    static components = { PageHead, Icon, BusyButton };
+    static components = { PageHead, Icon, BusyButton, PrinterSettings };
     static props = ["*"];
     setup() {
         this.modes = MODES;
         this.dateTime = dateTime;
         this.roles = { cashier: "Caissier / réception", manager: "Gestionnaire", admin: "Administrateur" };
-        this.tabs = [["rate", "Taux du jour"]].concat(can("admin") ? [["company", "Entreprise"], ["sites", "Établissements et DGI"], ["users", "Utilisateurs"]] : []);
+        this.tabs = [["printer", "Impression"]].concat(can("manager") ? [["rate", "Taux du jour"]] : []).concat(can("admin") ? [["company", "Entreprise"], ["sites", "Établissements et DGI"], ["users", "Utilisateurs"]] : []);
         const wanted = this.props.params.tab;
-        this.state = useState({ tab: this.tabs.some((t) => t[0] === wanted) ? wanted : (can("admin") ? "company" : "rate"),
+        this.state = useState({ tab: this.tabs.some((t) => t[0] === wanted) ? wanted : (can("admin") ? "company" : "printer"),
             rate: session.company.usd_rate, c: null, sites: [], users: [], logo: null });
         onWillStart(() => this.setTab(this.state.tab));
     }

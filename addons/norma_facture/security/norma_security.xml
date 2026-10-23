@@ -147,4 +147,9 @@
         <field name="groups" eval="[(4, ref('group_norma_cashier'))]"/>
         <field name="domain_force">[('id', 'in', user.norma_site_ids.ids)] if user.norma_site_ids else [(1, '=', 1)]</field>
     </record>
+    <record id="rule_subscription_payment" model="ir.rule">
+        <field name="name">NORMA : paiements d'abonnement de mon entreprise</field>
+        <field name="model_id" ref="model_norma_subscription_payment"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
 </odoo>

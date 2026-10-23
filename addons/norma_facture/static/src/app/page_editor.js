@@ -129,7 +129,7 @@ export class EditorPage extends Component {
             const inv = await api("checkout", {
                 request_key: this.saleKey,
                 site_id: this.site.id, invoice_type: this.state.type, customer_id: this.state.customer ? this.state.customer.id : null,
-                origin: this.state.origin, note: this.state.note, payments,
+                origin: this.state.origin, note: this.state.note, payments: payments.map((p) => ({ method: p.method, amount: p.amount })),
                 lines: this.valid.map((l) => ({ product_id: l.product_id, quantity: l.quantity, discount_pct: l.discount_pct || 0,
                     name: l.name || undefined, price: can("manager") ? l.price : undefined })),
             });

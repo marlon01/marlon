@@ -10,6 +10,7 @@
                 <meta name="robots" content="noindex, nofollow"/>
                 <title t-out="title or 'NORMA'"/>
                 <link rel="icon" href="/norma_facture/static/description/icon.png"/>
+                <t t-if="app == 'app'"><link rel="manifest" href="/norma/manifest.webmanifest"/><link rel="apple-touch-icon" href="/norma_facture/static/description/icon.png"/></t>
                 <style t-out="'html{--brand:%s}' % (color or '#0E4D64')"/>
                 <t t-if="app in ('login', 'signup')"><t t-call-assets="norma_facture.assets_public" t-js="false"/></t>
                 <t t-if="app == 'app'"><t t-call-assets="norma_facture.assets_app" t-js="false"/></t>

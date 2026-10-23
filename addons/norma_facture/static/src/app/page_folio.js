@@ -4,7 +4,7 @@ import { api } from "@norma_facture/common/rpc";
 import { BusyButton, confirm, Dialog, Icon, notify, notifyError, openDialog, useInterval } from "@norma_facture/common/ui";
 import { date, isoDay, money } from "@norma_facture/common/format";
 import { can, currentSite, loadCatalog, session } from "@norma_facture/app/store";
-import { CustomerPicker, IssuedDialog, PageHead, PaymentDialog } from "@norma_facture/app/components";
+import { autoPrint, CustomerPicker, IssuedDialog, PageHead, PaymentDialog } from "@norma_facture/app/components";
 import { Receipt } from "@norma_facture/app/page_pos";
 
 const HK = { clean: ["Prête", "ok"], dirty: ["À nettoyer", "warn"], maintenance: ["Maintenance", "bad"] };
@@ -164,7 +164,9 @@ class FolioView extends Component {
         if (!payments) return;
         this.state.busy = true;
         try {
-            const inv = await api("folio_checkout", { id: f.id, payments, customer_id: customer ? customer.id : null });
+            const inv = await api("folio_checkout", { id: f.id, payments: payments.map((p) => ({ method: p.method, amount: p.amount })),
+                customer_id: customer ? customer.id : null });
+            autoPrint(inv, payments.change);
             await openDialog(IssuedDialog, { invoice: inv, nextLabel: this.isRoom ? "Retour au plan" : "Retour à la salle" });
             this.props.onBack();
         } catch (err) {

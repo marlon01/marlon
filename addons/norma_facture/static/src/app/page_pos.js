@@ -5,7 +5,11 @@ import { ConfirmDialog, Icon, notify, notifyError, openDialog } from "@norma_fac
 import { money, qty } from "@norma_facture/common/format";
 import { can, currentSite, loadCatalog, session } from "@norma_facture/app/store";
 import { estimate, lineTotal } from "@norma_facture/app/fiscal";
-import { CustomerPicker, IssuedDialog, PaymentDialog } from "@norma_facture/app/components";
+import { autoPrint, CustomerPicker, IssuedDialog, PaymentDialog } from "@norma_facture/app/components";
+import { printerSettings, printTicket } from "@norma_facture/common/printer";
+import { qrSvg } from "@norma_facture/common/qr";
+import { queueSale } from "@norma_facture/app/sync";
+import { Dialog } from "@norma_facture/common/ui";
 
 /* Le ticket en cours : partagé par la caisse, l'éditeur et les notes (hôtel, restaurant). */
 export class Receipt extends Component {
@@ -70,6 +74,29 @@ export class Receipt extends Component {
     }
     get est() { return estimate(this.props.lines); }
     get currency() { return session.company.currency; }
+}
+
+class OfflineSaleDialog extends Component {
+    static template = xml`
+        <Dialog title="'Vente enregistrée hors ligne'" onClose="() => props.close('next')">
+            <div class="nm-issued is-failed">
+                <div class="nm-issued-stamp" aria-hidden="true"><Icon name="'wifi'" size="34"/><span>Hors ligne</span></div>
+                <div class="nm-issued-body">
+                    <div class="nm-num nm-issued-total" t-esc="money(props.ticket.total, props.ticket.currency)"/>
+                    <div class="nm-note nm-note-warn" style="margin-top:10px">La connexion est coupée. La vente est gardée sur ce poste et sera transmise automatiquement dès le retour du réseau, puis normalisée par la DGI. Le ticket provisoire porte un QR code qui mènera le client à sa facture normalisée.</div>
+                </div>
+            </div>
+            <t t-set-slot="footer">
+                <button class="nm-btn" t-on-click="reprint"><Icon name="'receipt'"/> Réimprimer</button>
+                <button class="nm-btn nm-btn-primary" data-autofocus="1" t-on-click="() => props.close('next')">Vente suivante</button>
+            </t>
+        </Dialog>`;
+    static components = { Dialog, Icon };
+    static props = ["*"];
+    setup() { this.money = money; }
+    reprint() {
+        printTicket(this.props.ticket, { qrSvgMarkup: qrSvg(this.props.ticket.verify_url, 3) }).catch(notifyError);
+    }
 }
 
 /* Saisie d'une remise (limitée pour le caissier). */
@@ -205,25 +232,67 @@ export class PosPage extends Component {
         if (!this.state.lines.length || this.state.busy) return;
         if (!this.site) { notify("Aucun établissement disponible.", "bad"); return; }
         const total = estimate(this.state.lines).total;
-        const payments = await openDialog(PaymentDialog, { total, currency: session.company.currency, allowCredit: !!this.state.customer });
+        const payments = await openDialog(PaymentDialog, { total, currency: session.company.currency,
+            allowCredit: !!this.state.customer && !session.offline });
         if (!payments) return;
         this.state.busy = true;
+        this.saleKey = this.saleKey || newKey();
+        const payload = {
+            request_key: this.saleKey, site_id: this.site.id, customer_id: this.state.customer ? this.state.customer.id : null,
+            lines: this.state.lines.map((l) => ({ product_id: l.product_id, quantity: l.quantity, discount_pct: l.discount_pct })),
+            payments: payments.map((p) => ({ method: p.method, amount: p.amount })),
+        };
         try {
-            this.saleKey = this.saleKey || newKey();
-            const inv = await api("checkout", {
-                request_key: this.saleKey,
-                site_id: this.site.id, customer_id: this.state.customer ? this.state.customer.id : null,
-                lines: this.state.lines.map((l) => ({ product_id: l.product_id, quantity: l.quantity, discount_pct: l.discount_pct })),
-                payments,
-            });
-            this.saleKey = null;
-            this.clear();
-            await openDialog(IssuedDialog, { invoice: inv });
+            let inv = null;
+            if (!session.offline) {
+                try {
+                    inv = await api("checkout", payload);
+                } catch (err) {
+                    if (!err.network) throw err;
+                    session.offline = true;
+                }
+            }
+            if (inv) {
+                this.saleKey = null;
+                this.clear();
+                autoPrint(inv, payments.change);
+                if (inv.state !== "normalized") session.dgiPending++;
+                await openDialog(IssuedDialog, { invoice: inv });
+            } else {
+                await this.saveOffline(payload, payments);
+            }
         } catch (err) {
             notifyError(err);
         } finally {
             this.state.busy = false;
             this.scan.el && this.scan.el.focus();
         }
+    }
+    /* Coupure : la vente est gardée sur le poste, un ticket provisoire est imprimé, l'envoi se fera tout seul. */
+    async saveOffline(payload, payments) {
+        const offline_at = new Date().toISOString();
+        const lines = this.state.lines.map((l) => ({ ...l }));
+        payload.offline_at = offline_at;
+        payload.lines = lines.map((l) => ({ product_id: l.product_id, quantity: l.quantity, discount_pct: l.discount_pct, price: l.price }));
+        const est = estimate(lines);
+        const url = `${location.origin}/norma/r/${payload.request_key}`;
+        const ticket = {
+            provisional: true, company: session.company, site: this.site, type: "FV", number: "", date: new Date().toLocaleString("fr-FR"),
+            operator: session.user.name, client_name: this.state.customer ? this.state.customer.name : "",
+            lines: lines.map((l) => ({ name: l.name, tax_group: l.tax_group, quantity: l.quantity, price: l.price,
+                discount_pct: l.discount_pct, total: lineTotal(l) })),
+            groups: est.groups, total_ht: est.ht, total_tax: est.tax, total: est.total, currency: session.company.currency,
+            payments: payments.map((p) => ({ label: (session.payment_methods.find((m) => m.code === p.method) || {}).label || p.method, amount: p.amount })),
+            change: payments.change, verify_url: url,
+        };
+        await queueSale({ request_key: payload.request_key, company_id: session.company.id, uid: session.user.id,
+            offline_at, payload, ticket, error: "" });
+        this.saleKey = null;
+        this.clear();
+        if (printerSettings().auto) {
+            // Impression lancée sans attendre : la caisse reste disponible pendant que le ticket sort.
+            printTicket(ticket, { qrSvgMarkup: qrSvg(url, 3) }).catch(notifyError);
+        }
+        await openDialog(OfflineSaleDialog, { ticket });
     }
 }

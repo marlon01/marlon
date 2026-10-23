@@ -3,7 +3,7 @@ import { reactive } from "@odoo/owl";
 import { api } from "@norma_facture/common/rpc";
 
 /* Session de l'utilisateur : entreprise, rôle, établissements, référentiels fiscaux. */
-export const session = reactive({ ready: false, user: {}, company: {}, category: {}, sites: [], tax_groups: [],
+export const session = reactive({ ready: false, offline: false, outbox: 0, dgiPending: 0, syncing: false, subscription: {}, user: {}, company: {}, category: {}, sites: [], tax_groups: [],
     payment_methods: [], invoice_types: [], reference_types: [], client_types: [], item_types: [], max_discount: 0,
     siteId: null, catalog: { products: [], categories: [] } });
 
@@ -12,8 +12,26 @@ export function can(role) {
     return (RANK[session.user.role] || 0) >= RANK[role];
 }
 
+const BOOT = "norma.boot", CATALOG = "norma.catalog";
+function remember(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* stockage plein ou indisponible */ }
+}
+function recall(key) {
+    try { return JSON.parse(localStorage.getItem(key) || "null"); } catch { return null; }
+}
+
+/* Démarrage : depuis le serveur, ou hors ligne depuis la dernière session enregistrée sur ce poste. */
 export async function loadSession() {
-    const data = await api("bootstrap");
+    let data;
+    try {
+        data = await api("bootstrap");
+        remember(BOOT, data);
+        session.offline = false;
+    } catch (err) {
+        data = err.network ? recall(BOOT) : null;
+        if (!data) throw err;
+        session.offline = true;
+    }
     Object.assign(session, data);
     let saved = null;
     try { saved = parseInt(localStorage.getItem("norma.site") || ""); } catch { /* stockage indisponible */ }
@@ -32,7 +50,15 @@ export function currentSite() {
 }
 
 export async function loadCatalog() {
-    session.catalog = await api("catalog");
+    try {
+        session.catalog = await api("catalog");
+        remember(CATALOG, session.catalog);
+    } catch (err) {
+        const cached = err.network ? recall(CATALOG) : null;
+        if (!cached) throw err;
+        session.catalog = cached;
+        session.offline = true;
+    }
     return session.catalog;
 }
 

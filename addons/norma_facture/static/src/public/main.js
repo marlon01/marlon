@@ -42,8 +42,8 @@ class LoginApp extends Component {
                     <p>Accédez à l'espace de votre entreprise.</p>
                     <div t-if="state.error" class="nm-error" role="alert" t-esc="state.error"/>
                     <div class="nm-stack">
-                        <label class="nm-field"><span>Adresse e-mail</span>
-                            <input class="nm-input" type="email" autocomplete="username" required="1" t-model="state.login" autofocus="1"/></label>
+                        <label class="nm-field"><span>Identifiant (adresse e-mail)</span>
+                            <input class="nm-input" type="text" inputmode="email" autocapitalize="off" spellcheck="false" autocomplete="username" required="1" t-model="state.login" autofocus="1"/></label>
                         <label class="nm-field"><span>Mot de passe</span>
                             <input class="nm-input" type="password" autocomplete="current-password" required="1" t-model="state.password"/></label>
                         <button class="nm-btn nm-btn-primary nm-btn-lg nm-btn-block" type="submit" t-att-disabled="state.busy">
@@ -84,7 +84,7 @@ class SignupApp extends Component {
             <main class="nm-auth-main">
                 <form class="nm-auth-card is-wide" t-on-submit.prevent="next" novalidate="1">
                     <h2>Créer le compte de votre entreprise</h2>
-                    <p>Vous pourrez facturer en mode démonstration dès la fin de l'inscription, puis relier vos établissements au dispositif fiscal de la DGI.</p>
+                    <p><t t-esc="trialDays"/> jours d'essai gratuit, sans engagement ni moyen de paiement. Vous facturez dès la fin de l'inscription, puis vous choisissez votre abonnement.</p>
                     <ol class="nm-steps">
                         <li t-foreach="steps" t-as="s" t-key="s_index" t-att-class="s_index &lt; state.step ? 'is-done' : (s_index === state.step ? 'is-on' : '')" t-esc="s"/>
                     </ol>
@@ -96,7 +96,8 @@ class SignupApp extends Component {
                                     t-att-aria-checked="state.f.category === c.code ? 'true' : 'false'"
                                     t-att-class="{'is-on': state.f.category === c.code}" t-on-click="() => this.state.f.category = c.code">
                                 <span class="nm-cat-ico"><Icon name="icon(c)" size="20"/></span>
-                                <span><b t-esc="c.name"/><small t-esc="c.description"/></span>
+                                <span class="nm-grow"><b t-esc="c.name"/><small t-esc="c.description"/></span>
+                                <span t-if="c.price" class="nm-cat-price"><b t-esc="c.price"/> $<small>/mois</small></span>
                             </button>
                         </div>
                     </t>
@@ -150,6 +151,7 @@ class SignupApp extends Component {
     static props = {};
     setup() {
         this.categories = CONFIG.categories || [];
+        this.trialDays = CONFIG.trial_days || 14;
         this.steps = ["Activité", "Entreprise", "Établissement", "Compte"];
         this.state = useState({ step: 0, busy: false, error: "", f: {
             category: CONFIG.category || "", company: "", nif: "", rccm: "", idnat: "", regime: "reel", address: "",

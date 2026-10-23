@@ -32,3 +32,9 @@ access_emcf_log_platform,emcf_log platform,model_norma_emcf_log,group_norma_plat
 access_emcf_sim_platform,emcf_sim platform,model_norma_emcf_sim,group_norma_platform,1,1,1,1
 access_emcf_sim_system,emcf sim system,model_norma_emcf_sim,base.group_system,1,1,1,1
 access_throttle_system,throttle system,model_norma_throttle,base.group_system,1,1,1,1
+access_plan_cashier,plan cashier,model_norma_plan,group_norma_cashier,1,0,0,0
+access_plan_platform,plan platform,model_norma_plan,group_norma_platform,1,1,1,1
+access_subpay_admin,subpay admin,model_norma_subscription_payment,group_norma_admin,1,0,0,0
+access_subpay_platform,subpay platform,model_norma_subscription_payment,group_norma_platform,1,1,1,0
+access_product_price_cashier,product price cashier,model_norma_product_price,group_norma_cashier,1,0,0,0
+access_product_price_platform,product price platform,model_norma_product_price,group_norma_platform,1,0,0,0

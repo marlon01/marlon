@@ -79,6 +79,17 @@ class NormaProduct(models.Model):
 
     _sql_constraints = [('barcode_company_unique', 'unique(company_id, barcode)', "Code-barres déjà utilisé.")]
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        products = super().create(vals_list)
+        self.env['norma.product.price'].sudo().create([{'product_id': p.id, 'price': p.price} for p in products])
+        return products
+
+    def _track_price(self, old):
+        changed = self.filtered(lambda p: round(old.get(p.id, p.price), 2) != round(p.price, 2))
+        if changed:
+            self.env['norma.product.price'].sudo().create([{'product_id': p.id, 'price': p.price} for p in changed])
+
     @api.constrains('price', 'specific_tax')
     def _check_price(self):
         for p in self:
@@ -101,8 +112,36 @@ class NormaProduct(models.Model):
     def write(self, vals):
         if 'company_id' in vals and any(r.company_id.id != vals['company_id'] for r in self):
             raise AccessError(_("Un élément ne change pas d'entreprise."))
-        return super().write(vals)
+        old = {p.id: p.price for p in self} if 'price' in vals else {}
+        res = super().write(vals)
+        if old:
+            self._track_price(old)
+        return res
 
+
+
+class NormaProductPrice(models.Model):
+    """Historique des prix : une vente faite hors ligne est facturée au prix affiché au moment de la vente."""
+    _name = 'norma.product.price'
+    _description = "Historique des prix"
+    _order = 'date_from desc, id desc'
+
+    product_id = fields.Many2one('norma.product', required=True, ondelete='cascade', index=True)
+    company_id = fields.Many2one(related='product_id.company_id', store=True, index=True)
+    price = fields.Float(digits=(16, 2), required=True)
+    date_from = fields.Datetime(required=True, default=fields.Datetime.now)
+
+    @api.model
+    def _price_at(self, product, when):
+        rec = self.sudo().search([('product_id', '=', product.id), ('date_from', '<=', when)], limit=1)
+        return rec.price if rec else product.price
+
+    @api.model
+    def _prices_since(self, product, when):
+        """Prix en vigueur à l'instant ``when`` et tous ceux affichés depuis."""
+        prices = {self._price_at(product, when), product.price}
+        prices |= set(self.sudo().search([('product_id', '=', product.id), ('date_from', '>=', when)]).mapped('price'))
+        return {round(p, 2) for p in prices}
 
 
 class NormaCustomer(models.Model):

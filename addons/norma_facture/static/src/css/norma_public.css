@@ -43,3 +43,6 @@
     .nm-auth-side::after { display: none; }
     .nm-cats { grid-template-columns: 1fr; }
 }
+
+.nm-cat-price { flex: none; text-align: right; font: 600 18px/1 var(--num); color: var(--river); }
+.nm-cat-price small { display: block; font: 500 11px var(--text); color: var(--muted); }

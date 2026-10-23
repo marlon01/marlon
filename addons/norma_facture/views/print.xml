@@ -99,6 +99,7 @@
                             <div class="n mono" t-out="inv.number or 'BROUILLON'"/>
                             <div>Date : <strong t-out="local_date"/></div>
                             <div t-if="inv.reversed_id">Facture d'origine : <strong class="mono" t-out="inv.reversed_id.number"/></div>
+                            <div t-if="inv.offline_at">Vente hors ligne du <t t-out="offline_date"/></div>
                         </div>
                     </div>
 
@@ -258,6 +259,7 @@
                     <div class="c b" t-out="title"/>
                     <div class="c mono" t-out="inv.number"/>
                     <div class="c"><t t-out="local_date"/> · <t t-out="inv.operator_id.name or ''"/></div>
+                    <div class="c" t-if="inv.offline_at">Vente hors ligne du <t t-out="offline_date"/></div>
                     <div t-if="inv.reversed_id" class="c">Avoir (<t t-out="inv.reference_type"/>) de <t t-out="inv.reversed_id.number"/><br/>Réf. DEF <span class="mono" t-out="inv.reversed_id.emcf_code"/></div>
                     <div t-if="inv.client_name"><div class="hr"/>Client : <t t-out="inv.client_name"/> (<t t-out="inv.client_type"/>)<t t-if="inv.client_nif"><br/>NIF : <t t-out="inv.client_nif"/></t></div>
                     <div class="hr"/>
@@ -290,6 +292,35 @@
                     <div class="hr"/>
                     <div class="c" t-if="company.norma_invoice_footer" t-out="company.norma_invoice_footer"/>
                     <div class="c" style="font-size:9px">NORMA v<t t-out="version"/> · Naxoris</div>
+                </div>
+            </body>
+        </html>
+    </template>
+
+    <!-- ================================================================== ticket provisoire pas encore synchronisé -->
+    <template id="provisional" name="NORMA — ticket provisoire">
+        <html lang="fr">
+            <head>
+                <meta charset="utf-8"/>
+                <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <meta name="robots" content="noindex, nofollow"/>
+                <meta http-equiv="refresh" content="60"/>
+                <title>Facture en cours de normalisation — NORMA</title>
+                <link rel="icon" href="/norma_facture/static/description/icon.png"/>
+                <style>
+                    body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:#0B2530;font:15px/1.55 "Segoe UI",Roboto,Arial,sans-serif;color:#0F172A}
+                    .card{max-width:520px;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+                    .h{padding:26px 28px;color:#fff;background:linear-gradient(135deg,#92400E,#F59E0B)}.h h1{margin:6px 0 0;font-size:22px}
+                    .b{padding:22px 28px;color:#334155}
+                </style>
+            </head>
+            <body>
+                <div class="card">
+                    <div class="h"><small>Ticket provisoire</small><h1>Votre facture est en cours de normalisation</h1></div>
+                    <div class="b">
+                        <p>Ce ticket a été émis pendant une coupure de connexion ou une indisponibilité de la DGI. La caisse transmet automatiquement la vente dès le retour du réseau.</p>
+                        <p>Gardez ce ticket : en scannant à nouveau son QR code, vous obtiendrez la facture normalisée avec son code DEF/DGI. Cette page se met à jour toute seule.</p>
+                    </div>
                 </div>
             </body>
         </html>

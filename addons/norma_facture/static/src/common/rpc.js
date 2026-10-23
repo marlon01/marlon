@@ -1,7 +1,12 @@
 /** @odoo-module */
 /* Appels JSON vers le serveur NORMA, sans dépendance au client web générique. */
 
-export class ApiError extends Error {}
+export class ApiError extends Error {
+    constructor(message, { network = false } = {}) {
+        super(message);
+        this.network = network;
+    }
+}
 
 let seq = 0;
 
@@ -16,12 +21,13 @@ export async function post(route, params = {}, { timeout = 60000 } = {}) {
             body: JSON.stringify({ jsonrpc: "2.0", method: "call", id: ++seq, params }),
         });
     } catch {
-        throw new ApiError("Connexion au serveur impossible. Vérifiez le réseau puis réessayez.");
+        throw new ApiError("Connexion au serveur impossible. Vérifiez le réseau puis réessayez.", { network: true });
     } finally {
         clearTimeout(timer);
     }
     if (!res.ok) {
-        throw new ApiError(res.status >= 500 ? `Serveur indisponible (${res.status}).` : `Requête refusée (${res.status}).`);
+        throw new ApiError(res.status >= 500 ? `Serveur indisponible (${res.status}).` : `Requête refusée (${res.status}).`,
+            { network: res.status >= 500 });
     }
     const payload = await res.json();
     if (payload.error) {

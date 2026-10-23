@@ -42,6 +42,7 @@ class TestNormaHttp(HttpCase):
             res = self.url_open('/norma/print/%s?format=%s' % (self.inv['id'], fmt))
             self.assertEqual(res.status_code, 200)
             self.assertIn(self.inv['emcf_code'], res.text)
+            self.assertEqual(res.headers.get('X-Frame-Options'), 'SAMEORIGIN')
             self.assertIn('<svg', res.text)  # QR code
             self.assertIn('SANS VALEUR FISCALE' if fmt == 'a4' else 'SIMULATION', res.text)
         self.assertIn('NIF', res.text)
@@ -88,6 +89,12 @@ class TestNormaHttp(HttpCase):
         res = self.url_open('/odoo', allow_redirects=False)
         self.assertIn(res.status_code, (302, 303))
         self.assertIn('/norma/app', res.headers.get('Location', ''))
+
+    def test_payment_method_parameter_reaches_api(self):
+        self.authenticate('a@shop.cd', 'MotDePasse2026')
+        out = self.rpc('/norma/api/billing_declare', {'months': 1, 'method': 'ORANGE', 'reference': 'OM.TEST.0001'})
+        self.assertNotIn('error', out, out)
+        self.assertEqual(out['result']['payments'][0]['method'], 'ORANGE')
 
     def test_logo_monogram_is_safe_svg(self):
         res = self.url_open('/norma/logo/%s' % self.shop.id)
