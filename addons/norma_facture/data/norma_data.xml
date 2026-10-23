@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Groupes de taxation (nomenclature FACNO v2.0). Les taux se resynchronisent depuis /api/info/taxGroups. -->
+        <record id="tax_group_A" model="norma.tax.group"><field name="code">A</field><field name="name">Exonéré / hors champ</field><field name="rate">0</field><field name="kind">exempt</field></record>
+        <record id="tax_group_B" model="norma.tax.group"><field name="code">B</field><field name="name">Taxable — taux normal</field><field name="rate">16</field><field name="kind">taxable</field></record>
+        <record id="tax_group_C" model="norma.tax.group"><field name="code">C</field><field name="name">Taxable — taux réduit (5 %)</field><field name="rate">5</field><field name="kind">taxable</field></record>
+        <record id="tax_group_D" model="norma.tax.group"><field name="code">D</field><field name="name">Régimes dérogatoires de TVA</field><field name="rate">0</field><field name="kind">specific</field></record>
+        <record id="tax_group_E" model="norma.tax.group"><field name="code">E</field><field name="name">Exportation et opérations assimilées</field><field name="rate">0</field><field name="kind">export</field></record>
+        <record id="tax_group_F" model="norma.tax.group"><field name="code">F</field><field name="name">Marché public à financement extérieur (16 %)</field><field name="rate">16</field><field name="kind">taxable</field></record>
+        <record id="tax_group_G" model="norma.tax.group"><field name="code">G</field><field name="name">Marché public à financement extérieur (5 %)</field><field name="rate">5</field><field name="kind">taxable</field></record>
+        <record id="tax_group_H" model="norma.tax.group"><field name="code">H</field><field name="name">Consignation d'emballages</field><field name="rate">0</field><field name="kind">specific</field></record>
+        <record id="tax_group_I" model="norma.tax.group"><field name="code">I</field><field name="name">Garantie et caution</field><field name="rate">0</field><field name="kind">specific</field></record>
+        <record id="tax_group_J" model="norma.tax.group"><field name="code">J</field><field name="name">Débours</field><field name="rate">0</field><field name="kind">specific</field></record>
+        <record id="tax_group_K" model="norma.tax.group"><field name="code">K</field><field name="name">Opérations de vendeurs non assujettis</field><field name="rate">0</field><field name="kind">specific</field></record>
+        <record id="tax_group_L" model="norma.tax.group"><field name="code">L</field><field name="name">Prélèvements sur ventes</field><field name="rate">0</field><field name="kind">specific</field></record>
+        <record id="tax_group_M" model="norma.tax.group"><field name="code">M</field><field name="name">Ventes réglementées à TVA spécifique</field><field name="rate">0</field><field name="kind">specific</field></record>
+        <record id="tax_group_N" model="norma.tax.group"><field name="code">N</field><field name="name">TVA spécifique (montant entièrement TVA)</field><field name="rate">0</field><field name="kind">specific</field></record>
+        <record id="tax_group_O" model="norma.tax.group"><field name="code">O</field><field name="name">Taxable — taux de 1 %</field><field name="rate">1</field><field name="kind">taxable</field></record>
+        <record id="tax_group_P" model="norma.tax.group"><field name="code">P</field><field name="name">Marché public à financement extérieur (1 %)</field><field name="rate">1</field><field name="kind">taxable</field></record>
+        <record id="tax_group_Q" model="norma.tax.group"><field name="code">Q</field><field name="name">Taxable — taux de 8 % (première nécessité)</field><field name="rate">8</field><field name="kind">taxable</field></record>
+        <record id="tax_group_R" model="norma.tax.group"><field name="code">R</field><field name="name">Marché public à financement extérieur (8 %)</field><field name="rate">8</field><field name="kind">taxable</field></record>
+        <record id="tax_group_S" model="norma.tax.group"><field name="code">S</field><field name="name">Hors champ d'application</field><field name="rate">0</field><field name="kind">exempt</field></record>
+
+        <record id="category_supermarche" model="norma.category"><field name="code">supermarche</field><field name="name">Supermarché / alimentation</field><field name="description">Caisse rapide au code-barres, tickets 80 mm</field><field name="workspace">pos</field><field name="icon">cart</field><field name="sequence">10</field></record>
+        <record id="category_magasin" model="norma.category"><field name="code">magasin</field><field name="name">Magasin / boutique</field><field name="description">Vente au comptoir, clients et avoirs</field><field name="workspace">pos</field><field name="icon">bag</field><field name="sequence">20</field></record>
+        <record id="category_pharmacie" model="norma.category"><field name="code">pharmacie</field><field name="name">Pharmacie</field><field name="description">Caisse rapide, produits à taux réduit ou exonérés</field><field name="workspace">pos</field><field name="icon">pill</field><field name="sequence">30</field></record>
+        <record id="category_station" model="norma.category"><field name="code">station</field><field name="name">Station-service</field><field name="description">Caisse rapide, carburant et lubrifiants</field><field name="workspace">pos</field><field name="icon">fuel</field><field name="sequence">40</field></record>
+        <record id="category_hotel" model="norma.category"><field name="code">hotel</field><field name="name">Hôtel / hébergement</field><field name="description">Plan des chambres, séjours, notes et départ</field><field name="workspace">hotel</field><field name="icon">bed</field><field name="sequence">50</field></record>
+        <record id="category_restaurant" model="norma.category"><field name="code">restaurant</field><field name="name">Restaurant / bar</field><field name="description">Plan de salle, additions par table, cuisine</field><field name="workspace">restaurant</field><field name="icon">utensils</field><field name="sequence">60</field></record>
+        <record id="category_services" model="norma.category"><field name="code">services</field><field name="name">Prestataire de services</field><field name="description">Factures détaillées aux entreprises, acomptes</field><field name="workspace">invoice</field><field name="icon">briefcase</field><field name="sequence">70</field></record>
+        <record id="category_btp" model="norma.category"><field name="code">btp</field><field name="name">BTP / industrie / commerce de gros</field><field name="description">Factures B2B, acomptes, exportation</field><field name="workspace">invoice</field><field name="icon">factory</field><field name="sequence">80</field></record>
+    </data>
+
+    <record id="cron_retry" model="ir.cron">
+        <field name="name">NORMA : reprise des factures en attente de normalisation</field>
+        <field name="model_id" ref="model_norma_invoice"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_retry()</field>
+        <field name="interval_number">5</field>
+        <field name="interval_type">minutes</field>
+    </record>
+    <record id="cron_status" model="ir.cron">
+        <field name="name">NORMA : vérification des dispositifs e-MCF</field>
+        <field name="model_id" ref="model_norma_site"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_status()</field>
+        <field name="interval_number">6</field>
+        <field name="interval_type">hours</field>
+    </record>
+</odoo>

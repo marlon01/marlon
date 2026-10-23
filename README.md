@@ -1,3 +1,9 @@
+# NORMA — Facture normalisée DGI (RDC)
+
+Le module **`addons/norma_facture`** est une plateforme SaaS de facturation normalisée pour les entreprises assujetties à la TVA en République démocratique du Congo : chaque facture passe par l'e-MCF de la DGI (code DEF/DGI, compteurs, QR code), avec une interface par métier (caisse de supermarché, hôtel, restaurant, éditeur de factures B2B), plusieurs établissements par entreprise, avoirs, rapports de TVA et journal d'audit scellé. Documentation complète, conformité et étapes d'homologation : [`addons/norma_facture/README.md`](addons/norma_facture/README.md). Captures : `docs/captures/norma/`.
+
+---
+
 # SELECTA — La culture de l'excellence
 
 *Une solution **Naxoris**. Démonstration : +243 828 317 540 · +243 831 509 420 · contact@naxoris.com*

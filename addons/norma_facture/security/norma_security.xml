@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="module_category_norma" model="ir.module.category">
+        <field name="name">NORMA — Facturation normalisée</field>
+        <field name="sequence">40</field>
+    </record>
+
+    <!-- Rôles des entreprises clientes : comptes de type portail (aucun accès au client web générique). -->
+    <record id="group_norma_cashier" model="res.groups">
+        <field name="name">Caissier / réceptionniste</field>
+        <field name="category_id" ref="module_category_norma"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_portal'))]"/>
+        <field name="comment">Encaisse et émet des factures normalisées sur ses établissements.</field>
+    </record>
+    <record id="group_norma_manager" model="res.groups">
+        <field name="name">Gestionnaire / comptable</field>
+        <field name="category_id" ref="module_category_norma"/>
+        <field name="implied_ids" eval="[(4, ref('group_norma_cashier'))]"/>
+        <field name="comment">Catalogue, clients, toutes les factures, avoirs, rapports fiscaux.</field>
+    </record>
+    <record id="group_norma_admin" model="res.groups">
+        <field name="name">Administrateur de l'entreprise</field>
+        <field name="category_id" ref="module_category_norma"/>
+        <field name="implied_ids" eval="[(4, ref('group_norma_manager'))]"/>
+        <field name="comment">Établissements, dispositifs fiscaux (e-MCF), utilisateurs et paramètres.</field>
+    </record>
+
+    <!-- Administration centrale de la plateforme (éditeur). -->
+    <record id="group_norma_platform" model="res.groups">
+        <field name="name">Administration centrale NORMA</field>
+        <field name="category_id" ref="module_category_norma"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
+    </record>
+
+    <!-- ============================================================ cloisonnement par entreprise -->
+    <record id="rule_site" model="ir.rule">
+        <field name="name">NORMA : établissements de mon entreprise</field>
+        <field name="model_id" ref="model_norma_site"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_product_category" model="ir.rule">
+        <field name="name">NORMA : rayons de mon entreprise</field>
+        <field name="model_id" ref="model_norma_product_category"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_product" model="ir.rule">
+        <field name="name">NORMA : articles de mon entreprise</field>
+        <field name="model_id" ref="model_norma_product"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_customer" model="ir.rule">
+        <field name="name">NORMA : clients de mon entreprise</field>
+        <field name="model_id" ref="model_norma_customer"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_invoice" model="ir.rule">
+        <field name="name">NORMA : factures de mon entreprise</field>
+        <field name="model_id" ref="model_norma_invoice"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_invoice_cashier_sites" model="ir.rule">
+        <field name="name">NORMA : le caissier ne voit que ses établissements</field>
+        <field name="model_id" ref="model_norma_invoice"/>
+        <field name="groups" eval="[(4, ref('group_norma_cashier'))]"/>
+        <field name="domain_force">[('site_id', 'in', user.norma_site_ids.ids)] if user.norma_site_ids else [(1, '=', 1)]</field>
+    </record>
+    <record id="rule_invoice_line" model="ir.rule">
+        <field name="name">NORMA : lignes de mon entreprise</field>
+        <field name="model_id" ref="model_norma_invoice_line"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_invoice_group" model="ir.rule">
+        <field name="name">NORMA : ventilation de mon entreprise</field>
+        <field name="model_id" ref="model_norma_invoice_group"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_invoice_payment" model="ir.rule">
+        <field name="name">NORMA : paiements de mon entreprise</field>
+        <field name="model_id" ref="model_norma_invoice_payment"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_place" model="ir.rule">
+        <field name="name">NORMA : chambres et tables de mon entreprise</field>
+        <field name="model_id" ref="model_norma_place"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_folio" model="ir.rule">
+        <field name="name">NORMA : notes de mon entreprise</field>
+        <field name="model_id" ref="model_norma_folio"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_folio_line" model="ir.rule">
+        <field name="name">NORMA : consommations de mon entreprise</field>
+        <field name="model_id" ref="model_norma_folio_line"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_audit" model="ir.rule">
+        <field name="name">NORMA : journal de mon entreprise</field>
+        <field name="model_id" ref="model_norma_audit"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_emcf_log" model="ir.rule">
+        <field name="name">NORMA : échanges e-MCF de mon entreprise</field>
+        <field name="model_id" ref="model_norma_emcf_log"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_norma_invoice_line_cashier_sites" model="ir.rule">
+        <field name="name">NORMA : lignes des établissements du caissier</field>
+        <field name="model_id" ref="model_norma_invoice_line"/>
+        <field name="groups" eval="[(4, ref('group_norma_cashier'))]"/>
+        <field name="domain_force">[('invoice_id.site_id', 'in', user.norma_site_ids.ids)] if user.norma_site_ids else [(1, '=', 1)]</field>
+    </record>
+    <record id="rule_norma_invoice_group_cashier_sites" model="ir.rule">
+        <field name="name">NORMA : ventilation des établissements du caissier</field>
+        <field name="model_id" ref="model_norma_invoice_group"/>
+        <field name="groups" eval="[(4, ref('group_norma_cashier'))]"/>
+        <field name="domain_force">[('invoice_id.site_id', 'in', user.norma_site_ids.ids)] if user.norma_site_ids else [(1, '=', 1)]</field>
+    </record>
+    <record id="rule_norma_invoice_payment_cashier_sites" model="ir.rule">
+        <field name="name">NORMA : paiements des établissements du caissier</field>
+        <field name="model_id" ref="model_norma_invoice_payment"/>
+        <field name="groups" eval="[(4, ref('group_norma_cashier'))]"/>
+        <field name="domain_force">[('invoice_id.site_id', 'in', user.norma_site_ids.ids)] if user.norma_site_ids else [(1, '=', 1)]</field>
+    </record>
+    <record id="rule_norma_folio_cashier_sites" model="ir.rule">
+        <field name="name">NORMA : notes des établissements du caissier</field>
+        <field name="model_id" ref="model_norma_folio"/>
+        <field name="groups" eval="[(4, ref('group_norma_cashier'))]"/>
+        <field name="domain_force">[('site_id', 'in', user.norma_site_ids.ids)] if user.norma_site_ids else [(1, '=', 1)]</field>
+    </record>
+    <record id="rule_norma_folio_line_cashier_sites" model="ir.rule">
+        <field name="name">NORMA : consommations des établissements du caissier</field>
+        <field name="model_id" ref="model_norma_folio_line"/>
+        <field name="groups" eval="[(4, ref('group_norma_cashier'))]"/>
+        <field name="domain_force">[('folio_id.site_id', 'in', user.norma_site_ids.ids)] if user.norma_site_ids else [(1, '=', 1)]</field>
+    </record>
+    <record id="rule_norma_place_cashier_sites" model="ir.rule">
+        <field name="name">NORMA : chambres et tables des établissements du caissier</field>
+        <field name="model_id" ref="model_norma_place"/>
+        <field name="groups" eval="[(4, ref('group_norma_cashier'))]"/>
+        <field name="domain_force">[('site_id', 'in', user.norma_site_ids.ids)] if user.norma_site_ids else [(1, '=', 1)]</field>
+    </record>
+    <record id="rule_norma_site_cashier_sites" model="ir.rule">
+        <field name="name">NORMA : établissements des établissements du caissier</field>
+        <field name="model_id" ref="model_norma_site"/>
+        <field name="groups" eval="[(4, ref('group_norma_cashier'))]"/>
+        <field name="domain_force">[('id', 'in', user.norma_site_ids.ids)] if user.norma_site_ids else [(1, '=', 1)]</field>
+    </record>
+</odoo>

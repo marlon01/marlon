@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Gabarit commun des applications OWL autonomes (connexion, inscription, espace entreprise, plateforme). -->
+    <template id="layout" name="NORMA layout">
+        <html lang="fr" t-att-data-app="app">
+            <head>
+                <meta charset="utf-8"/>
+                <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+                <meta name="theme-color" t-att-content="color"/>
+                <meta name="robots" content="noindex, nofollow"/>
+                <title t-out="title or 'NORMA'"/>
+                <link rel="icon" href="/norma_facture/static/description/icon.png"/>
+                <style t-out="'html{--brand:%s}' % (color or '#0E4D64')"/>
+                <t t-if="app in ('login', 'signup')"><t t-call-assets="norma_facture.assets_public" t-js="false"/></t>
+                <t t-if="app == 'app'"><t t-call-assets="norma_facture.assets_app" t-js="false"/></t>
+                <t t-if="app == 'platform'"><t t-call-assets="norma_facture.assets_platform" t-js="false"/></t>
+                <script type="application/json" id="norma-config" t-out="config_json"/>
+                <t t-if="app in ('login', 'signup')"><t t-call-assets="norma_facture.assets_public" t-css="false"/></t>
+                <t t-if="app == 'app'"><t t-call-assets="norma_facture.assets_app" t-css="false"/></t>
+                <t t-if="app == 'platform'"><t t-call-assets="norma_facture.assets_platform" t-css="false"/></t>
+            </head>
+            <body t-att-class="'nm-body nm-app-%s' % app">
+                <div id="norma-root">
+                    <div class="nm-boot">
+                        <img src="/norma_facture/static/description/icon.png" alt="" width="56" height="56"/>
+                        <div>Chargement…</div>
+                        <noscript>JavaScript est requis pour utiliser NORMA.</noscript>
+                    </div>
+                </div>
+            </body>
+        </html>
+    </template>
+</odoo>

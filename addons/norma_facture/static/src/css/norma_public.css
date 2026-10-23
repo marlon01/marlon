@@ -1,0 +1,45 @@
+/* Connexion et inscription : un panneau « encre » avec le sceau, un formulaire sur papier. */
+.nm-auth { min-height: 100vh; display: grid; grid-template-columns: minmax(340px, 5fr) 7fr; }
+.nm-auth-side { position: relative; overflow: hidden; background: var(--ink); color: #DCE6E9; padding: 40px 44px; display: flex; flex-direction: column; gap: 28px; }
+.nm-auth-side::after { content: ""; position: absolute; inset: auto -80px -120px auto; width: 360px; height: 360px; border-radius: 50%; border: 46px solid rgba(242, 183, 5, .07); }
+.nm-logo { display: flex; align-items: center; gap: 12px; color: #fff; text-decoration: none; }
+.nm-logo img { width: 40px; height: 40px; border-radius: 10px; }
+.nm-logo b { font: 600 22px/1 var(--display); letter-spacing: .04em; }
+.nm-auth-side h1 { font-size: clamp(28px, 3.2vw, 40px); color: #fff; max-width: 15ch; }
+.nm-auth-side p { max-width: 42ch; margin: 0; color: #AFC1C7; font-size: 15px; }
+.nm-seal { position: relative; z-index: 1; margin-top: auto; width: 100%; max-width: 330px; background: #FBFCFB; color: var(--ink); border-radius: 4px; padding: 18px 18px 26px;
+    font: 12px/1.45 var(--num); box-shadow: 0 30px 60px rgba(0, 0, 0, .35); transform: rotate(-2deg);
+    -webkit-mask: radial-gradient(circle 6px at 50% 100%, transparent 98%, #000) 0 0/16px 100% repeat-x; mask: radial-gradient(circle 6px at 50% 100%, transparent 98%, #000) 0 0/16px 100% repeat-x; }
+.nm-seal-row { display: flex; justify-content: space-between; gap: 10px; }
+.nm-seal hr { border: 0; border-top: 1px dashed #9AAAB0; margin: 8px 0; }
+.nm-seal-stamp { display: flex; gap: 12px; align-items: center; margin-top: 10px; padding: 9px; border: 2px solid var(--ok); border-radius: 6px; color: var(--ok); }
+.nm-seal-stamp svg { flex: none; }
+.nm-auth-foot { position: relative; z-index: 1; font-size: 12px; color: #7F959C; }
+.nm-auth-foot a { color: #C7D5D9; }
+.nm-auth-main { display: flex; align-items: center; justify-content: center; padding: 40px 28px; }
+.nm-auth-card { width: 100%; max-width: 440px; }
+.nm-auth-card.is-wide { max-width: 720px; }
+.nm-auth-card h2 { font-size: 30px; margin-bottom: 6px; }
+.nm-auth-card > p { color: var(--muted); margin: 0 0 26px; }
+.nm-error { margin-bottom: 16px; padding: 11px 13px; border-radius: var(--r-s); background: var(--bad-soft); color: #7A1A12; font-weight: 500; }
+.nm-steps { display: flex; gap: 6px; margin: 4px 0 26px; padding: 0; list-style: none; counter-reset: s; }
+.nm-steps li { flex: 1; counter-increment: s; font-size: 12px; font-weight: 600; color: var(--muted); padding-top: 9px; border-top: 3px solid var(--line); }
+.nm-steps li::before { content: counter(s) ". "; }
+.nm-steps li.is-done { border-color: var(--river); color: var(--ink-2); }
+.nm-steps li.is-on { border-color: var(--gold); color: var(--ink); }
+.nm-cats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.nm-cat { display: flex; gap: 12px; align-items: flex-start; text-align: left; padding: 14px; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--surface); cursor: pointer; }
+.nm-cat:hover { border-color: #AFC0C5; }
+.nm-cat.is-on { border-color: var(--river); box-shadow: inset 0 0 0 1px var(--river); background: #F6FAFB; }
+.nm-cat-ico { flex: none; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 9px; background: var(--river-soft); color: var(--river); }
+.nm-cat b { display: block; font-size: 14px; }
+.nm-cat small { color: var(--muted); font-size: 12px; }
+.nm-auth-actions { display: flex; justify-content: space-between; gap: 10px; margin-top: 24px; }
+.nm-honey { position: absolute; left: -9999px; }
+@media (max-width: 900px) {
+    .nm-auth { grid-template-columns: 1fr; }
+    .nm-auth-side { padding: 26px 22px; gap: 14px; }
+    .nm-auth-side p, .nm-seal { display: none; }
+    .nm-auth-side::after { display: none; }
+    .nm-cats { grid-template-columns: 1fr; }
+}

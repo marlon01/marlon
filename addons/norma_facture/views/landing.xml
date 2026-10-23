@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="landing" name="NORMA — présentation">
+        <html lang="fr">
+            <head>
+                <meta charset="utf-8"/>
+                <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+                <title>NORMA — Facture normalisée DGI pour les entreprises de la RDC</title>
+                <meta name="description" content="Émettez des factures normalisées conformes à la DGI (e-MCF) depuis la caisse, la réception de l'hôtel, le restaurant ou l'éditeur de factures. Multi-établissements, avoirs, rapports de TVA."/>
+                <meta name="theme-color" content="#10212B"/>
+                <link rel="icon" href="/norma_facture/static/description/icon.png"/>
+                <link rel="stylesheet" href="/norma_facture/static/src/css/norma_base.css"/>
+                <style>
+                    body{background:var(--paper)}
+                    .w{max-width:1180px;margin:0 auto;padding:0 24px}
+                    .top{position:sticky;top:0;z-index:20;background:rgba(245,247,246,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--line-2)}
+                    .top .w{display:flex;align-items:center;gap:18px;height:64px}
+                    .logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink)}
+                    .logo img{width:34px;height:34px;border-radius:8px}.logo b{font:600 20px var(--display);letter-spacing:.04em}
+                    .top nav{display:flex;gap:20px;margin-left:24px}.top nav a{color:var(--ink-2);text-decoration:none;font-weight:500}
+                    .top .act{margin-left:auto;display:flex;gap:10px}
+                    .hero{background:var(--ink);color:#DCE6E9;overflow:hidden}
+                    .hero .w{display:grid;grid-template-columns:1.15fr .85fr;gap:48px;align-items:center;padding-top:72px;padding-bottom:84px}
+                    .hero h1{font-size:clamp(36px,5vw,62px);line-height:1.02;color:#fff;max-width:13ch}
+                    .hero p{font-size:18px;color:#AFC1C7;max-width:52ch;margin:22px 0 30px}
+                    .hero .cta{display:flex;gap:12px;flex-wrap:wrap}
+                    .hero .nm-btn{height:54px;padding:0 24px;font-size:16px}
+                    .hero .ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.3)}
+                    .facts{display:flex;gap:28px;margin-top:38px;color:#8FA4AB;font-size:14px;flex-wrap:wrap}
+                    .facts b{display:block;color:#fff;font:600 22px var(--num)}
+                    .ticket{position:relative;justify-self:center;width:330px;background:#FBFCFB;color:var(--ink);padding:22px 22px 34px;border-radius:4px;font:13px/1.5 var(--num);transform:rotate(2deg);box-shadow:0 40px 80px rgba(0,0,0,.4);
+                        -webkit-mask:radial-gradient(circle 7px at 50% 100%,transparent 97%,#000) 0 0/18px 100% repeat-x;mask:radial-gradient(circle 7px at 50% 100%,transparent 97%,#000) 0 0/18px 100% repeat-x}
+                    .ticket .c{text-align:center}.ticket hr{border:0;border-top:1px dashed #9AAAB0;margin:9px 0}
+                    .ticket .r{display:flex;justify-content:space-between;gap:10px}
+                    .stamp{position:absolute;right:-44px;bottom:-40px;width:142px;height:142px;border-radius:50%;border:5px double #0F7B5F;color:#0F7B5F;display:flex;flex-direction:column;align-items:center;justify-content:center;font:700 14px/1.15 var(--display);text-align:center;background:rgba(251,252,251,.86);transform:rotate(-14deg);animation:stamp .5s 0.7s cubic-bezier(.2,1.6,.4,1) both}
+                    .stamp small{font:600 10px var(--num);margin-top:4px}
+                    @keyframes stamp{from{opacity:0;transform:rotate(-14deg) scale(2.1)}to{opacity:1;transform:rotate(-14deg) scale(1)}}
+                    section.band{padding:84px 0}
+                    .band h2{font-size:clamp(28px,3.4vw,40px);max-width:22ch}
+                    .band .lead{color:var(--muted);font-size:17px;max-width:62ch;margin:14px 0 36px}
+                    .trades{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+                    .trade{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);padding:20px}
+                    .trade h3{font-size:18px;margin-bottom:6px}.trade p{margin:0;color:var(--muted);font-size:14px}
+                    .trade ul{margin:12px 0 0;padding-left:18px;font-size:14px;color:var(--ink-2)}
+                    .flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;counter-reset:f;border-top:2px solid var(--ink)}
+                    .flow div{counter-increment:f;padding:22px 20px 0 0}
+                    .flow div::before{content:counter(f);display:block;font:600 40px/1 var(--num);color:var(--river);margin-bottom:12px}
+                    .flow h3{font-size:18px;margin-bottom:6px}.flow p{margin:0;color:var(--muted);font-size:14px}
+                    .alt{background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+                    .proof{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px 36px}
+                    .proof h3{font-size:17px;margin-bottom:6px}.proof p{margin:0;color:var(--muted);font-size:14px}
+                    .rates{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+                    .rates span{display:inline-flex;gap:8px;align-items:center;padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:var(--paper);font-size:13px}
+                    .final{background:var(--river);color:#fff;border-radius:var(--r-l);padding:48px;display:flex;gap:30px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+                    .final h2{color:#fff;max-width:20ch}.final p{color:#CFE1E6;margin:10px 0 0;max-width:52ch}
+                    footer{padding:34px 0 46px;color:var(--muted);font-size:14px}
+                    footer .w{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+                    footer a{color:var(--ink-2)}
+                    @media (max-width:960px){.hero .w{grid-template-columns:1fr}.ticket{transform:none}.trades,.flow,.proof{grid-template-columns:1fr 1fr}.top nav{display:none}}
+                    @media (max-width:600px){.trades,.flow,.proof{grid-template-columns:1fr}.stamp{right:-6px}.final{padding:28px}.top .act .hide-s{display:none}}
+                    @media (prefers-reduced-motion:reduce){.stamp{animation:none}}
+                </style>
+            </head>
+            <body class="nm-body">
+                <header class="top"><div class="w">
+                    <a class="logo" href="/norma"><img src="/norma_facture/static/description/icon.png" alt=""/><b>NORMA</b></a>
+                    <nav aria-label="Navigation"><a href="#metiers">Métiers</a><a href="#fonctionnement">Fonctionnement</a><a href="#conformite">Conformité</a></nav>
+                    <div class="act">
+                        <a t-if="space" class="nm-btn nm-btn-primary" t-att-href="space">Mon espace</a>
+                        <t t-else=""><a class="nm-btn nm-btn-ghost hide-s" href="/norma/login">Se connecter</a><a class="nm-btn nm-btn-primary" href="/norma/signup">Créer un compte</a></t>
+                    </div>
+                </div></header>
+
+                <main>
+                    <section class="hero"><div class="w">
+                        <div>
+                            <h1>La facture normalisée, à chaque vente.</h1>
+                            <p>NORMA émet vos factures par le dispositif électronique fiscal de la DGI et les rend vérifiables par QR code, depuis la caisse du supermarché, la réception de l'hôtel, la salle du restaurant ou le bureau du comptable.</p>
+                            <div class="cta">
+                                <a class="nm-btn nm-btn-gold" href="/norma/signup">Créer le compte de mon entreprise</a>
+                                <a class="nm-btn ghost" href="/norma/login">Se connecter</a>
+                            </div>
+                            <div class="facts">
+                                <span><b>e-MCF v1.3</b>API de la DGI</span>
+                                <span><b>A → S</b>groupes de taxation</span>
+                                <span><b>FV · FT · FA · EV · ET · EA</b>tous les types de facture</span>
+                            </div>
+                        </div>
+                        <div class="ticket" aria-hidden="true">
+                            <div class="c"><b>HÔTEL DU FLEUVE SARL</b><br/>NIF A0700190Q · RCCM CD/KNG/24-B-0412<br/>HTL-01 · Gombe, Kinshasa</div>
+                            <hr/>
+                            <div class="c"><b>FACTURE DE VENTE</b><br/>HTL-01-FV-2026-000731</div>
+                            <hr/>
+                            <div class="r"><span>Nuitée chambre supérieure ×2 [B]</span><span>360 000</span></div>
+                            <div class="r"><span>Petit-déjeuner ×2 [B]</span><span>50 000</span></div>
+                            <div class="r"><span>Transfert aéroport [B]</span><span>90 000</span></div>
+                            <hr/>
+                            <div class="r"><span>Gr. B 16 % · HT 431 034,48</span><span>TVA 68 965,52</span></div>
+                            <div class="r" style="font-size:16px;font-weight:700"><span>TOTAL TTC CDF</span><span>500 000</span></div>
+                            <hr/>
+                            <div>Code DEF/DGI  RX7Q-4MBC-HT92-W1PZ<br/>DEF NID  CD01000214 · 731/731 FV</div>
+                            <div class="stamp">Normalisée<br/>DGI<small>23/10/2026 14:02</small></div>
+                        </div>
+                    </div></section>
+
+                    <section class="band" id="metiers"><div class="w">
+                        <h2>Une interface faite pour votre métier.</h2>
+                        <p class="lead">À l'inscription, vous choisissez votre catégorie d'activité. NORMA ouvre l'espace de vente qui lui correspond, avec un catalogue de départ prêt à facturer.</p>
+                        <div class="trades">
+                            <div class="trade"><h3>Supermarché, magasin, pharmacie</h3><p>Caisse rapide au lecteur de codes-barres.</p><ul><li>Ticket 80 mm normalisé</li><li>Paiement mixte espèces et Mobile Money</li><li>Rendu de monnaie</li></ul></div>
+                            <div class="trade"><h3>Hôtel</h3><p>Plan des chambres et notes de séjour.</p><ul><li>Arrivée, nuitées automatiques</li><li>Restaurant et services sur la note</li><li>Une facture au départ</li></ul></div>
+                            <div class="trade"><h3>Restaurant et bar</h3><p>Plan de salle et additions par table.</p><ul><li>Envoi des commandes en cuisine</li><li>Changement de table</li><li>Encaissement à table</li></ul></div>
+                            <div class="trade"><h3>Services et B2B</h3><p>Factures détaillées aux entreprises.</p><ul><li>Acomptes et exportation</li><li>Factures à crédit</li><li>Avoirs partiels</li></ul></div>
+                        </div>
+                    </div></section>
+
+                    <section class="band alt" id="fonctionnement"><div class="w">
+                        <h2>Du ticket à la DGI en quelques secondes.</h2>
+                        <p class="lead">Chaque établissement est relié à son propre module de contrôle de facturation en ligne (e-MCF). Le circuit est celui que prescrit la DGI.</p>
+                        <div class="flow">
+                            <div><h3>Vente</h3><p>Le caissier ou le réceptionniste saisit les articles. Les montants et la TVA sont calculés sur le serveur.</p></div>
+                            <div><h3>Contrôle</h3><p>La demande part à l'e-MCF. NORMA compare les totaux de la DGI aux siens et bloque au moindre écart.</p></div>
+                            <div><h3>Normalisation</h3><p>La DGI renvoie le code DEF, les compteurs, le NID et le QR code, imprimés sur la facture.</p></div>
+                            <div><h3>Vérification</h3><p>Votre client, un contrôleur ou votre comptable vérifient la facture par son QR code ou sur le portail de la DGI.</p></div>
+                        </div>
+                    </div></section>
+
+                    <section class="band" id="conformite"><div class="w">
+                        <h2>Ce que contrôle l'homologation, NORMA le fait.</h2>
+                        <p class="lead">Règles de calcul des Spécifications SFE, mentions obligatoires, sécurité des données fiscales : le logiciel est conçu pour passer les tests de la DGI.</p>
+                        <div class="proof">
+                            <div><h3>Calcul SFE exact</h3><p>Total par groupe de taxation, TVA arrondie au centime supérieur, taxe spécifique dans la base, montants transmis en CDF même pour une facture en dollars.</p></div>
+                            <div><h3>Factures définitives</h3><p>Une facture normalisée ne se modifie ni ne se supprime. Les corrections passent par une facture d'avoir (COR, RAN, RAM, RRR), plafonnée à la facture d'origine.</p></div>
+                            <div><h3>Numérotation sans trou</h3><p>Une série par établissement et par type de facture. Une facture abandonnée garde son numéro et son motif.</p></div>
+                            <div><h3>Coupures maîtrisées</h3><p>Reprise automatique sans double envoi ; une confirmation restée sans réponse est signalée pour vérification, jamais renvoyée à l'aveugle.</p></div>
+                            <div><h3>Traçabilité scellée</h3><p>Journal d'audit et chaîne des factures scellés par empreintes SHA-256 ; chaque échange avec la DGI est conservé.</p></div>
+                            <div><h3>Accès par rôle et par site</h3><p>Caissiers limités à leurs établissements, remises plafonnées, prix modifiables par le seul gestionnaire, données cloisonnées entre entreprises.</p></div>
+                        </div>
+                        <div class="rates">
+                            <span t-foreach="tax_groups" t-as="g"><span class="nm-group" t-out="g.code"/><t t-out="g.name"/></span>
+                        </div>
+                    </div></section>
+
+                    <section class="band" style="padding-top:0"><div class="w">
+                        <div class="final">
+                            <div><h2>Facturez dès aujourd'hui, en démonstration.</h2><p>Créez le compte de votre entreprise, testez la caisse ou la réception, puis reliez vos établissements à l'e-MCF de la DGI.</p></div>
+                            <a class="nm-btn nm-btn-gold nm-btn-lg" href="/norma/signup">Créer un compte</a>
+                        </div>
+                    </div></section>
+                </main>
+
+                <footer><div class="w">
+                    <span>© <t t-out="year"/> NORMA by Naxoris — Kinshasa, République démocratique du Congo</span>
+                    <span>Démonstration : <a href="tel:+243828317540">+243 828 317 540</a> · <a href="tel:+243831509420">+243 831 509 420</a> · <a href="mailto:contact@naxoris.com">contact@naxoris.com</a></span>
+                </div></footer>
+            </body>
+        </html>
+    </template>
+</odoo>

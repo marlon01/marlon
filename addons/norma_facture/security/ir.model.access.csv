@@ -1,0 +1,34 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_category_cashier,category cashier,model_norma_category,group_norma_cashier,1,0,0,0
+access_tax_group_cashier,tax_group cashier,model_norma_tax_group,group_norma_cashier,1,0,0,0
+access_site_cashier,site cashier,model_norma_site,group_norma_cashier,1,0,0,0
+access_product_category_cashier,product_category cashier,model_norma_product_category,group_norma_cashier,1,0,0,0
+access_product_cashier,product cashier,model_norma_product,group_norma_cashier,1,0,0,0
+access_customer_cashier,customer cashier,model_norma_customer,group_norma_cashier,1,0,0,0
+access_invoice_cashier,invoice cashier,model_norma_invoice,group_norma_cashier,1,0,0,0
+access_invoice_line_cashier,invoice_line cashier,model_norma_invoice_line,group_norma_cashier,1,0,0,0
+access_invoice_group_cashier,invoice_group cashier,model_norma_invoice_group,group_norma_cashier,1,0,0,0
+access_invoice_payment_cashier,invoice_payment cashier,model_norma_invoice_payment,group_norma_cashier,1,0,0,0
+access_place_cashier,place cashier,model_norma_place,group_norma_cashier,1,0,0,0
+access_folio_cashier,folio cashier,model_norma_folio,group_norma_cashier,1,0,0,0
+access_folio_line_cashier,folio_line cashier,model_norma_folio_line,group_norma_cashier,1,0,0,0
+access_audit_manager,audit manager,model_norma_audit,group_norma_manager,1,0,0,0
+access_emcf_log_manager,emcf_log manager,model_norma_emcf_log,group_norma_manager,1,0,0,0
+access_category_platform,category platform,model_norma_category,group_norma_platform,1,1,1,1
+access_tax_group_platform,tax_group platform,model_norma_tax_group,group_norma_platform,1,1,1,1
+access_site_platform,site platform,model_norma_site,group_norma_platform,1,1,1,1
+access_product_category_platform,product_category platform,model_norma_product_category,group_norma_platform,1,1,1,1
+access_product_platform,product platform,model_norma_product,group_norma_platform,1,1,1,1
+access_customer_platform,customer platform,model_norma_customer,group_norma_platform,1,1,1,1
+access_invoice_platform,invoice platform,model_norma_invoice,group_norma_platform,1,0,0,0
+access_invoice_line_platform,invoice_line platform,model_norma_invoice_line,group_norma_platform,1,0,0,0
+access_invoice_group_platform,invoice_group platform,model_norma_invoice_group,group_norma_platform,1,0,0,0
+access_invoice_payment_platform,invoice_payment platform,model_norma_invoice_payment,group_norma_platform,1,0,0,0
+access_place_platform,place platform,model_norma_place,group_norma_platform,1,1,1,1
+access_folio_platform,folio platform,model_norma_folio,group_norma_platform,1,1,1,1
+access_folio_line_platform,folio_line platform,model_norma_folio_line,group_norma_platform,1,1,1,1
+access_audit_platform,audit platform,model_norma_audit,group_norma_platform,1,0,0,0
+access_emcf_log_platform,emcf_log platform,model_norma_emcf_log,group_norma_platform,1,0,0,0
+access_emcf_sim_platform,emcf_sim platform,model_norma_emcf_sim,group_norma_platform,1,1,1,1
+access_emcf_sim_system,emcf sim system,model_norma_emcf_sim,base.group_system,1,1,1,1
+access_throttle_system,throttle system,model_norma_throttle,base.group_system,1,1,1,1

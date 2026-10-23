@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ================================================================== éléments communs -->
+    <template id="print_styles" name="NORMA — styles d'impression">
+        <style>
+            :root{--ink:#0F172A;--muted:#475569;--line:#CBD5E1;--soft:#F1F5F9;--brand:<t t-out="company.norma_brand_color or '#0E4D64'"/>}
+            *{box-sizing:border-box}
+            body{margin:0;font:12px/1.45 "Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--ink);background:#E2E8F0}
+            .bar{position:sticky;top:0;display:flex;gap:8px;justify-content:center;padding:10px;background:#0F172A}
+            .bar button,.bar a{font:600 13px system-ui,sans-serif;border:0;border-radius:8px;padding:9px 16px;cursor:pointer;text-decoration:none;color:#0F172A;background:#fff}
+            .bar .pri{background:#F2B705}
+            .stamp{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;overflow:hidden}
+            .stamp span{transform:rotate(-28deg);font:800 54px/1 system-ui,sans-serif;letter-spacing:4px;color:rgba(220,38,38,.16);border:6px solid rgba(220,38,38,.16);padding:10px 26px;border-radius:12px;white-space:nowrap}
+            .num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+            .mono{font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace}
+            @media print{body{background:#fff}.bar{display:none}.sheet{box-shadow:none!important;margin:0!important}}
+        </style>
+    </template>
+
+    <template id="print_bar" name="NORMA — barre d'impression">
+        <div class="bar">
+            <button class="pri" onclick="window.print()">Imprimer</button>
+            <a t-att-href="'/norma/print/%s?format=%s' % (inv.id, 'a4' if fmt_name == 'ticket' else 'ticket')" t-out="'Format A4' if fmt_name == 'ticket' else 'Ticket 80 mm'"/>
+            <button onclick="window.close()">Fermer</button>
+        </div>
+        <script t-if="auto">window.addEventListener('load',function(){setTimeout(function(){window.print()},300)})</script>
+    </template>
+
+    <!-- ================================================================== facture A4 -->
+    <template id="print_a4" name="NORMA — facture A4">
+        <html lang="fr">
+            <head>
+                <meta charset="utf-8"/>
+                <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <meta name="robots" content="noindex"/>
+                <title t-out="'%s %s' % (title, inv.number or '')"/>
+                <link rel="icon" href="/norma_facture/static/description/icon.png"/>
+                <t t-call="norma_facture.print_styles"/>
+                <style>
+                    @page{size:A4;margin:12mm}
+                    .sheet{position:relative;width:210mm;min-height:297mm;margin:16px auto;background:#fff;padding:14mm 13mm;box-shadow:0 10px 40px rgba(15,23,42,.18)}
+                    @media print{.sheet{width:auto;min-height:0;padding:0}}
+                    .head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start}
+                    .seller{display:flex;gap:14px;align-items:flex-start}
+                    .seller img{width:64px;height:64px;object-fit:contain;border-radius:10px}
+                    .seller h1{margin:0 0 4px;font-size:18px;letter-spacing:.2px}
+                    .seller div{color:var(--muted);font-size:11px}
+                    .doc{text-align:right}
+                    .doc .t{display:inline-block;background:var(--brand);color:#fff;font-weight:800;letter-spacing:.6px;padding:7px 14px;border-radius:6px;font-size:13px}
+                    .doc .n{font-size:15px;font-weight:700;margin-top:8px;white-space:nowrap}
+                    .doc div{color:var(--muted);font-size:11px}
+                    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+                    .box{border:1px solid var(--line);border-radius:8px;padding:9px 11px}
+                    .box h3{margin:0 0 5px;font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--brand)}
+                    .box table{width:100%;border-collapse:collapse}.box td{padding:1px 0;vertical-align:top}.box td:first-child{color:var(--muted);width:42%}
+                    table.lines{width:100%;border-collapse:collapse;margin-top:6px}
+                    table.lines th{background:var(--soft);text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:7px 8px;border-bottom:1px solid var(--line)}
+                    table.lines td{padding:6px 8px;border-bottom:1px solid #E2E8F0;vertical-align:top}
+                    .tg{display:inline-block;min-width:18px;text-align:center;border-radius:4px;background:var(--soft);font-weight:700;font-size:10px;padding:1px 4px}
+                    .sum{display:grid;grid-template-columns:1.25fr 1fr;gap:14px;margin-top:14px;align-items:start}
+                    table.small{width:100%;border-collapse:collapse;font-size:11px}
+                    table.small th,table.small td{padding:4px 6px;border-bottom:1px solid #E2E8F0;text-align:left}
+                    table.small th{color:var(--muted);font-size:10px;text-transform:uppercase}
+                    .tot{border:1px solid var(--line);border-radius:8px;overflow:hidden}
+                    .tot div{display:flex;justify-content:space-between;padding:6px 11px;border-bottom:1px solid #E2E8F0}
+                    .tot .grand{background:var(--brand);color:#fff;font-size:15px;font-weight:800;border:0}
+                    .words{margin-top:8px;font-style:italic;color:var(--muted)}
+                    .sec{display:flex;gap:16px;align-items:center;margin-top:16px;border:2px solid var(--ink);border-radius:10px;padding:10px 14px}
+                    .sec .qr svg{width:34mm;height:34mm;display:block}
+                    .sec table td{padding:2px 8px 2px 0}.sec table td:first-child{color:var(--muted);white-space:nowrap}
+                    .sec h3{margin:0 0 4px;font-size:11px;letter-spacing:.8px;text-transform:uppercase}
+                    .pending{margin-top:16px;border:2px dashed #DC2626;color:#991B1B;border-radius:10px;padding:12px 14px;font-weight:700;text-align:center}
+                    .foot{margin-top:14px;display:flex;justify-content:space-between;gap:12px;color:var(--muted);font-size:10px;border-top:1px solid var(--line);padding-top:8px}
+                    .foot .vq svg{width:16mm;height:16mm}
+                </style>
+            </head>
+            <body>
+                <t t-set="fmt_name" t-value="'a4'"/>
+                <t t-call="norma_facture.print_bar"/>
+                <div class="sheet">
+                    <div t-if="inv.state != 'normalized'" class="stamp"><span>NE VAUT PAS FACTURE</span></div>
+                    <div t-elif="simulation" class="stamp"><span>SIMULATION — SANS VALEUR FISCALE</span></div>
+                    <div t-elif="inv.emcf_mode == 'test'" class="stamp"><span>TEST DGI — SANS VALEUR FISCALE</span></div>
+
+                    <div class="head">
+                        <div class="seller">
+                            <img t-att-src="'/norma/logo/%s' % company.id" alt=""/>
+                            <div>
+                                <h1 t-out="company.name"/>
+                                <div><t t-out="company.street or ''"/><t t-if="company.city">, <t t-out="company.city"/></t></div>
+                                <div><t t-if="company.phone">Tél. <t t-out="company.phone"/></t><t t-if="company.email"> · <t t-out="company.email"/></t></div>
+                                <div><strong>NIF</strong> <t t-out="company.norma_nif or '—'"/> · <strong>RCCM</strong> <t t-out="company.norma_rccm or '—'"/> · <strong>Id. Nat.</strong> <t t-out="company.norma_idnat or '—'"/></div>
+                                <div t-if="company.norma_tax_center">Centre des impôts : <t t-out="company.norma_tax_center"/></div>
+                                <div t-if="site.emcf_isf">ISF : <span class="mono" t-out="site.emcf_isf"/></div>
+                            </div>
+                        </div>
+                        <div class="doc">
+                            <div class="t" t-out="title"/>
+                            <div class="n mono" t-out="inv.number or 'BROUILLON'"/>
+                            <div>Date : <strong t-out="local_date"/></div>
+                            <div t-if="inv.reversed_id">Facture d'origine : <strong class="mono" t-out="inv.reversed_id.number"/></div>
+                        </div>
+                    </div>
+
+                    <div class="grid">
+                        <div class="box">
+                            <h3>Client</h3>
+                            <table t-if="inv.client_name">
+                                <tr><td>Nom / raison sociale</td><td><strong t-out="inv.client_name"/></td></tr>
+                                <tr t-if="inv.client_type"><td>Type</td><td t-out="{'PP': 'Personne physique', 'PM': 'Personne morale', 'PC': 'Commerçant', 'PL': 'Profession libérale', 'AO': 'Ambassade / organisation internationale'}.get(inv.client_type, inv.client_type)"/></tr>
+                                <tr><td>NIF</td><td class="mono" t-out="inv.client_nif or '—'"/></tr>
+                                <tr t-if="inv.client_address"><td>Adresse</td><td t-out="inv.client_address"/></tr>
+                                <tr t-if="inv.client_contact"><td>Contact</td><td t-out="inv.client_contact"/></tr>
+                                <tr t-if="inv.client_exemption"><td>Exonération</td><td t-out="inv.client_exemption"/></tr>
+                            </table>
+                            <div t-else="" style="color:var(--muted)">Client comptant (personne physique non identifiée)</div>
+                        </div>
+                        <div class="box">
+                            <h3>Point de vente et dispositif fiscal</h3>
+                            <table>
+                                <tr><td>Établissement</td><td><strong class="mono" t-out="site.code"/> — <t t-out="site.name"/></td></tr>
+                                <tr t-if="site.address"><td>Adresse</td><td t-out="site.address"/></tr>
+                                <tr><td>NID du DEF</td><td class="mono" t-out="inv.emcf_nim or site.emcf_nim or '—'"/></tr>
+                                <tr><td>Opérateur</td><td t-out="inv.operator_id.name or ''"/></tr>
+                                <tr><td>Mode de prix</td><td>TTC</td></tr>
+                                <tr><td>Devise</td><td><t t-out="inv.currency"/><t t-if="inv.currency != 'CDF'"> — taux <t t-out="fmt(inv.currency_rate, 4)"/> CDF</t></td></tr>
+                                <tr t-if="inv.origin"><td>Référence</td><td t-out="inv.origin"/></tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div t-if="inv.reversed_id" class="box" style="margin-bottom:12px">
+                        <h3>Avoir</h3>
+                        Nature : <strong t-out="references.get(inv.reference_type, inv.reference_type)"/> ·
+                        Code DEF/DGI de la facture d'origine : <strong class="mono" t-out="inv.reversed_id.emcf_code"/> ·
+                        Motif : <t t-out="inv.reversal_reason"/>
+                    </div>
+
+                    <table class="lines">
+                        <thead><tr>
+                            <th style="width:46%">Désignation</th><th>Gr.</th><th class="num">Qté</th>
+                            <th class="num">P.U. TTC</th><th class="num">Remise</th><th class="num">Montant TTC</th>
+                        </tr></thead>
+                        <tbody>
+                            <tr t-foreach="inv.line_ids" t-as="l">
+                                <td><t t-out="l.name"/><div t-if="l.specific_tax" style="color:var(--muted);font-size:10px">dont taxe spécifique <t t-out="fmt(l.specific_tax)"/> CDF</div></td>
+                                <td><span class="tg" t-out="l.tax_group"/></td>
+                                <td class="num" t-out="fmt(l.quantity, 3).rstrip('0').rstrip(',')"/>
+                                <td class="num" t-out="fmt(l.price_currency if inv.currency != 'CDF' else l.unit_price)"/>
+                                <td class="num" t-out="(('%g' % l.discount_pct) + ' %') if l.discount_pct else ''"/>
+                                <td class="num" t-out="fmt(l.total / inv.currency_rate if inv.currency != 'CDF' else l.total)"/>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="sum">
+                        <div>
+                            <table class="small">
+                                <thead><tr><th>Groupe</th><th class="num">Taux</th><th class="num">Base HT (CDF)</th><th class="num">TVA (CDF)</th><th class="num">TTC (CDF)</th></tr></thead>
+                                <tbody>
+                                    <tr t-foreach="inv.group_ids" t-as="g">
+                                        <td><span class="tg" t-out="g.code"/></td>
+                                        <td class="num" t-out="('%g' % g.rate) + ' %'"/>
+                                        <td class="num" t-out="fmt(g.base)"/><td class="num" t-out="fmt(g.tax)"/><td class="num" t-out="fmt(g.ttc)"/>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <table class="small" style="margin-top:10px">
+                                <thead><tr><th>Paiement</th><th class="num">Montant</th></tr></thead>
+                                <tbody>
+                                    <tr t-foreach="inv.payment_ids" t-as="p">
+                                        <td t-out="payments_label.get(p.method, p.method)"/>
+                                        <td class="num"><t t-out="fmt(p.amount)"/> <t t-out="inv.currency"/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div>
+                            <div class="tot">
+                                <div><span>Total HT</span><span class="num"><t t-out="fmt(inv.total_ht)"/> CDF</span></div>
+                                <div><span>Total TVA</span><span class="num"><t t-out="fmt(inv.total_tax)"/> CDF</span></div>
+                                <div t-if="inv.total_specific"><span>Taxe spécifique (HT)</span><span class="num"><t t-out="fmt(inv.total_specific)"/> CDF</span></div>
+                                <div class="grand"><span>Total TTC</span><span class="num"><t t-out="fmt(inv.total)"/> CDF</span></div>
+                                <div t-if="inv.currency != 'CDF'"><span>Soit en <t t-out="inv.currency"/></span><span class="num"><t t-out="fmt(inv.total_currency)"/> <t t-out="inv.currency"/></span></div>
+                            </div>
+                            <div class="words">Arrêtée à la somme de : <t t-out="words"/>.</div>
+                        </div>
+                    </div>
+
+                    <div t-if="inv.state == 'normalized'" class="sec">
+                        <div class="qr" t-out="qr"/>
+                        <div>
+                            <h3>Éléments de sécurité — facture normalisée</h3>
+                            <table>
+                                <tr><td>Code DEF/DGI</td><td><strong class="mono" t-out="inv.emcf_code"/></td></tr>
+                                <tr><td>DEF NID</td><td class="mono" t-out="inv.emcf_nim"/></tr>
+                                <tr><td>DEF Compteurs</td><td class="mono" t-out="inv.emcf_counters"/></tr>
+                                <tr><td>DEF Heure</td><td class="mono" t-out="inv.emcf_datetime"/></tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div t-else="" class="pending">
+                        Document en attente de normalisation par la DGI — NE VAUT PAS FACTURE.
+                        <div style="font-weight:400;margin-top:4px">La facture normalisée sera disponible dès la confirmation du dispositif électronique fiscal.</div>
+                    </div>
+
+                    <div class="foot">
+                        <div>
+                            <div t-if="company.norma_invoice_footer" t-out="company.norma_invoice_footer"/>
+                            <div>Facture émise par le système de facturation NORMA v<t t-out="version"/> (Naxoris), via le dispositif électronique fiscal de la DGI.</div>
+                            <div t-if="inv.note">Note : <t t-out="inv.note"/></div>
+                            <div t-if="verify_url">Vérification : <span class="mono" t-out="verify_url"/></div>
+                        </div>
+                        <div class="vq" t-if="verify_url" t-out="verify_qr"/>
+                    </div>
+                </div>
+            </body>
+        </html>
+    </template>
+
+    <!-- ================================================================== ticket 80 mm -->
+    <template id="print_ticket" name="NORMA — ticket 80 mm">
+        <html lang="fr">
+            <head>
+                <meta charset="utf-8"/>
+                <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <meta name="robots" content="noindex"/>
+                <title t-out="'Ticket %s' % (inv.number or '')"/>
+                <link rel="icon" href="/norma_facture/static/description/icon.png"/>
+                <t t-call="norma_facture.print_styles"/>
+                <style>
+                    @page{size:80mm auto;margin:3mm}
+                    body{font-size:11px}
+                    .sheet{position:relative;width:76mm;margin:16px auto;background:#fff;padding:4mm 3mm;box-shadow:0 10px 30px rgba(15,23,42,.2)}
+                    @media print{.sheet{width:auto;padding:0}}
+                    .c{text-align:center}.b{font-weight:700}
+                    .hr{border-top:1px dashed #000;margin:5px 0}
+                    table{width:100%;border-collapse:collapse}td{padding:1px 0;vertical-align:top}
+                    .qr svg{width:36mm;height:36mm}
+                    .stamp span{font-size:20px;border-width:3px}
+                </style>
+            </head>
+            <body>
+                <t t-set="fmt_name" t-value="'ticket'"/>
+                <t t-call="norma_facture.print_bar"/>
+                <div class="sheet">
+                    <div t-if="inv.state != 'normalized'" class="stamp"><span>NE VAUT PAS FACTURE</span></div>
+                    <div t-elif="simulation" class="stamp"><span>SIMULATION</span></div>
+                    <div t-elif="inv.emcf_mode == 'test'" class="stamp"><span>TEST DGI</span></div>
+                    <div class="c b" style="font-size:14px" t-out="company.name"/>
+                    <div class="c"><t t-out="site.name"/> (<t t-out="site.code"/>)</div>
+                    <div class="c" t-if="site.address or company.street" t-out="site.address or company.street"/>
+                    <div class="c" t-if="company.phone">Tél. <t t-out="company.phone"/></div>
+                    <div class="c">NIF <t t-out="company.norma_nif or '—'"/> · RCCM <t t-out="company.norma_rccm or '—'"/></div>
+                    <div class="c" t-if="company.norma_idnat">Id. Nat. <t t-out="company.norma_idnat"/></div>
+                    <div class="c" t-if="site.emcf_isf">ISF <t t-out="site.emcf_isf"/></div>
+                    <div class="hr"/>
+                    <div class="c b" t-out="title"/>
+                    <div class="c mono" t-out="inv.number"/>
+                    <div class="c"><t t-out="local_date"/> · <t t-out="inv.operator_id.name or ''"/></div>
+                    <div t-if="inv.reversed_id" class="c">Avoir (<t t-out="inv.reference_type"/>) de <t t-out="inv.reversed_id.number"/><br/>Réf. DEF <span class="mono" t-out="inv.reversed_id.emcf_code"/></div>
+                    <div t-if="inv.client_name"><div class="hr"/>Client : <t t-out="inv.client_name"/> (<t t-out="inv.client_type"/>)<t t-if="inv.client_nif"><br/>NIF : <t t-out="inv.client_nif"/></t></div>
+                    <div class="hr"/>
+                    <table>
+                        <t t-foreach="inv.line_ids" t-as="l">
+                            <tr><td colspan="2"><t t-out="l.name"/> <span class="b">[<t t-out="l.tax_group"/>]</span></td></tr>
+                            <tr><td><t t-out="fmt(l.quantity, 3).rstrip('0').rstrip(',')"/> × <t t-out="fmt(l.net_price)"/><t t-if="l.discount_pct"> (-<t t-out="'%g' % l.discount_pct"/> %)</t></td><td class="num" t-out="fmt(l.total)"/></tr>
+                        </t>
+                    </table>
+                    <div class="hr"/>
+                    <table>
+                        <tr t-foreach="inv.group_ids" t-as="g"><td>Gr. <t t-out="g.code"/> (<t t-out="'%g' % g.rate"/> %) HT <t t-out="fmt(g.base)"/></td><td class="num">TVA <t t-out="fmt(g.tax)"/></td></tr>
+                        <tr><td>Total HT</td><td class="num" t-out="fmt(inv.total_ht)"/></tr>
+                        <tr><td>Total TVA</td><td class="num" t-out="fmt(inv.total_tax)"/></tr>
+                        <tr class="b" style="font-size:14px"><td>TOTAL TTC CDF</td><td class="num" t-out="fmt(inv.total)"/></tr>
+                        <tr t-if="inv.currency != 'CDF'"><td>Soit <t t-out="inv.currency"/> (taux <t t-out="fmt(inv.currency_rate, 2)"/>)</td><td class="num" t-out="fmt(inv.total_currency)"/></tr>
+                        <tr t-foreach="inv.payment_ids" t-as="p"><td t-out="payments_label.get(p.method, p.method)"/><td class="num"><t t-out="fmt(p.amount)"/></td></tr>
+                    </table>
+                    <div class="hr"/>
+                    <t t-if="inv.state == 'normalized'">
+                        <div class="c qr" t-out="qr"/>
+                        <table>
+                            <tr><td>Code DEF/DGI</td><td class="num mono b" t-out="inv.emcf_code"/></tr>
+                            <tr><td>DEF NID</td><td class="num mono" t-out="inv.emcf_nim"/></tr>
+                            <tr><td>DEF Compteurs</td><td class="num mono" t-out="inv.emcf_counters"/></tr>
+                            <tr><td>DEF Heure</td><td class="num mono" t-out="inv.emcf_datetime"/></tr>
+                        </table>
+                    </t>
+                    <div t-else="" class="c b">EN ATTENTE DE NORMALISATION<br/>NE VAUT PAS FACTURE</div>
+                    <div class="hr"/>
+                    <div class="c" t-if="company.norma_invoice_footer" t-out="company.norma_invoice_footer"/>
+                    <div class="c" style="font-size:9px">NORMA v<t t-out="version"/> · Naxoris</div>
+                </div>
+            </body>
+        </html>
+    </template>
+
+    <!-- ================================================================== vérification publique -->
+    <template id="verify" name="NORMA — vérification">
+        <html lang="fr">
+            <head>
+                <meta charset="utf-8"/>
+                <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <meta name="robots" content="noindex, nofollow"/>
+                <title>Vérification d'une facture — NORMA</title>
+                <link rel="icon" href="/norma_facture/static/description/icon.png"/>
+                <style>
+                    *{box-sizing:border-box}
+                    body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:#0B2530;font:15px/1.5 "Segoe UI",Roboto,Arial,sans-serif;color:#0F172A}
+                    .card{width:100%;max-width:560px;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+                    .h{padding:26px 28px;color:#fff}.ok{background:linear-gradient(135deg,#065F46,#10B981)}.wait{background:linear-gradient(135deg,#92400E,#F59E0B)}.ko{background:linear-gradient(135deg,#7F1D1D,#EF4444)}
+                    .h small{opacity:.85;letter-spacing:1px;text-transform:uppercase;font-size:11px;font-weight:700}
+                    .h h1{margin:6px 0 0;font-size:22px}
+                    table{width:100%;border-collapse:collapse}td{padding:10px 28px;border-bottom:1px solid #E2E8F0;font-size:14px}td:first-child{color:#64748B;width:42%}
+                    .mono{font-family:Consolas,"Liberation Mono",monospace}
+                    .f{padding:16px 28px;font-size:12px;color:#64748B;display:flex;gap:10px;align-items:center}
+                    .f img{width:28px;height:28px;border-radius:7px}
+                </style>
+            </head>
+            <body>
+                <div class="card">
+                    <t t-if="inv and inv.state == 'normalized'">
+                        <div t-att-class="'h ' + ('ok' if inv.emcf_mode == 'production' else 'wait')">
+                            <small t-out="'Facture normalisée enregistrée par le dispositif fiscal de la DGI' if inv.emcf_mode == 'production' else ('Environnement de test de la DGI — sans valeur fiscale' if inv.emcf_mode == 'test' else 'Facture de démonstration (simulation) — sans valeur fiscale')"/>
+                            <h1 t-out="title"/>
+                        </div>
+                        <table>
+                            <tr><td>Émetteur</td><td><strong t-out="inv.company_id.name"/></td></tr>
+                            <tr><td>NIF de l'émetteur</td><td class="mono" t-out="inv.company_id.norma_nif"/></tr>
+                            <tr><td>Établissement</td><td><t t-out="inv.site_id.code"/> — <t t-out="inv.site_id.name"/></td></tr>
+                            <tr><td>Numéro</td><td class="mono" t-out="inv.number"/></tr>
+                            <tr><td>Date</td><td t-out="local_date"/></tr>
+                            <tr><td>Client</td><td t-out="inv.client_name or 'Client comptant'"/></tr>
+                            <tr><td>Total TTC</td><td><strong><t t-out="fmt(inv.total)"/> CDF</strong></td></tr>
+                            <tr><td>dont TVA</td><td><t t-out="fmt(inv.total_tax)"/> CDF</td></tr>
+                            <tr><td>Code DEF/DGI</td><td class="mono" t-out="inv.emcf_code"/></tr>
+                            <tr><td>DEF NID / compteurs</td><td class="mono"><t t-out="inv.emcf_nim"/> · <t t-out="inv.emcf_counters"/></td></tr>
+                            <tr t-if="inv.credit_note_ids.filtered(lambda c: c.state == 'normalized')"><td>Avoirs émis</td><td><t t-foreach="inv.credit_note_ids.filtered(lambda c: c.state == 'normalized')" t-as="c"><div class="mono"><t t-out="c.number"/> (−<t t-out="fmt(c.total)"/> CDF)</div></t></td></tr>
+                        </table>
+                    </t>
+                    <t t-elif="inv">
+                        <div class="h wait"><small>Document non normalisé</small><h1>En attente de normalisation</h1></div>
+                        <table><tr><td>Émetteur</td><td t-out="inv.company_id.name"/></tr><tr><td>Numéro</td><td class="mono" t-out="inv.number"/></tr></table>
+                        <div class="f">Ce document ne vaut pas facture tant que le dispositif électronique fiscal de la DGI ne l'a pas confirmé.</div>
+                    </t>
+                    <t t-else="">
+                        <div class="h ko"><small>Vérification</small><h1>Facture introuvable</h1></div>
+                        <div class="f">Aucune facture ne correspond à ce lien. Vérifiez aussi le code DEF/DGI imprimé sur l'application officielle de la DGI.</div>
+                    </t>
+                    <div class="f"><img src="/norma_facture/static/description/icon.png" alt=""/> Vérification fournie par NORMA. Le contrôle officiel du code DEF/DGI se fait sur les outils de la DGI.</div>
+                </div>
+            </body>
+        </html>
+    </template>
+</odoo>

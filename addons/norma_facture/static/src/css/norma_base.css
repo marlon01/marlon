@@ -1,0 +1,143 @@
+/* NORMA — jetons et composants communs.
+   Encre et « fleuve » pour la structure ; l'or fiscal est réservé au sceau d'une facture normalisée. */
+:root {
+    --ink: #10212B;
+    --ink-2: #33464F;
+    --muted: #64767E;
+    --line: #D9E1E3;
+    --line-2: #E9EEEF;
+    --paper: #F5F7F6;
+    --surface: #FFFFFF;
+    --river: #0E4D64;
+    --river-2: #0A3A4C;
+    --river-soft: #E3EEF1;
+    --gold: #F2B705;
+    --gold-soft: #FFF6D6;
+    --ok: #0F7B5F;
+    --ok-soft: #E2F4EE;
+    --warn: #B45309;
+    --warn-soft: #FDF0DC;
+    --bad: #B42318;
+    --bad-soft: #FDE8E6;
+    --brand: var(--river);
+    --display: "Bahnschrift", "DIN Alternate", "Roboto Condensed", "Arial Narrow", system-ui, sans-serif;
+    --text: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --num: "Bahnschrift", "DIN Alternate", "Roboto Condensed", system-ui, sans-serif;
+    --r-s: 6px;
+    --r-m: 10px;
+    --r-l: 16px;
+    --shadow: 0 1px 2px rgba(16, 33, 43, .06), 0 6px 18px rgba(16, 33, 43, .07);
+    --shadow-lg: 0 24px 60px rgba(16, 33, 43, .22);
+    color-scheme: light;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body.nm-body { font: 14px/1.5 var(--text); color: var(--ink); background: var(--paper); -webkit-font-smoothing: antialiased; }
+h1, h2, h3, h4 { font-family: var(--display); font-weight: 600; letter-spacing: -.01em; margin: 0; line-height: 1.15; }
+a { color: var(--river); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.nm-num { font-family: var(--num); font-variant-numeric: tabular-nums; }
+.nm-mono { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: .92em; }
+.nm-muted { color: var(--muted); }
+.nm-grow { flex: 1 1 auto; min-width: 0; }
+.nm-row { display: flex; align-items: center; gap: 10px; }
+.nm-wrap { flex-wrap: wrap; }
+.nm-stack { display: flex; flex-direction: column; gap: 12px; }
+.nm-right { text-align: right; }
+.nm-hide { display: none !important; }
+.nm-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+.nm-boot { min-height: 100vh; display: flex; flex-direction: column; gap: 14px; align-items: center; justify-content: center; color: var(--muted); }
+.nm-boot img { border-radius: 14px; }
+
+/* ---------------------------------------------------------------- boutons */
+.nm-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 16px;
+    border: 1px solid var(--line); border-radius: var(--r-s); background: var(--surface); cursor: pointer; font-weight: 600;
+    text-decoration: none; color: var(--ink); white-space: nowrap; transition: background .12s, border-color .12s; }
+.nm-btn:hover { border-color: #B9C6CA; background: #FAFCFC; }
+.nm-btn:disabled { opacity: .5; cursor: not-allowed; }
+.nm-btn-primary { background: var(--river); border-color: var(--river); color: #fff; }
+.nm-btn-primary:hover { background: var(--river-2); border-color: var(--river-2); }
+.nm-btn-gold { background: var(--gold); border-color: #DCA600; color: var(--ink); }
+.nm-btn-gold:hover { background: #E5AD00; border-color: #C99700; }
+.nm-btn-danger { color: var(--bad); }
+.nm-btn-ghost { border-color: transparent; background: transparent; }
+.nm-btn-ghost:hover { background: rgba(16, 33, 43, .06); border-color: transparent; }
+.nm-btn-sm { height: 32px; padding: 0 11px; font-size: 13px; }
+.nm-btn-lg { height: 52px; padding: 0 22px; font-size: 16px; }
+.nm-btn-icon { width: 40px; padding: 0; }
+.nm-btn-sm.nm-btn-icon { width: 32px; }
+.nm-btn-block { width: 100%; }
+
+/* ---------------------------------------------------------------- formulaires */
+.nm-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.nm-field > span { font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.nm-field small { color: var(--muted); font-size: 12px; }
+.nm-input, .nm-select, .nm-textarea { width: 100%; height: 40px; padding: 0 12px; border: 1px solid var(--line); border-radius: var(--r-s);
+    background: var(--surface); transition: border-color .12s, box-shadow .12s; }
+.nm-textarea { height: auto; min-height: 80px; padding: 10px 12px; resize: vertical; }
+.nm-input:focus, .nm-select:focus, .nm-textarea:focus { outline: none; border-color: var(--river); box-shadow: 0 0 0 3px rgba(14, 77, 100, .15); }
+.nm-input.is-invalid { border-color: var(--bad); }
+.nm-grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.nm-grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.nm-span-2 { grid-column: span 2; }
+.nm-check { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
+.nm-check input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--river); }
+.nm-seg { display: inline-flex; border: 1px solid var(--line); border-radius: var(--r-s); overflow: hidden; background: var(--surface); }
+.nm-seg button { border: 0; background: transparent; padding: 0 14px; height: 36px; cursor: pointer; font-weight: 600; color: var(--muted); }
+.nm-seg button + button { border-left: 1px solid var(--line); }
+.nm-seg button.is-on { background: var(--river); color: #fff; }
+
+/* ---------------------------------------------------------------- étiquettes d'état */
+.nm-tag { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px; border-radius: 999px; font-size: 12px;
+    font-weight: 600; background: var(--line-2); color: var(--ink-2); white-space: nowrap; }
+.nm-tag::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; opacity: .8; }
+.nm-tag-ok { background: var(--ok-soft); color: var(--ok); }
+.nm-tag-warn { background: var(--warn-soft); color: var(--warn); }
+.nm-tag-bad { background: var(--bad-soft); color: var(--bad); }
+.nm-tag-info { background: var(--river-soft); color: var(--river); }
+.nm-tag-gold { background: var(--gold-soft); color: #7A5B00; }
+.nm-tag-plain::before { display: none; }
+.nm-group { display: inline-grid; place-items: center; min-width: 22px; height: 20px; padding: 0 5px; border-radius: 4px;
+    background: var(--river-soft); color: var(--river); font: 700 11px/1 var(--num); }
+
+/* ---------------------------------------------------------------- surfaces */
+.nm-panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-m); }
+.nm-panel-head { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--line-2); }
+.nm-panel-head h2 { font-size: 17px; }
+.nm-panel-body { padding: 18px; }
+.nm-empty { padding: 42px 20px; text-align: center; color: var(--muted); }
+.nm-empty h3 { color: var(--ink); font-size: 17px; margin-bottom: 6px; }
+.nm-note { padding: 12px 14px; border-radius: var(--r-s); background: var(--river-soft); color: var(--river-2); font-size: 13px; }
+.nm-note-warn { background: var(--warn-soft); color: #7C3A06; }
+.nm-note-bad { background: var(--bad-soft); color: #7A1A12; }
+.nm-note-ok { background: var(--ok-soft); color: #0B5843; }
+
+/* ---------------------------------------------------------------- tableaux */
+.nm-table { width: 100%; border-collapse: collapse; }
+.nm-table th { text-align: left; font-size: 12px; font-weight: 600; color: var(--muted); padding: 10px 14px; border-bottom: 1px solid var(--line); background: #FAFBFB; white-space: nowrap; }
+.nm-table td { padding: 11px 14px; border-bottom: 1px solid var(--line-2); vertical-align: middle; }
+.nm-table tr.is-click { cursor: pointer; }
+.nm-table tr.is-click:hover td { background: #F7FAFA; }
+.nm-table .nm-right { text-align: right; }
+.nm-table-wrap { overflow-x: auto; }
+
+/* ---------------------------------------------------------------- boîtes de dialogue et notifications */
+.nm-overlay { position: fixed; inset: 0; z-index: 900; background: rgba(16, 33, 43, .48); display: flex; align-items: center; justify-content: center; padding: 18px; animation: nm-fade .14s ease-out; }
+.nm-dialog { width: 100%; max-width: 560px; max-height: calc(100vh - 36px); overflow: auto; background: var(--surface); border-radius: var(--r-l); box-shadow: var(--shadow-lg); animation: nm-rise .18s ease-out; }
+.nm-dialog-lg { max-width: 860px; }
+.nm-dialog-head { display: flex; align-items: center; gap: 10px; padding: 18px 22px 0; }
+.nm-dialog-head h2 { font-size: 20px; flex: 1; }
+.nm-dialog-body { padding: 16px 22px; }
+.nm-dialog-foot { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 22px 20px; }
+.nm-toasts { position: fixed; z-index: 1000; right: 18px; top: 18px; display: flex; flex-direction: column; gap: 8px; max-width: min(420px, calc(100vw - 36px)); }
+.nm-toast { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: var(--r-m); background: var(--ink); color: #fff; box-shadow: var(--shadow-lg); animation: nm-rise .18s ease-out; }
+.nm-toast-bad { background: var(--bad); }
+.nm-toast-ok { background: var(--ok); }
+.nm-spinner { width: 18px; height: 18px; border: 2px solid rgba(16, 33, 43, .2); border-top-color: var(--river); border-radius: 50%; animation: nm-spin .7s linear infinite; }
+@keyframes nm-spin { to { transform: rotate(360deg); } }
+@keyframes nm-fade { from { opacity: 0; } }
+@keyframes nm-rise { from { opacity: 0; transform: translateY(8px); } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+@media (max-width: 720px) { .nm-grid-2, .nm-grid-3 { grid-template-columns: 1fr; } .nm-span-2 { grid-column: auto; } }
