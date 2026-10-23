@@ -40,7 +40,7 @@ STATES = [
 ACCESS_FULL, ACCESS_READONLY, ACCESS_BLOCKED = 'full', 'readonly', 'blocked'
 ACTIVE_CONCOURS_STATES = ('ready', 'open')
 WRITE_ACTIONS = {'concours.create', 'concours.ready', 'concours.open', 'candidate.create', 'question.create',
-                 'staff.create', 'codes.generate'}
+                 'staff.create', 'codes.generate', 'codes.send'}
 
 
 def icp_int(env, key, default):

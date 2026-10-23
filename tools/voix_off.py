@@ -52,6 +52,7 @@ LEXIQUE = {  # orthographe → graphie que la voix prononce juste (vérifiée en
     "LIPUTA": "Lipouta",
     "SELECTA": "Sélecta",      # selɛkta
     "Selecta": "Sélecta",
+    "WhatsApp": "Ouatsape",    # uatsap (et non un mélange anglais-français)
     "QR": "Q R",
 }
 

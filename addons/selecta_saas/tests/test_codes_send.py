@@ -133,3 +133,55 @@ class TestCodesSend(SaasCommon):
         self.assertEqual(data['msg_channels'], ['sms'])
         self.assertTrue(data['msg_api_key_set'])
         self.assertNotIn('msg_api_key', data)
+
+    # ------------------------------------------------------------------ garde-fous du compte d'envoi
+    def _send(self, concours, issued, channel='sms'):
+        with patch('odoo.addons.selecta_concours.models.selecta_messaging.requests.post',
+                   return_value=FakeResp(201, {'sid': 'SM1'})) as post:
+            res = self.bo(self.user_a).codes_send(concours.id, [{'id': issued['id'], 'code': issued['code']}], channel)
+        return res, post
+
+    def test_one_automatic_send_per_code(self):
+        self._setup('twilio')
+        concours, issued = self._issued()
+        res, _post = self._send(concours, issued)
+        self.assertEqual(res['sent'], 1)
+        res, post = self._send(concours, issued, 'whatsapp')
+        self.assertEqual(res['sent'], 0)
+        post.assert_not_called()
+        # Régénérer le code permet un nouvel envoi.
+        new = self.bo(self.user_a).generate_codes(concours.id, [issued['id']], False)['codes'][0]
+        res, _post = self._send(concours, new)
+        self.assertEqual(res['sent'], 1)
+
+    def test_daily_limit_per_organisation(self):
+        self._setup('twilio')
+        self.env['ir.config_parameter'].sudo().set_param('selecta.msg.daily_limit', '1')
+        c = self._concours(self.user_a)
+        for ref in ('L-1', 'L-2'):
+            self.bo(self.user_a).candidate_save({'concours_id': c.id, 'name': ref, 'reference': ref, 'phone': '0812345678'})
+        codes = self.bo(self.user_a).generate_codes(c.id)['codes']
+        with patch('odoo.addons.selecta_concours.models.selecta_messaging.requests.post',
+                   return_value=FakeResp(201, {'sid': 'SM1'})):
+            res = self.bo(self.user_a).codes_send(c.id, [{'id': x['id'], 'code': x['code']} for x in codes], 'sms')
+        self.assertEqual(res['sent'], 1)
+        self.assertIn('plafond', [r for r in res['results'] if not r['ok']][0]['error'])
+
+    def test_closed_contest_or_blocked_account_cannot_send(self):
+        self._setup('twilio')
+        concours, issued = self._issued()
+        self.tenant_a.sudo().write({'state': 'suspended'})
+        with self.assertRaises(UserError):
+            self._send(concours, issued)
+        with self.assertRaises(UserError):
+            self.bo(self.user_a).codes_whatsapp_links(concours.id, [{'id': issued['id'], 'code': issued['code']}])
+
+    def test_free_text_in_the_message_is_sanitised(self):
+        concours, issued = self._issued()
+        concours.write({'exam_venue': "Salle A\nhttps://evil.example/login www.phish.cd " + "x" * 200})
+        cand = self.env['selecta.candidate'].browse(issued['id'])
+        text = self.env['selecta.messaging'].code_message(cand, issued['code'])
+        self.assertNotIn('evil.example', text)
+        self.assertNotIn('phish', text)
+        self.assertNotIn('\n', text)
+        self.assertLess(len(text), 420)

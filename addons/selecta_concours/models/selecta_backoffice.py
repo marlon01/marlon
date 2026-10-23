@@ -14,7 +14,7 @@ from odoo.exceptions import AccessError, UserError
 
 from .selecta_concours import G_ADMIN, G_DESIGN, G_JURY, G_PROCTOR, require_group
 from .selecta_attempt import EVENT_LABELS, LEVEL_MAX_WARNINGS, to_ms
-from .selecta_messaging import normalize_phone
+from .selecta_messaging import DAILY_LIMIT, normalize_phone
 
 CONCOURS_FIELDS = [
     'name', 'description', 'instructions', 'date_start', 'date_end', 'auto_close', 'duration_minutes',
@@ -419,6 +419,14 @@ class SelectaBackoffice(models.AbstractModel):
         require_group(self.env, G_ADMIN)
         return self.env['selecta.messaging'].channels()
 
+    def _concours_for_codes(self, concours_id):
+        concours = self.env['selecta.concours'].browse(int(concours_id)).exists()
+        if not concours:
+            raise UserError(_("Concours introuvable."))
+        if concours.state not in ('draft', 'ready', 'open'):
+            raise UserError(_("Ce concours est clôturé : plus aucun code n'est envoyé."))
+        return concours
+
     @api.model
     def codes_send(self, concours_id, items, channel):
         """Envoie à chaque candidat son code, que la console vient de générer et d'afficher.
@@ -429,11 +437,16 @@ class SelectaBackoffice(models.AbstractModel):
         require_group(self.env, G_ADMIN)
         if channel not in ('sms', 'whatsapp'):
             raise UserError(_("Canal d'envoi inconnu."))
-        concours = self.env['selecta.concours'].browse(int(concours_id)).exists()
-        if not concours:
-            raise UserError(_("Concours introuvable."))
+        concours = self._concours_for_codes(concours_id)
+        # Le compte d'envoi est celui de la plateforme (payant) : abonnement en règle, un envoi
+        # automatique par code (renvoyer = régénérer, ce qui est tracé) et un plafond quotidien.
+        concours.company_id._selecta_guard('codes.send', concours=concours)
+        icp = self.env['ir.config_parameter'].sudo()
+        daily_limit = int(icp.get_param('selecta.msg.daily_limit') or DAILY_LIMIT)
         Msg = self.env['selecta.messaging']
         Cand = self.env['selecta.candidate']
+        already = Cand.sudo().search_count([('company_id', '=', concours.company_id.id),
+                                            ('code_sent_at', '>=', fields.Datetime.now() - timedelta(days=1))])
         results, sent = [], 0
         for item in (items or [])[:500]:
             cand = Cand.browse(int(item.get('id') or 0)).exists()
@@ -442,6 +455,13 @@ class SelectaBackoffice(models.AbstractModel):
             code = str(item.get('code') or '')
             if not cand.sudo().code_hash or Cand._hash_code(code) != cand.sudo().code_hash:
                 results.append({'id': cand.id, 'ok': False, 'error': _("code invalide")})
+                continue
+            if cand.code_sent_at:  # remis à zéro à chaque régénération du code
+                results.append({'id': cand.id, 'ok': False, 'error': _("code déjà envoyé (régénérer pour renvoyer)")})
+                continue
+            if already + sent >= daily_limit:
+                results.append({'id': cand.id, 'ok': False,
+                                'error': _("plafond de %s messages par 24 h atteint", daily_limit)})
                 continue
             phone = normalize_phone(cand.phone, concours.company_id.country_id)
             if not phone:
@@ -461,7 +481,8 @@ class SelectaBackoffice(models.AbstractModel):
     def codes_whatsapp_links(self, concours_id, items):
         """Envoi manuel, sans service : un lien wa.me par candidat, ouvert depuis le téléphone du personnel."""
         require_group(self.env, G_ADMIN)
-        concours = self.env['selecta.concours'].browse(int(concours_id)).exists()
+        concours = self._concours_for_codes(concours_id)
+        concours.company_id._selecta_guard('codes.send', concours=concours)
         Cand = self.env['selecta.candidate']
         Msg = self.env['selecta.messaging']
         links = []

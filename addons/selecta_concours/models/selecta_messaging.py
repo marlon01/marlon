@@ -23,6 +23,8 @@ from odoo import _, api, fields, models
 
 _logger = logging.getLogger(__name__)
 TIMEOUT = 10
+DAILY_LIMIT = 300  # messages envoyés par structure sur 24 h (paramètre selecta.msg.daily_limit)
+URL_RE = re.compile(r'(https?://|www\.)\S*', re.I)
 PARAMS = ('provider', 'username', 'account_sid', 'api_key', 'sms_from', 'whatsapp_from')
 
 
@@ -39,6 +41,16 @@ def normalize_phone(phone, country=None):
     else:
         number = digits
     return '+%s' % number if 8 <= len(number) <= 15 else ''
+
+
+def clean_text(text, limit):
+    """Texte saisi par une structure, repris dans un SMS : sans lien ni retour à la ligne, longueur bornée.
+
+    Le compte d'envoi est celui de la plateforme : il ne doit pas pouvoir relayer un lien d'hameçonnage.
+    """
+    text = URL_RE.sub('', text or '')
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text[:limit].rstrip()
 
 
 class SelectaMessaging(models.AbstractModel):
@@ -105,7 +117,7 @@ class SelectaMessaging(models.AbstractModel):
     def code_message(self, candidate, code):
         """Texte envoyé au candidat : structure, concours, code, lieu (présentiel) ou adresse (à distance)."""
         c = candidate.concours_id.sudo()
-        parts = ["%s - %s." % (c.company_id.name, c.name),
+        parts = ["%s - %s." % (clean_text(c.company_id.name, 60), clean_text(c.name, 60)),
                  _("Votre code d'accès SELECTA : %s", code)]
         if c.date_start:
             start = fields.Datetime.context_timestamp(self.with_context(tz=self.env.user.tz or 'Africa/Kinshasa'),
@@ -115,6 +127,7 @@ class SelectaMessaging(models.AbstractModel):
             base = self.env['ir.config_parameter'].sudo().get_param('web.base.url', '').rstrip('/')
             parts.append(_("À distance, webcam obligatoire : %s/selecta/exam", base))
         else:
-            parts.append(_("En présentiel : %s. Présentez une pièce d'identité.", c.exam_venue or _("salle d'examen")))
+            parts.append(_("En présentiel : %s. Présentez une pièce d'identité.",
+                           clean_text(c.exam_venue, 90) or _("salle d'examen")))
         parts.append(_("Code personnel, valable une seule fois : ne le communiquez à personne."))
         return " ".join(parts)

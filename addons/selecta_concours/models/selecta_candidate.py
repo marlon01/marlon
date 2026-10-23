@@ -106,7 +106,9 @@ class SelectaCandidate(models.Model):
                     break
             else:  # pragma: no cover - probabilité négligeable
                 raise UserError(_("Collision de codes, veuillez réessayer."))
-            cand.write({'code_hash': digest, 'code_generated_at': fields.Datetime.now()})
+            # Nouveau code : il n'a encore été envoyé par aucun canal.
+            cand.write({'code_hash': digest, 'code_generated_at': fields.Datetime.now(),
+                        'code_sent_at': False, 'code_sent_via': False})
             result.append({'id': cand.id, 'name': cand.name, 'reference': cand.reference,
                            'room': cand.room or '', 'code': code})
         if self:
