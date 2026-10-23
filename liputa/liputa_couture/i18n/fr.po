@@ -139,8 +139,9 @@ msgstr "En retard / à risque"
 #. odoo-javascript
 #: code:addons/liputa_couture/static/src/backend/dashboard/dashboard.js:0
 #: code:addons/liputa_couture/static/src/backend/dashboard/dashboard.xml:0
+#: model:liputa.order.stage,client_label:liputa_couture.stage_ready
 msgid "Ready for pick-up"
-msgstr "Prêtes à retirer"
+msgstr "À retirer"
 
 #. module: liputa_couture
 #. odoo-javascript
@@ -398,3 +399,296 @@ msgstr "Le mot de passe doit contenir au moins 10 caractères."
 #: code:addons/liputa_couture/controllers/main.py:0
 msgid "An account already exists with this email."
 msgstr "Un compte existe déjà avec cette adresse e-mail."
+
+#. module: liputa_couture
+#: model:liputa.order.stage,name:liputa_couture.stage_draft
+msgid "Draft"
+msgstr "Brouillon"
+
+#. module: liputa_couture
+#: model:liputa.order.stage,client_label:liputa_couture.stage_draft
+msgid "Order registered"
+msgstr "Commande enregistrée"
+
+#. module: liputa_couture
+#: model:liputa.order.stage,name:liputa_couture.stage_confirmed
+msgid "Confirmed"
+msgstr "Confirmée"
+
+#. module: liputa_couture
+#: model:liputa.order.stage,client_label:liputa_couture.stage_confirmed
+msgid "Order confirmed"
+msgstr "Commande confirmée"
+
+#. module: liputa_couture
+#: model:liputa.order.stage,name:liputa_couture.stage_cutting
+msgid "Cutting"
+msgstr "Coupe"
+
+#. module: liputa_couture
+#: model:liputa.order.stage,client_label:liputa_couture.stage_cutting
+msgid "Fabric is being cut"
+msgstr "Le tissu est en cours de coupe"
+
+#. module: liputa_couture
+#: model:liputa.order.stage,name:liputa_couture.stage_sewing
+msgid "Sewing"
+msgstr "Couture"
+
+#. module: liputa_couture
+#: model:liputa.order.stage,client_label:liputa_couture.stage_sewing
+msgid "Your outfit is being sewn"
+msgstr "Votre tenue est en cours de couture"
+
+#. module: liputa_couture
+#: model:liputa.order.stage,name:liputa_couture.stage_fitting
+msgid "Fitting"
+msgstr "Essayage"
+
+#. module: liputa_couture
+#: model:liputa.order.stage,client_label:liputa_couture.stage_fitting
+msgid "Ready for fitting"
+msgstr "Prête pour l'essayage"
+
+#. module: liputa_couture
+#: model:liputa.order.stage,name:liputa_couture.stage_finishing
+msgid "Finishing"
+msgstr "Finitions"
+
+#. module: liputa_couture
+#: model:liputa.order.stage,client_label:liputa_couture.stage_finishing
+msgid "Final touches"
+msgstr "Dernières retouches"
+
+#. module: liputa_couture
+#: model:liputa.order.stage,name:liputa_couture.stage_ready
+msgid "Ready"
+msgstr "Prête"
+
+#. module: liputa_couture
+#: model:liputa.order.stage,name:liputa_couture.stage_delivered
+#: model:liputa.order.stage,client_label:liputa_couture.stage_delivered
+msgid "Delivered"
+msgstr "Livrée"
+
+#. module: liputa_couture
+#: model:liputa.order.stage,name:liputa_couture.stage_cancelled
+#: model:liputa.order.stage,client_label:liputa_couture.stage_cancelled
+msgid "Cancelled"
+msgstr "Annulée"
+
+#. module: liputa_couture
+#. odoo-python
+#: code:addons/liputa_couture/models/services.py:0
+msgid ""
+"Backlog %(b).1f h for a capacity of %(c).1f h/day (%(q).1f days of queue). "
+"This order: %(w).1f h of work, fitting buffer %(f)s day(s)."
+msgstr ""
+"Charge en attente : %(b).1f h pour une capacité de %(c).1f h/jour (%(q).1f "
+"jours de file). Cette commande : %(w).1f h de travail, marge d'essayage %(f)s "
+"jour(s)."
+
+#. module: liputa_couture
+#: model:liputa.garment.category,name:liputa_couture.cat_women
+msgid "Women"
+msgstr "Femmes"
+
+#. module: liputa_couture
+#: model:liputa.garment.category,name:liputa_couture.cat_men
+msgid "Men"
+msgstr "Hommes"
+
+#. module: liputa_couture
+#: model:liputa.garment.category,name:liputa_couture.cat_children
+msgid "Children"
+msgstr "Enfants"
+
+#. module: liputa_couture
+#: model:liputa.garment.category,name:liputa_couture.cat_dress
+msgid "Dresses"
+msgstr "Robes"
+
+#. module: liputa_couture
+#: model:liputa.garment.category,name:liputa_couture.cat_kaba
+msgid "Kaba & long dresses"
+msgstr "Kaba et robes longues"
+
+#. module: liputa_couture
+#: model:liputa.garment.category,name:liputa_couture.cat_wrap
+msgid "Pagne ensembles (liputa)"
+msgstr "Ensembles pagne (liputa)"
+
+#. module: liputa_couture
+#: model:liputa.garment.category,name:liputa_couture.cat_skirt
+msgid "Skirts & tops"
+msgstr "Jupes et hauts"
+
+#. module: liputa_couture
+#: model:liputa.garment.category,name:liputa_couture.cat_boubou
+msgid "Boubou, agbada & kaftan"
+msgstr "Boubou, agbada et caftan"
+
+#. module: liputa_couture
+#: model:liputa.garment.category,name:liputa_couture.cat_men_ensemble
+msgid "Men's ensembles"
+msgstr "Ensembles homme"
+
+#. module: liputa_couture
+#: model:liputa.garment.category,name:liputa_couture.cat_men_shirt
+msgid "Shirts"
+msgstr "Chemises"
+
+#. module: liputa_couture
+#: model:liputa.garment.category,name:liputa_couture.cat_suit
+msgid "Suits & abacost"
+msgstr "Costumes et abacost"
+
+#. module: liputa_couture
+#: model:liputa.event.type,name:liputa_couture.ev_customary_wedding
+msgid "Customary wedding / dowry"
+msgstr "Mariage coutumier / dot"
+
+#. module: liputa_couture
+#: model:liputa.event.type,name:liputa_couture.ev_civil_wedding
+msgid "Civil / religious wedding"
+msgstr "Mariage civil / religieux"
+
+#. module: liputa_couture
+#: model:liputa.event.type,name:liputa_couture.ev_baptism
+msgid "Baptism / naming ceremony"
+msgstr "Baptême / cérémonie du nom"
+
+#. module: liputa_couture
+#: model:liputa.event.type,name:liputa_couture.ev_mourning
+msgid "Mourning / funeral (matanga)"
+msgstr "Deuil / funérailles (matanga)"
+
+#. module: liputa_couture
+#: model:liputa.event.type,name:liputa_couture.ev_tabaski
+msgid "Tabaski / Eid"
+msgstr "Tabaski / Aïd"
+
+#. module: liputa_couture
+#: model:liputa.event.type,name:liputa_couture.ev_christmas
+msgid "Christmas & New Year"
+msgstr "Noël et Nouvel An"
+
+#. module: liputa_couture
+#: model:liputa.event.type,name:liputa_couture.ev_independence
+msgid "National day / Independence (30 June...)"
+msgstr "Fête nationale / Indépendance (30 juin…)"
+
+#. module: liputa_couture
+#: model:liputa.event.type,name:liputa_couture.ev_women_day
+msgid "International Women's Day (8 March)"
+msgstr "Journée internationale des femmes (8 mars)"
+
+#. module: liputa_couture
+#: model:liputa.event.type,name:liputa_couture.ev_graduation
+msgid "Graduation"
+msgstr "Remise de diplômes"
+
+#. module: liputa_couture
+#: model:liputa.event.type,name:liputa_couture.ev_church
+msgid "Sunday service / church event"
+msgstr "Culte du dimanche / événement d'église"
+
+#. module: liputa_couture
+#: model:liputa.event.type,name:liputa_couture.ev_office
+msgid "Office & business"
+msgstr "Bureau et affaires"
+
+#. module: liputa_couture
+#: model:liputa.event.type,name:liputa_couture.ev_party
+msgid "Party / anniversary / gala"
+msgstr "Fête / anniversaire / gala"
+
+#. module: liputa_couture
+#: model:liputa.event.type,name:liputa_couture.ev_school
+msgid "School uniforms"
+msgstr "Uniformes scolaires"
+
+#. module: liputa_couture
+#: model:liputa.garment.model,name:liputa_couture.lib_mermaid_wax
+msgid "Mermaid wax gown"
+msgstr "Robe sirène en wax"
+
+#. module: liputa_couture
+#: model:liputa.garment.model,description:liputa_couture.lib_mermaid_wax
+msgid "Fitted bodice and hips, flared hem with ruffles. A Kinshasa and Abidjan classic for ceremonies."
+msgstr "Buste et hanches ajustés, bas évasé à volants. Un classique de Kinshasa et d'Abidjan pour les cérémonies."
+
+#. module: liputa_couture
+#: model:liputa.garment.model,name:liputa_couture.lib_kaba_ngondo
+msgid "Kaba ngondo"
+msgstr "Kaba ngondo"
+
+#. module: liputa_couture
+#: model:liputa.garment.model,description:liputa_couture.lib_kaba_ngondo
+msgid "Wide, flowing Cameroonian kaba with gathered yoke - comfortable and elegant."
+msgstr "Kaba camerounaise ample et fluide, empiècement froncé : confortable et élégante."
+
+#. module: liputa_couture
+#: model:liputa.garment.model,name:liputa_couture.lib_liputa_trio
+msgid "Liputa trio (top, wrap, headwrap)"
+msgstr "Trio liputa (haut, pagne, foulard)"
+
+#. module: liputa_couture
+#: model:liputa.garment.model,description:liputa_couture.lib_liputa_trio
+msgid "Traditional Congolese 6-yard ensemble: fitted top, wrap skirt and matching headwrap."
+msgstr "Ensemble congolais traditionnel de 6 yards : haut ajusté, pagne noué et foulard assorti."
+
+#. module: liputa_couture
+#: model:liputa.garment.model,name:liputa_couture.lib_pencil_set
+msgid "Peplum top & pencil skirt"
+msgstr "Haut péplum et jupe crayon"
+
+#. module: liputa_couture
+#: model:liputa.garment.model,name:liputa_couture.lib_grand_boubou
+msgid "Embroidered grand boubou (bazin riche)"
+msgstr "Grand boubou brodé (bazin riche)"
+
+#. module: liputa_couture
+#: model:liputa.garment.model,description:liputa_couture.lib_grand_boubou
+msgid "Majestic three-piece grand boubou with rich neckline embroidery."
+msgstr "Grand boubou trois pièces majestueux, encolure richement brodée."
+
+#. module: liputa_couture
+#: model:liputa.garment.model,name:liputa_couture.lib_kaftan_women
+msgid "Women's kaftan / bubu"
+msgstr "Caftan / boubou femme"
+
+#. module: liputa_couture
+#: model:liputa.garment.model,name:liputa_couture.lib_dashiki_set
+msgid "Dashiki ensemble"
+msgstr "Ensemble dashiki"
+
+#. module: liputa_couture
+#: model:liputa.garment.model,name:liputa_couture.lib_senator
+msgid "Senator long tunic & trousers"
+msgstr "Tunique longue senator et pantalon"
+
+#. module: liputa_couture
+#: model:liputa.garment.model,name:liputa_couture.lib_abacost
+msgid "Abacost"
+msgstr "Abacost"
+
+#. module: liputa_couture
+#: model:liputa.garment.model,description:liputa_couture.lib_abacost
+msgid "The iconic Congolese collarless suit jacket with matching trousers."
+msgstr "L'emblématique veste congolaise sans col, avec son pantalon assorti."
+
+#. module: liputa_couture
+#: model:liputa.garment.model,name:liputa_couture.lib_wax_shirt
+msgid "Wax print shirt"
+msgstr "Chemise en wax"
+
+#. module: liputa_couture
+#: model:liputa.garment.model,name:liputa_couture.lib_mourning_dress
+msgid "Modest mourning dress"
+msgstr "Robe de deuil sobre"
+
+#. module: liputa_couture
+#: model:liputa.garment.model,name:liputa_couture.lib_girl_dress
+msgid "Girl's party dress"
+msgstr "Robe de fête fille"
