@@ -71,7 +71,23 @@ python3 tools/demo_patterns.py ./sortie   # 12 patrons SVG 1:1 + métrages
 
 ## État de validation
 
-- ✅ Moteur de patrons exécuté sur les 12 gabarits, rendus SVG contrôlés visuellement.
-- ✅ Chargement des classes et `setup_models` de l'**ORM réel d'Odoo 18** (303 modèles, base + mail + portal + account + liputa) : champs, related et dépendances valides.
-- ✅ 26 vues contrôlées contre les champs/méthodes réels ; vues list/search/calendar validées par les schémas RelaxNG d'Odoo 18 ; templates OWL compilés avec l'OWL d'Odoo 18 ; données XML et CSV contrôlés.
-- ⚠️ Non fait dans cet environnement (pas de PostgreSQL utilisable) : installation sur une base réelle et tests de bout en bout. **Première étape à faire chez vous** : `odoo-bin -d liputa_test -i liputa_couture --test-enable`.
+- ✅ **Installé sur une base Odoo 18 réelle** (PostgreSQL 16, Community, français chargé), sans erreur ni avertissement propre au module.
+- ✅ **Tests automatisés** : `odoo-bin -d <base> -i liputa_couture --test-tags /liputa_couture --stop-after-init` — 12 tests : inscription d'un atelier (formulaire réel), cloisonnement (commandes, clients, contacts, extras, modèles), paiements (confirmation réservée à la plateforme, webhook signé HMAC accepté / refusé), quota mensuel de commandes, cycle essai → grâce → suspension, moteur de patrons et estimation du délai.
+- ✅ **Parcours vérifié dans le navigateur** (mobile 390 px) : inscription → connexion → application `/app` (accueil, commandes, catalogue, planning, compte, nouvelle commande) sans erreur ; commande d'un nouveau client par l'API de l'application : numérotée par atelier, confirmée, tâches planifiées, délai estimé, lien de suivi et patron SVG générés ; `/web` renvoie l'atelier vers `/app`.
+- ✅ Moteur de patrons exécuté sur les 12 gabarits (`tools/demo_patterns.py`).
+
+### Corrections apportées lors de la première installation
+| Problème | Correction |
+|---|---|
+| Installation impossible (vue calendrier : attribut `all_day` invalide) | Attribut retiré |
+| Le chef d'atelier ne pouvait pas créer de client : toute commande pour un nouveau client échouait | Droit « création de contacts » accordé au groupe chef d'atelier |
+| Les clients d'un atelier étaient visibles par tous les autres (créés sans société, recherche non filtrée, contacts des utilisateurs internes visibles par défaut dans Odoo) | Clients rattachés à leur atelier, API filtrée, règle d'accès sur les contacts (la plateforme garde la vue complète) |
+| Un chef d'atelier pouvait confirmer lui-même son paiement en attente et prolonger son abonnement sans payer | Confirmation manuelle réservée aux administrateurs de la plateforme ; création directe de paiements retirée aux ateliers |
+| « Adopter » un modèle copiait n'importe quel modèle, y compris le modèle privé d'un autre atelier | Seuls les modèles de la bibliothèque publique, lisibles, peuvent être adoptés |
+| Une commande pouvait référencer le client, le modèle ou l'événement d'un autre atelier ; extras sans cloisonnement | Contrôle de société sur ces champs ; règle d'accès sur les extras |
+| Quota mensuel de commandes du plan déclaré mais jamais appliqué | Appliqué à la création des commandes |
+| Numérotation des commandes commune à tous les ateliers | Séquence propre à chaque atelier |
+
+### Reste à faire
+- Adaptateur de paiement Mobile Money (FlexPay, MaxiCash ou CinetPay) : le webhook signé générique fonctionne ; sans adaptateur, les paiements restent « en attente » jusqu'à confirmation par la plateforme.
+- Limite d'utilisateurs du plan (`max_users`) : les ateliers ne créent pas de comptes eux-mêmes aujourd'hui ; à appliquer le jour où ils pourront inviter leurs couturiers.
