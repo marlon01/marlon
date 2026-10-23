@@ -21,7 +21,7 @@ def _client(env, login, name="Cliente Portail"):
 
 def _device(env, partner, n=1):
     return env["mail.push.device"].sudo().create({
-        "partner_id": partner.id, "endpoint": "https://push.example.org/%s/%s" % (partner.id, n),
+        "partner_id": partner.id, "endpoint": "https://fcm.googleapis.com/fcm/send/%s-%s" % (partner.id, n),
         "keys": json.dumps({"p256dh": "x", "auth": "y"})})
 
 
@@ -126,6 +126,26 @@ class TestClientPortal(LiputaCommon):
              "phone": "+243810000004", "password": "Motdepasse123"}, self.env.ref("base.cd"), "10.0.0.3")
         self.assertTrue(Push.search([("device_id.partner_id", "=", admin.partner_id.id)]))
 
+    def test_push_only_to_browser_push_services(self):
+        from odoo.addons.liputa_couture.models.push import is_push_endpoint
+        self.assertTrue(is_push_endpoint("https://fcm.googleapis.com/fcm/send/abc"))
+        self.assertTrue(is_push_endpoint("https://web.push.apple.com/QGx"))
+        self.assertTrue(is_push_endpoint("https://wns2-par02p.notify.windows.com/w/?token=x"))
+        for bad in ("http://fcm.googleapis.com/x", "https://127.0.0.1/x", "https://localhost:8069/web",
+                    "https://fcm.googleapis.com.evil.cd/x", "https://fcm.googleapis.com:8443/x",
+                    "https://user:pw@fcm.googleapis.com/x", "https://169.254.169.254/latest", ""):
+            self.assertFalse(is_push_endpoint(bad), bad)
+        # Un appareil enregistré hors liste n'est jamais appelé : il est supprimé.
+        device = self.env["mail.push.device"].sudo().create({
+            "partner_id": self.client_1.partner_id.id, "endpoint": "https://10.0.0.5/admin",
+            "keys": json.dumps({"p256dh": "x", "auth": "y"})})
+        Push = self.env["liputa.push.message"].sudo()
+        Push._liputa_send(self.client_1.partner_id, "Test", "Corps")
+        with patch("requests.Session.post") as post:
+            Push._cron_send()
+        post.assert_not_called()
+        self.assertFalse(device.exists())
+
     def test_sender_drops_gone_devices_and_uses_a_long_ttl(self):
         device = _device(self.env, self.client_1.partner_id)
         Push = self.env["liputa.push.message"].sudo()
@@ -135,7 +155,7 @@ class TestClientPortal(LiputaCommon):
         class Resp:
             status_code = 410
 
-        def fake_post(session, url, data=None, timeout=None, headers=None):
+        def fake_post(session, url, data=None, timeout=None, headers=None, **kw):
             calls.append(headers)
             return Resp()
 

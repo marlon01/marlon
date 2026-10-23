@@ -11,6 +11,7 @@ from odoo.exceptions import AccessDenied, ValidationError
 from odoo.http import request
 from odoo.tools import consteq, file_open
 
+from ..models.push import is_push_endpoint
 from .main import EMAIL_RE
 
 _logger = logging.getLogger(__name__)
@@ -250,7 +251,7 @@ class LiputaClientPortal(http.Controller):
         sub = subscription or {}
         endpoint = str(sub.get("endpoint") or "")
         keys = sub.get("keys") or {}
-        if not endpoint.startswith("https://") or not keys.get("p256dh") or not keys.get("auth"):
+        if not is_push_endpoint(endpoint) or not keys.get("p256dh") or not keys.get("auth"):
             raise ValidationError(_("Invalid push subscription."))
         request.env["mail.push.device"].register_devices(
             endpoint=endpoint[:1024], keys={"p256dh": str(keys["p256dh"])[:200], "auth": str(keys["auth"])[:100]},

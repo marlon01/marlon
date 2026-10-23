@@ -19,6 +19,25 @@ from odoo.addons.mail.tools.web_push import DeviceUnreachableError, _encrypt_pay
 
 _logger = logging.getLogger(__name__)
 
+# Services push des navigateurs : on n'envoie qu'à eux. Un point d'arrivée arbitraire ferait du
+# serveur un relais vers des adresses internes (SSRF), puisque n'importe quel compte client en déclare un.
+PUSH_HOSTS = ("fcm.googleapis.com", "android.googleapis.com", "updates.push.services.mozilla.com",
+              "push.services.mozilla.com", "notify.windows.com", "push.apple.com")
+
+
+def is_push_endpoint(endpoint):
+    """True for an https URL on a known browser push service (no port, no credentials)."""
+    try:
+        url = urlsplit(endpoint or "")
+        host = (url.hostname or "").lower()
+        port = url.port
+    except ValueError:
+        return False
+    if url.scheme != "https" or url.username or url.password or port not in (None, 443):
+        return False
+    return any(host == h or host.endswith("." + h) for h in PUSH_HOSTS)
+
+
 PUSH_TTL = 3 * 24 * 3600  # le service push garde le message 3 jours si le téléphone est éteint
 MAX_TEXT = 240
 
@@ -71,12 +90,12 @@ class LiputaPushMessage(models.Model):
     def _post(self, session, device, payload, private_key, public_key):
         endpoint = device.endpoint
         url = urlsplit(endpoint)
-        if url.netloc.endswith(".invalid"):
-            raise DeviceUnreachableError("Device Unreachable")
+        if not is_push_endpoint(endpoint):
+            raise DeviceUnreachableError("Not a browser push service")
         token = jwt.sign({"aud": "%s://%s" % (url.scheme, url.netloc), "sub": self.get_base_url()},
                          private_key, ttl=12 * 60 * 60, algorithm=jwt.Algorithm.ES256)
         body = _encrypt_payload(payload.encode(), {"keys": device.keys})
-        response = session.post(endpoint, data=body, timeout=8, headers={
+        response = session.post(endpoint, data=body, timeout=8, allow_redirects=False, headers={
             "Authorization": "vapid t=%s, k=%s" % (token, public_key),
             "Content-Encoding": "aes128gcm",
             "TTL": str(PUSH_TTL),
