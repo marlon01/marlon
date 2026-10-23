@@ -392,6 +392,19 @@ class LiputaApp(http.Controller):
         payment._liputa_initiate()
         return {"reference": payment.reference, "amount": payment.amount}
 
+    @http.route("/liputa/api/subscription/payment_status", type="json", auth="user")
+    def subscription_payment_status(self, reference):
+        """État d'un paiement de l'atelier ; interroge l'opérateur s'il est encore en attente."""
+        pay = request.env["liputa.subscription.payment"].sudo().search([
+            ("reference", "=", str(reference)[:64]), ("company_id", "=", request.env.company.id)], limit=1)
+        if not pay:
+            raise UserError(_("Payment not found."))
+        if pay.state == "pending" and pay.provider == "flexpay":
+            pay._liputa_check_flexpay()
+        sub = pay.subscription_id
+        return {"state": pay.state, "message": pay.provider_message or "",
+                "next_due_date": fields.Date.to_string(sub.next_due_date) if pay.state == "done" else False}
+
     @http.route("/liputa/api/lang", type="json", auth="user")
     def set_lang(self, lang):
         code = request.env["res.lang"].sudo().search(

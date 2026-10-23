@@ -24,6 +24,9 @@ const DICT = {
         "Enter your PIN in the %s prompt to pay %s. Your subscription is renewed as soon as the payment is confirmed.":
             "Saisissez votre code PIN dans la demande %s pour payer %s. L'abonnement est renouvelé dès la confirmation du paiement.",
         "Close": "Fermer", "Enter a valid phone number": "Saisissez un numéro de téléphone valide",
+        "Payment confirmed: your subscription is renewed.": "Paiement confirmé : votre abonnement est renouvelé.",
+        "The payment was not completed. You can try again.": "Le paiement n'a pas abouti. Vous pouvez réessayer.",
+        "Waiting for the operator confirmation…": "En attente de la confirmation de l'opérateur…",
         "today": "aujourd'hui", "tomorrow": "demain", "in %s d": "dans %s j", "%s d late": "%s j de retard",
         "yesterday": "hier",
         "On time": "Dans les temps", "At risk": "À risque", "Late": "En retard",

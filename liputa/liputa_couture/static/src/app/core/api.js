@@ -56,6 +56,7 @@ export const api = {
     planning: (p) => call("/liputa/api/planning", p),
     events: () => call("/liputa/api/events"),
     pay: (method, phone) => call("/liputa/api/subscription/pay", { method, phone }),
+    paymentStatus: (reference) => call("/liputa/api/subscription/payment_status", { reference }),
     setLang: (lang) => call("/liputa/api/lang", { lang }),
 };
 

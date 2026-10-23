@@ -3,6 +3,7 @@ import hashlib
 import hmac
 import json
 from datetime import timedelta
+from unittest.mock import patch
 
 from odoo import fields
 from odoo.exceptions import AccessError, UserError, ValidationError
@@ -168,3 +169,111 @@ class TestLiputaHttp(HttpCase):
         pay.invalidate_recordset()
         self.assertEqual(pay.state, "done")
         self.assertEqual(sub.state, "active")
+
+
+class FakeResponse:
+    def __init__(self, data):
+        self._data = data
+
+    def json(self):
+        return self._data
+
+
+@tagged("post_install", "-at_install", "liputa")
+class TestLiputaFlexpay(LiputaCommon):
+
+    def setUp(self):
+        super().setUp()
+        icp = self.env["ir.config_parameter"].sudo()
+        icp.set_param("liputa.payment.provider", "flexpay")
+        icp.set_param("liputa.flexpay.merchant", "LIPUTA")
+        icp.set_param("liputa.flexpay.token", "jeton-test")
+        icp.set_param("web.base.url", "https://app.liputa.test")
+        self.sub = self.atelier_a.liputa_subscription_id
+
+    def _pay(self, phone="+243 81 234 5678", method="mpesa"):
+        pay = self.env["liputa.subscription.payment"].create(
+            {"subscription_id": self.sub.id, "amount": 5000, "method": method, "phone": phone})
+        with patch("odoo.addons.liputa_couture.models.saas.requests.post",
+                   return_value=FakeResponse({"code": "0", "message": "OK", "orderNumber": "FP-123"})) as post:
+            pay._liputa_initiate()
+        return pay, post
+
+    def test_payment_request_sent_to_flexpay(self):
+        pay, post = self._pay()
+        url, kwargs = post.call_args.args[0], post.call_args.kwargs
+        self.assertEqual(url, "https://backend.flexpay.cd/api/rest/v1/paymentService")
+        self.assertEqual(kwargs["headers"]["Authorization"], "Bearer jeton-test")
+        body = kwargs["json"]
+        self.assertEqual((body["merchant"], body["type"], body["phone"]), ("LIPUTA", "1", "243812345678"))
+        self.assertEqual((body["amount"], body["currency"], body["reference"]), ("5000", "CDF", pay.reference))
+        self.assertEqual(body["callbackUrl"], "https://app.liputa.test/liputa/payment/flexpay/callback")
+        self.assertEqual((pay.provider, pay.provider_order, pay.state), ("flexpay", "FP-123", "pending"))
+
+    def test_local_number_and_invalid_inputs(self):
+        pay, post = self._pay(phone="0991234567")
+        self.assertEqual(post.call_args.kwargs["json"]["phone"], "243991234567")
+        with self.assertRaises(UserError):
+            self._pay(phone="12345")
+        with self.assertRaises(UserError):
+            self._pay(method="card")
+
+    def test_success_is_verified_with_flexpay(self):
+        pay, _post = self._pay()
+        due = self.sub.next_due_date
+        ok = {"code": "0", "transaction": {"status": "0", "amount": "5000", "currency": "CDF", "reference": pay.reference}}
+        with patch("odoo.addons.liputa_couture.models.saas.requests.get", return_value=FakeResponse(ok)) as get:
+            pay._liputa_check_flexpay()
+        self.assertEqual(get.call_args.args[0], "https://backend.flexpay.cd/api/rest/v1/check/FP-123")
+        self.assertEqual(pay.state, "done")
+        self.assertEqual(self.sub.state, "active")
+        self.assertGreater(self.sub.next_due_date, due)
+
+    def test_underpaid_or_failed_transaction_does_not_renew(self):
+        pay, _post = self._pay()
+        low = {"code": "0", "transaction": {"status": "0", "amount": "50", "currency": "CDF", "reference": pay.reference}}
+        with patch("odoo.addons.liputa_couture.models.saas.requests.get", return_value=FakeResponse(low)):
+            pay._liputa_check_flexpay()
+        self.assertEqual(pay.state, "failed")
+        self.assertEqual(self.sub.state, "trial")
+        pay2, _post = self._pay()
+        ko = {"code": "1", "message": "Solde insuffisant", "transaction": {"status": "1"}}
+        with patch("odoo.addons.liputa_couture.models.saas.requests.get", return_value=FakeResponse(ko)):
+            pay2._liputa_check_flexpay()
+        self.assertEqual((pay2.state, pay2.provider_message), ("failed", "Solde insuffisant"))
+
+    def test_pending_stays_pending_and_cron_retries(self):
+        pay, _post = self._pay()
+        waiting = {"code": "0", "transaction": {"status": "2", "amount": "5000", "currency": "CDF"}}
+        with patch("odoo.addons.liputa_couture.models.saas.requests.get", return_value=FakeResponse(waiting)):
+            self.env["liputa.subscription.payment"]._cron_check_flexpay()
+        self.assertEqual(pay.state, "pending")
+
+    def test_status_endpoint_is_scoped_to_the_workshop(self):
+        pay, _post = self._pay()
+        app = self.env["liputa.subscription.payment"].with_user(self.user_b).with_company(self.atelier_b)
+        self.assertFalse(app.sudo().search([("reference", "=", pay.reference), ("company_id", "=", self.atelier_b.id)]))
+
+
+@tagged("post_install", "-at_install", "liputa")
+class TestLiputaFlexpayHttp(HttpCase):
+
+    def test_forged_callback_cannot_validate_a_payment(self):
+        company = self.env["res.company"]._liputa_create_workshop(
+            {"atelier": "Atelier Rappel", "name": "R", "email": "r@rappel.cd", "password": "Motdepasse123"})
+        icp = self.env["ir.config_parameter"].sudo()
+        icp.set_param("liputa.flexpay.merchant", "LIPUTA")
+        icp.set_param("liputa.flexpay.token", "jeton-test")
+        pay = self.env["liputa.subscription.payment"].create({
+            "subscription_id": company.liputa_subscription_id.id, "amount": 5000, "method": "mpesa",
+            "phone": "243812345678", "provider": "flexpay", "provider_order": "FP-9"})
+        body = json.dumps({"code": "0", "reference": pay.reference, "orderNumber": "FP-9"})
+        # FlexPay répond que la transaction a échoué : le rappel « succès » est ignoré.
+        ko = FakeResponse({"code": "1", "transaction": {"status": "1"}})
+        with patch("odoo.addons.liputa_couture.models.saas.requests.get", return_value=ko):
+            resp = self.url_open("/liputa/payment/flexpay/callback", data=body,
+                                 headers={"Content-Type": "application/json"})
+        self.assertEqual(resp.status_code, 200)
+        pay.invalidate_recordset()
+        self.assertEqual(pay.state, "failed")
+        self.assertEqual(company.liputa_subscription_id.state, "trial")

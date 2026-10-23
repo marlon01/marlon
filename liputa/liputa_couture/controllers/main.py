@@ -103,6 +103,23 @@ class LiputaController(http.Controller):
         env["res.company"].sudo()._liputa_create_workshop(values, country, ip, lang=request.env.lang)
         return request.redirect("/app/login", 303)
 
+    # ------------------------------------------------------------ FlexPay callback
+    @http.route("/liputa/payment/flexpay/callback", type="http", auth="public", methods=["POST"], csrf=False)
+    def flexpay_callback(self, **kw):
+        """Rappel FlexPay. Son contenu ne sert qu'à retrouver le paiement : le statut est
+        ensuite demandé à FlexPay lui-même (un rappel falsifié ne peut rien valider)."""
+        try:
+            data = json.loads(request.httprequest.get_data() or b"{}")
+        except ValueError:
+            data = dict(kw)
+        reference = str(data.get("reference") or "")[:64]
+        Payment = request.env["liputa.subscription.payment"].sudo()
+        payment = Payment.search([("reference", "=", reference), ("provider", "=", "flexpay")], limit=1) \
+            if reference else Payment.browse()
+        if payment:
+            payment._liputa_check_flexpay()
+        return request.make_json_response({"ok": True})
+
     # ------------------------------------------------------------ payment webhook
     @http.route("/liputa/payment/webhook/<string:provider>", type="http", auth="public",
                 methods=["POST"], csrf=False)

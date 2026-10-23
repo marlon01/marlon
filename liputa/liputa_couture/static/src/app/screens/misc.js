@@ -1,5 +1,5 @@
 /** @odoo-module **/
-import { onWillStart, useState, xml } from "@odoo/owl";
+import { onWillStart, onWillUnmount, useState, xml } from "@odoo/owl";
 import { api, store, toast } from "../core/api";
 import { Base, BottomSheet, Empty, Icon, Skeleton, Tape, TopBar } from "../core/ui";
 import { go } from "../core/router";
@@ -216,7 +216,10 @@ export class AccountScreen extends Base {
                 <h2 class="lp-hero-name" style="font-size: 22px" t-esc="t('Confirm the payment on your phone')"/>
                 <p class="lp-muted" t-esc="t('Enter your PIN in the %s prompt to pay %s. Your subscription is renewed as soon as the payment is confirmed.', operatorName, money(me.subscription.price))"/>
                 <p class="lp-small lp-muted lp-num" t-esc="state.pay.reference"/>
-                <button class="lp-btn lp-btn-ghost lp-btn-block" t-on-click="() => state.pay = null" t-esc="t('Close')"/>
+                <p t-if="state.pay.result === 'done'" class="lp-pay-result lp-pay-ok" role="status" t-esc="t('Payment confirmed: your subscription is renewed.')"/>
+                <p t-elif="state.pay.result === 'failed'" class="lp-pay-result lp-pay-ko" role="alert" t-esc="state.pay.message or t('The payment was not completed. You can try again.')"/>
+                <p t-elif="state.pay.checking" class="lp-small lp-muted" aria-live="polite" t-esc="t('Waiting for the operator confirmation…')"/>
+                <button class="lp-btn lp-btn-ghost lp-btn-block" t-on-click="closePay" t-esc="t('Close')"/>
             </div>
         </BottomSheet>
     </div>`;
@@ -226,6 +229,7 @@ export class AccountScreen extends Base {
         this.money = money;
         this.store = useState(store);
         this.state = useState({ pay: null, busy: false });
+        onWillUnmount(() => clearTimeout(this.pollTimer));
         this.langs = [["fr", "Français"], ["en", "English"]];
         this.operators = [["mpesa", "M-Pesa", "#E3262E"], ["orange_money", "Orange Money", "#FF7900"], ["airtel_money", "Airtel Money", "#ED1C24"]];
     }
@@ -243,12 +247,44 @@ export class AccountScreen extends Base {
         this.state.busy = true;
         try {
             const res = await api.pay(this.state.pay.method, this.state.pay.phone);
-            Object.assign(this.state.pay, { step: "wait", reference: res.reference });
+            Object.assign(this.state.pay, { step: "wait", reference: res.reference, checking: true, polls: 0 });
+            this.pollPayment();
         } catch (e) {
             toast(e.message, "error");
         } finally {
             this.state.busy = false;
         }
+    }
+    /** Interroge l'état du paiement toutes les 5 s pendant 3 minutes (le temps de saisir le code PIN). */
+    pollPayment() {
+        clearTimeout(this.pollTimer);
+        const pay = this.state.pay;
+        if (!pay || pay.step !== "wait" || pay.polls >= 36) {
+            if (pay) {
+                pay.checking = false;
+            }
+            return;
+        }
+        this.pollTimer = setTimeout(async () => {
+            pay.polls += 1;
+            try {
+                const res = await api.paymentStatus(pay.reference);
+                if (res.state === "done" || res.state === "failed") {
+                    Object.assign(pay, { result: res.state, message: res.message, checking: false });
+                    if (res.state === "done") {
+                        this.store.me = await api.me();
+                    }
+                    return;
+                }
+            } catch {
+                // Réseau instable : on réessaie au prochain tour.
+            }
+            this.pollPayment();
+        }, 5000);
+    }
+    closePay() {
+        clearTimeout(this.pollTimer);
+        this.state.pay = null;
     }
     async setLang(lang) {
         if (lang === this.me.lang) {

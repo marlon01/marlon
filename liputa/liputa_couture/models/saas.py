@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 """SaaS layer: workshop tenants (res.company), plans, subscriptions, payments."""
 import logging
+import re
 from datetime import timedelta
+
+import requests
 
 from dateutil.relativedelta import relativedelta
 
@@ -9,6 +12,11 @@ from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
+
+# FlexPay (Infoset, RDC) — Mobile Money M-Pesa, Orange Money, Airtel Money, Afrimoney.
+FLEXPAY_URLS = {"prod": "https://backend.flexpay.cd/api/rest/v1", "dev": "https://beta-backend.flexpay.cd/api/rest/v1"}
+FLEXPAY_METHODS = ("mpesa", "orange_money", "airtel_money", "afrimoney")
+FLEXPAY_TIMEOUT = 30
 
 PAYMENT_METHODS = [
     ("mpesa", "M-Pesa"),
@@ -233,6 +241,9 @@ class LiputaSubscriptionPayment(models.Model):
     currency_id = fields.Many2one(related="subscription_id.currency_id")
     method = fields.Selection(PAYMENT_METHODS, required=True, default="mpesa")
     phone = fields.Char("Payer phone")
+    provider = fields.Char(readonly=True, copy=False)
+    provider_order = fields.Char("Provider order number", readonly=True, copy=False, index=True)
+    provider_message = fields.Char(readonly=True, copy=False)
     date = fields.Datetime(default=fields.Datetime.now)
     state = fields.Selection([("pending", "Pending"), ("done", "Done"), ("failed", "Failed")],
                              default="pending", required=True, index=True)
@@ -259,6 +270,98 @@ class LiputaSubscriptionPayment(models.Model):
             pay.subscription_id.message_post(body=_(
                 "Payment request %(ref)s sent to %(phone)s (%(method)s).",
                 ref=pay.reference, phone=pay.phone, method=pay.method))
+
+    # ------------------------------------------------------------------ FlexPay
+    def _flexpay_config(self):
+        icp = self.env["ir.config_parameter"].sudo()
+        env_key = icp.get_param("liputa.flexpay.environment", "prod")
+        return {
+            "merchant": (icp.get_param("liputa.flexpay.merchant") or "").strip(),
+            "token": (icp.get_param("liputa.flexpay.token") or "").strip(),
+            "url": FLEXPAY_URLS.get(env_key, FLEXPAY_URLS["prod"]),
+            "base_url": (icp.get_param("web.base.url") or "").rstrip("/"),
+        }
+
+    @staticmethod
+    def _flexpay_phone(phone):
+        """FlexPay attend 12 chiffres au format international sans « + » (243XXXXXXXXX)."""
+        digits = re.sub(r"\D", "", phone or "")
+        if digits.startswith("00"):
+            digits = digits[2:]
+        if len(digits) == 10 and digits.startswith("0"):
+            digits = "243" + digits[1:]
+        elif len(digits) == 9:
+            digits = "243" + digits
+        return digits if len(digits) == 12 else False
+
+    def _liputa_initiate_flexpay(self):
+        """Envoie la demande de paiement : le client valide avec son code PIN sur son téléphone."""
+        cfg = self._flexpay_config()
+        if not cfg["merchant"] or not cfg["token"]:
+            raise UserError(_("FlexPay is not configured (merchant code and token)."))
+        for pay in self:
+            if pay.method not in FLEXPAY_METHODS:
+                raise UserError(_("FlexPay accepts Mobile Money only (M-Pesa, Orange Money, Airtel Money, Afrimoney)."))
+            phone = self._flexpay_phone(pay.phone)
+            if not phone:
+                raise UserError(_("Enter the Mobile Money number in the format 243XXXXXXXXX."))
+            currency = pay.currency_id.name
+            if currency not in ("CDF", "USD"):
+                raise UserError(_("FlexPay only accepts payments in CDF or USD."))
+            payload = {
+                "merchant": cfg["merchant"], "type": "1", "phone": phone, "reference": pay.reference,
+                "amount": "%s" % (int(pay.amount) if float(pay.amount).is_integer() else round(pay.amount, 2)),
+                "currency": currency, "callbackUrl": "%s/liputa/payment/flexpay/callback" % cfg["base_url"],
+                "description": ("Liputa %s" % pay.subscription_id.company_id.name)[:100],
+            }
+            pay.write({"provider": "flexpay", "provider_message": False})
+            try:
+                resp = requests.post(cfg["url"] + "/paymentService", json=payload, timeout=FLEXPAY_TIMEOUT,
+                                     headers={"Authorization": "Bearer %s" % cfg["token"]})
+                data = resp.json()
+            except (requests.RequestException, ValueError) as exc:
+                _logger.warning("FlexPay injoignable pour %s : %s", pay.reference, exc)
+                raise UserError(_("The Mobile Money service cannot be reached right now. Please try again in a few minutes."))
+            if str(data.get("code")) != "0" or not data.get("orderNumber"):
+                _logger.warning("FlexPay a refusé %s : %s", pay.reference, data)
+                pay.write({"state": "failed", "provider_message": str(data.get("message") or "")[:200]})
+                raise UserError(_("The payment request was refused: %s", data.get("message") or "?"))
+            pay.write({"provider_order": str(data["orderNumber"])[:64]})
+
+    def _liputa_check_flexpay(self):
+        """Interroge FlexPay : seule source de vérité (jamais le contenu d'un rappel)."""
+        cfg = self._flexpay_config()
+        for pay in self.filtered(lambda p: p.state == "pending" and p.provider == "flexpay" and p.provider_order):
+            try:
+                resp = requests.get(cfg["url"] + "/check/%s" % requests.utils.quote(pay.provider_order, safe=""),
+                                    timeout=FLEXPAY_TIMEOUT, headers={"Authorization": "Bearer %s" % cfg["token"]})
+                data = resp.json()
+            except (requests.RequestException, ValueError) as exc:
+                _logger.warning("FlexPay : vérification de %s impossible : %s", pay.reference, exc)
+                continue
+            tx = data.get("transaction") or {}
+            status = str(tx.get("status", ""))
+            if str(data.get("code")) == "0" and status == "0":
+                try:
+                    amount = float(tx.get("amount") or 0)
+                except (TypeError, ValueError):
+                    amount = 0.0
+                if tx.get("reference") not in (None, pay.reference) or amount + 1e-6 < pay.amount or \
+                        (tx.get("currency") or pay.currency_id.name) != pay.currency_id.name:
+                    _logger.warning("FlexPay : transaction %s non conforme : %s", pay.reference, tx)
+                    pay.write({"state": "failed", "provider_message": _("Amount, currency or reference mismatch.")})
+                    continue
+                pay._liputa_webhook_update("success", pay.provider_order)
+            elif status == "1":
+                pay.write({"provider_message": str(data.get("message") or "")[:200] or False})
+                pay._liputa_webhook_update("failed")
+
+    @api.model
+    def _cron_check_flexpay(self):
+        """Filet de sécurité : rattrape les rappels perdus (paiements de moins de 48 h)."""
+        since = fields.Datetime.now() - timedelta(hours=48)
+        self.sudo().search([("state", "=", "pending"), ("provider", "=", "flexpay"),
+                            ("provider_order", "!=", False), ("date", ">=", since)], limit=200)._liputa_check_flexpay()
 
     def action_confirm(self):
         """Manual confirmation (agent/cash) by a platform administrator."""

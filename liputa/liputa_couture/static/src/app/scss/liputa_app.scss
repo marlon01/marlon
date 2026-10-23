@@ -427,3 +427,8 @@ img { max-width: 100%; display: block; }
 @media (min-width: 561px) {
     .lp-app { box-shadow: 0 0 0 1px var(--line); }
 }
+
+// Résultat du paiement Mobile Money (écran d'attente)
+.lp-pay-result { padding: 12px 14px; border-radius: 12px; font-weight: 600; margin: 4px 0 12px; }
+.lp-pay-ok { background: #E4F5EE; color: #075A3D; }
+.lp-pay-ko { background: #FBE7E5; color: #7D1F18; }

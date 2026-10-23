@@ -59,9 +59,21 @@ liputa/
 | `liputa.image_api_key`, `liputa.image_endpoint`, `liputa.image_model` | rendu photoréaliste (API d'édition d'image) |
 | `liputa.sms_provider` | `africastalking`, `twilio_sms`, `twilio_whatsapp` ou `none` |
 | `liputa.sms_username`, `liputa.sms_api_key`, `liputa.sms_sender` | identifiants passerelle |
-| `liputa.payment.secret.<fournisseur>` | secret HMAC du webhook `/liputa/payment/webhook/<fournisseur>` |
+| `liputa.payment.provider` | `flexpay` pour encaisser les abonnements par Mobile Money (vide = confirmation manuelle par la plateforme) |
+| `liputa.flexpay.merchant`, `liputa.flexpay.token` | code marchand et jeton (Bearer) fournis par FlexPay |
+| `liputa.flexpay.environment` | `prod` (par défaut) ou `dev` (bac à sable `beta-backend.flexpay.cd`) |
+| `liputa.payment.secret.<fournisseur>` | secret HMAC du webhook générique `/liputa/payment/webhook/<fournisseur>` (autres agrégateurs) |
 
 5. Inscription publique d'un atelier : `https://votre-domaine/liputa/signup`.
+6. Adresse publique : fixer `web.base.url` à `https://votre-domaine` et `web.base.url.freeze` = `True` (FlexPay rappelle `https://votre-domaine/liputa/payment/flexpay/callback`).
+
+### Paiement des abonnements par FlexPay (Mobile Money, RDC)
+1. Le chef d'atelier choisit M-Pesa, Orange Money ou Airtel Money et saisit son numéro (`+243…` ou `0…`) dans *Compte › Renouveler*.
+2. Liputa envoie la demande à FlexPay ; le client valide avec son code PIN sur son téléphone.
+3. FlexPay rappelle Liputa ; **le rappel ne valide rien à lui seul** : Liputa interroge FlexPay (`/check/<orderNumber>`) et vérifie statut, montant, devise et référence avant de prolonger l'abonnement. Une vérification automatique toutes les 10 minutes rattrape les rappels perdus (48 h).
+4. L'application suit l'état du paiement en direct et confirme le renouvellement dès sa validation.
+
+Devises acceptées par FlexPay : CDF et USD. L'intégration suit les adresses et champs de l'API FlexPay publiés par le SDK communautaire `ngandu-dev/flexpay-php` ; la documentation officielle n'est pas publique : **validez avec votre compte marchand en environnement `dev` avant la mise en production.**
 
 ## Tester le moteur de patrons sans Odoo
 
@@ -72,7 +84,7 @@ python3 tools/demo_patterns.py ./sortie   # 12 patrons SVG 1:1 + métrages
 ## État de validation
 
 - ✅ **Installé sur une base Odoo 18 réelle** (PostgreSQL 16, Community, français chargé), sans erreur ni avertissement propre au module.
-- ✅ **Tests automatisés** : `odoo-bin -d <base> -i liputa_couture --test-tags /liputa_couture --stop-after-init` — 12 tests : inscription d'un atelier (formulaire réel), cloisonnement (commandes, clients, contacts, extras, modèles), paiements (confirmation réservée à la plateforme, webhook signé HMAC accepté / refusé), quota mensuel de commandes, cycle essai → grâce → suspension, moteur de patrons et estimation du délai.
+- ✅ **Tests automatisés** : `odoo-bin -d <base> -i liputa_couture --test-tags /liputa_couture --stop-after-init` — 19 tests (dont 7 pour FlexPay : demande de paiement, numéros locaux, validation vérifiée auprès de FlexPay, montant insuffisant, échec, attente, rappel falsifié) : inscription d'un atelier (formulaire réel), cloisonnement (commandes, clients, contacts, extras, modèles), paiements (confirmation réservée à la plateforme, webhook signé HMAC accepté / refusé), quota mensuel de commandes, cycle essai → grâce → suspension, moteur de patrons et estimation du délai.
 - ✅ **Parcours vérifié dans le navigateur** (mobile 390 px) : inscription → connexion → application `/app` (accueil, commandes, catalogue, planning, compte, nouvelle commande) sans erreur ; commande d'un nouveau client par l'API de l'application : numérotée par atelier, confirmée, tâches planifiées, délai estimé, lien de suivi et patron SVG générés ; `/web` renvoie l'atelier vers `/app`.
 - ✅ Moteur de patrons exécuté sur les 12 gabarits (`tools/demo_patterns.py`).
 
@@ -89,5 +101,5 @@ python3 tools/demo_patterns.py ./sortie   # 12 patrons SVG 1:1 + métrages
 | Numérotation des commandes commune à tous les ateliers | Séquence propre à chaque atelier |
 
 ### Reste à faire
-- Adaptateur de paiement Mobile Money (FlexPay, MaxiCash ou CinetPay) : le webhook signé générique fonctionne ; sans adaptateur, les paiements restent « en attente » jusqu'à confirmation par la plateforme.
+- Valider FlexPay avec un compte marchand réel (environnement `dev`), les échanges étant testés par simulation.
 - Limite d'utilisateurs du plan (`max_users`) : les ateliers ne créent pas de comptes eux-mêmes aujourd'hui ; à appliquer le jour où ils pourront inviter leurs couturiers.

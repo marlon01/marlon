@@ -112,6 +112,14 @@
             <field name="interval_number">1</field>
             <field name="interval_type">days</field>
         </record>
+        <record id="cron_flexpay_check" model="ir.cron">
+            <field name="name">Liputa: check pending FlexPay payments</field>
+            <field name="model_id" ref="model_liputa_subscription_payment"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_check_flexpay()</field>
+            <field name="interval_number">10</field>
+            <field name="interval_type">minutes</field>
+        </record>
         <record id="cron_schedule_watch" model="ir.cron">
             <field name="name">Liputa: watch order deadlines</field>
             <field name="model_id" ref="model_liputa_order"/>
