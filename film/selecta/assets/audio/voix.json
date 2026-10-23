@@ -1,0 +1,88 @@
+{
+  "voix": "siwis",
+  "modele": "fr_FR-siwis-medium",
+  "vitesse": 0.88,
+  "duree": 45.392,
+  "phrases": [
+    {
+      "texte": "Un concours de recrutement, ce sont d'abord des montagnes de copies.",
+      "debut": 0.0,
+      "fin": 3.437,
+      "entendu": "Un concours de recrutement, ce sont d'abord des montagnes de copies.",
+      "ecarts": 0,
+      "fichier": "film/selecta/assets/audio/phrases/01.wav"
+    },
+    {
+      "texte": "Des salles à louer, des surveillants à payer, des semaines de correction.",
+      "debut": 3.787,
+      "fin": 7.597,
+      "entendu": "des salles à louer, des surveillants à payer, des semaines de correction.",
+      "ecarts": 0,
+      "fichier": "film/selecta/assets/audio/phrases/02.wav"
+    },
+    {
+      "texte": "Pendant ce temps, les candidats attendent leurs résultats.",
+      "debut": 7.947,
+      "fin": 10.828,
+      "entendu": "Pendant ce temps, les candidats attendent leurs résultats.",
+      "ecarts": 0,
+      "fichier": "film/selecta/assets/audio/phrases/03.wav"
+    },
+    {
+      "texte": "Et quand une note est contestée, comment prouver que personne n'a triché ?",
+      "debut": 11.178,
+      "fin": 15.176,
+      "entendu": "Et quand une note est contestée, comment prouver que personne n'a triché ?",
+      "ecarts": 0,
+      "fichier": "film/selecta/assets/audio/phrases/04.wav"
+    },
+    {
+      "texte": "Avec Sélecta, l'épreuve se passe en ligne, sans salle d'examen à louer.",
+      "debut": 15.976,
+      "fin": 20.463,
+      "entendu": "Avec Selecta, les preuves se passent en ligne sans salle d'examen à louer.",
+      "ecarts": 4,
+      "fichier": "film/selecta/assets/audio/phrases/05.wav"
+    },
+    {
+      "texte": "Chaque candidat reçoit un code personnel, valable une seule fois.",
+      "debut": 20.813,
+      "fin": 24.707,
+      "entendu": "Chaque candidat reçoit un code personnel valable une seule fois.",
+      "ecarts": 0,
+      "fichier": "film/selecta/assets/audio/phrases/06.wav"
+    },
+    {
+      "texte": "La caméra vérifie son identité, puis compare son visage toutes les huit secondes.",
+      "debut": 25.057,
+      "fin": 30.215,
+      "entendu": "La caméra vérifie son identité puis compare son visage toutes les huit secondes.",
+      "ecarts": 0,
+      "fichier": "film/selecta/assets/audio/phrases/07.wav"
+    },
+    {
+      "texte": "La correction est automatique : le résultat s'affiche dès la dernière page.",
+      "debut": 30.565,
+      "fin": 34.52,
+      "entendu": "La correction est automatique. Le résultat s'affiche dès la dernière page.",
+      "ecarts": 0,
+      "fichier": "film/selecta/assets/audio/phrases/08.wav"
+    },
+    {
+      "texte": "Le procès-verbal est scellé, et chacun peut vérifier son authenticité grâce à un code Q R.",
+      "debut": 34.87,
+      "fin": 40.332,
+      "entendu": "Le procès verbal est scellé et chacun peut vérifier son authenticity grâce à un code cutaire.",
+      "ecarts": 3,
+      "fichier": "film/selecta/assets/audio/phrases/09.wav"
+    },
+    {
+      "texte": "Sélecta. Des concours en ligne aux résultats incontestables.",
+      "debut": 41.132,
+      "fin": 45.392,
+      "entendu": "sélecta des concours en ligne aux résultats incontestables.",
+      "ecarts": 0,
+      "fichier": "film/selecta/assets/audio/phrases/10.wav"
+    }
+  ]
+}

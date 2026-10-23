@@ -2,57 +2,87 @@
   "voix": "siwis",
   "modele": "fr_FR-siwis-medium",
   "vitesse": 0.88,
-  "duree": 39.016,
+  "duree": 39.171,
   "phrases": [
     {
       "texte": "Samedi, neuf heures. À Kinshasa, l'atelier de Nadège déborde déjà.",
       "debut": 0.0,
-      "fin": 4.479
+      "fin": 4.623,
+      "entendu": "Saturday, 9h. À Kinshasa, l'atelier de Nadaj des Bords de Déjà.",
+      "ecarts": 7,
+      "fichier": "film/liputa/assets/audio/phrases/01.wav"
     },
     {
       "texte": "Les mesures sont notées dans un carnet. Les clientes appellent pour savoir où en est leur tenue.",
-      "debut": 4.829,
-      "fin": 9.884
+      "debut": 4.973,
+      "fin": 10.126,
+      "entendu": "Les mesures sont notées dans un carnet. Les clients s'appellent pour savoir où on est leur tenu.",
+      "ecarts": 4,
+      "fichier": "film/liputa/assets/audio/phrases/02.wav"
     },
     {
       "texte": "Et la date promise, on espère la tenir.",
-      "debut": 10.234,
-      "fin": 12.8
+      "debut": 10.476,
+      "fin": 13.021,
+      "entendu": "Et la date promise, on espère la tenir.",
+      "ecarts": 0,
+      "fichier": "film/liputa/assets/audio/phrases/03.wav"
     },
     {
       "texte": "Avec Lipouta, chaque commande trouve sa place.",
-      "debut": 13.6,
-      "fin": 16.474
+      "debut": 13.821,
+      "fin": 16.987,
+      "entendu": "Avec l'Hiputa, chaque commande trouve sa place.",
+      "ecarts": 1,
+      "fichier": "film/liputa/assets/audio/phrases/04.wav"
     },
     {
       "texte": "Les mesures sont enregistrées une fois pour toutes, le patron est tracé et le tissu calculé.",
-      "debut": 16.824,
-      "fin": 21.847
+      "debut": 17.337,
+      "fin": 22.365,
+      "entendu": "Les mesures sont enregistrées une fois pour toutes. Le patron est tracé et le tissu calculé.",
+      "ecarts": 0,
+      "fichier": "film/liputa/assets/audio/phrases/05.wav"
     },
     {
       "texte": "La date de livraison tient compte de la charge réelle de l'atelier.",
-      "debut": 22.197,
-      "fin": 25.566
+      "debut": 22.715,
+      "fin": 26.093,
+      "entendu": "La date de livraison tient compte de la charge réelle de l'atelier.",
+      "ecarts": 0,
+      "fichier": "film/liputa/assets/audio/phrases/06.wav"
     },
     {
       "texte": "Chaque tailleur voit son travail de la journée.",
-      "debut": 25.916,
-      "fin": 28.296
+      "debut": 26.443,
+      "fin": 28.768,
+      "entendu": "Chaque tailleur voit son travail de la journée.",
+      "ecarts": 0,
+      "fichier": "film/liputa/assets/audio/phrases/07.wav"
     },
     {
       "texte": "Et la cliente suit sa commande, sans avoir à appeler.",
-      "debut": 28.646,
-      "fin": 31.861
+      "debut": 29.118,
+      "fin": 31.898,
+      "entendu": "et la cliente suit sa commande sans avoir à appeler.",
+      "ecarts": 0,
+      "fichier": "film/liputa/assets/audio/phrases/08.wav"
     },
     {
       "texte": "L'atelier respire.",
-      "debut": 32.661,
-      "fin": 34.043
+      "debut": 32.698,
+      "fin": 34.028,
+      "entendu": "L'atelier respire.",
+      "ecarts": 0,
+      "fichier": "film/liputa/assets/audio/phrases/09.wav"
     },
     {
       "texte": "Lipouta. Le sur-mesure, à l'heure. Essai gratuit de quatorze jours.",
-      "debut": 34.843,
-      "fin": 39.016
+      "debut": 34.828,
+      "fin": 39.171,
+      "entendu": "L'Hipouta, le sur mesure à l'heure, et c'est gratuit de 14 jours.",
+      "ecarts": 4,
+      "fichier": "film/liputa/assets/audio/phrases/10.wav"
     }
   ]
 }

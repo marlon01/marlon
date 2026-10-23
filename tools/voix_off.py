@@ -12,7 +12,15 @@ Installation (une fois) :
     python3 -m venv .venv-voix && .venv-voix/bin/pip install sherpa-onnx soundfile numpy
 
 Usage :
-    .venv-voix/bin/python tools/voix_off.py texte.txt -o voix.wav --voix upmc-jessica --vitesse 0.9
+    .venv-voix/bin/python tools/voix_off.py texte.txt -o voix.wav --voix siwis --vitesse 0.88 \
+        --prises 4 --verifier --phrases assets/audio/phrases
+
+Les voix Piper varient d'un tirage à l'autre. Avec --prises N et --verifier, chaque phrase est
+générée N fois puis retranscrite par Whisper (small, multilingue, publié sur le même dépôt GitHub) ;
+la prise la plus proche du texte est gardée. --phrases écrit aussi chaque phrase dans son propre
+fichier (01.wav, 02.wav…) pour la poser librement sur la ligne de temps du film.
+
+Écrire les mots difficiles comme ils se prononcent : « Lipouta », « code Q R ».
 
 Voix et licences (à créditer au générique quand la licence le demande) :
     siwis          voix de femme, jeu de données SIWIS, CC-BY 4.0
@@ -20,8 +28,10 @@ Voix et licences (à créditer au générique quand la licence le demande) :
     upmc-pierre    voix d'homme,  jeu de données UPMC, CC-BY-SA 4.0
 """
 import argparse
+import difflib
 import json
 import pathlib
+import re
 import tarfile
 import urllib.request
 
@@ -51,6 +61,35 @@ def model_dir(name):
     return folder
 
 
+WHISPER = "sherpa-onnx-whisper-small"
+
+
+def asr_model():
+    folder = CACHE / WHISPER
+    if not (folder / "small-encoder.int8.onnx").exists():
+        CACHE.mkdir(parents=True, exist_ok=True)
+        archive = CACHE / f"{WHISPER}.tar.bz2"
+        print("Téléchargement de Whisper small (vérification) …")
+        urllib.request.urlretrieve(
+            "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/" + archive.name, archive)
+        with tarfile.open(archive) as tar:
+            tar.extractall(CACHE, filter="data")
+        archive.unlink()
+    return sherpa_onnx.OfflineRecognizer.from_whisper(
+        encoder=str(folder / "small-encoder.int8.onnx"), decoder=str(folder / "small-decoder.int8.onnx"),
+        tokens=str(folder / "small-tokens.txt"), language="fr", task="transcribe", num_threads=4)
+
+
+def words(text):
+    return re.sub(r"[^\w' ]", " ", text.lower().replace("’", "'")).split()
+
+
+def distance(reference, heard):
+    """Nombre de mots du texte manqués ou déformés à l'écoute."""
+    matcher = difflib.SequenceMatcher(a=words(reference), b=words(heard))
+    return sum(max(i2 - i1, j2 - j1) for op, i1, i2, j1, j2 in matcher.get_opcodes() if op != "equal")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("texte", help="fichier texte : une phrase par ligne, ligne vide = pause longue")
@@ -59,6 +98,10 @@ def main():
     parser.add_argument("--vitesse", type=float, default=0.9, help="1 = vitesse du modèle, < 1 = plus lent")
     parser.add_argument("--pause", type=float, default=0.35, help="silence entre deux phrases (s)")
     parser.add_argument("--pause-longue", type=float, default=0.8, help="silence d'une ligne vide (s)")
+    parser.add_argument("--prises", type=int, default=1, help="nombre de prises générées par phrase")
+    parser.add_argument("--verifier", action="store_true",
+                        help="retranscrire chaque prise avec Whisper et garder la mieux prononcée")
+    parser.add_argument("--phrases", help="dossier où écrire aussi chaque phrase dans son fichier")
     args = parser.parse_args()
 
     name, speaker = VOICES[args.voix]
@@ -70,6 +113,18 @@ def main():
                 data_dir=str(folder / "espeak-ng-data")),
             num_threads=4),
     ))
+
+    recognizer = asr_model() if args.verifier else None
+
+    def take(line):
+        audio = tts.generate(line, sid=speaker, speed=args.vitesse)  # sherpa-onnx : > 1 accélère
+        samples = np.asarray(audio.samples, dtype=np.float32)
+        if not recognizer:
+            return samples, None
+        stream = recognizer.create_stream()
+        stream.accept_waveform(tts.sample_rate, samples)
+        recognizer.decode_stream(stream)
+        return samples, stream.result.text.strip()
 
     lines = pathlib.Path(args.texte).read_text(encoding="utf-8").splitlines()
     rate = tts.sample_rate
@@ -85,11 +140,19 @@ def main():
             chunks.append(np.zeros(int(gap * rate), dtype=np.float32))
             t += gap
         pending_pause = 0.0
-        audio = tts.generate(line, sid=speaker, speed=args.vitesse)  # sherpa-onnx : > 1 accélère
-        samples = np.asarray(audio.samples, dtype=np.float32)
+        takes = [take(line) for _ in range(max(1, args.prises))]
+        samples, heard = min(takes, key=lambda x: distance(line, x[1]) if x[1] is not None else 0)
         chunks.append(samples)
         duration = len(samples) / rate
-        timings.append({"texte": line, "debut": round(t, 3), "fin": round(t + duration, 3)})
+        entry = {"texte": line, "debut": round(t, 3), "fin": round(t + duration, 3)}
+        if heard is not None:
+            entry.update(entendu=heard, ecarts=distance(line, heard))
+        if args.phrases:
+            folder_out = pathlib.Path(args.phrases)
+            folder_out.mkdir(parents=True, exist_ok=True)
+            entry["fichier"] = str(folder_out / f"{len(timings) + 1:02d}.wav")
+            sf.write(entry["fichier"], samples, rate)
+        timings.append(entry)
         t += duration
 
     out = pathlib.Path(args.sortie)
