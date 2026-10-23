@@ -471,3 +471,5 @@ img { max-width: 100%; display: block; }
 .lp-reviews li { padding: 12px 0; border-top: 1px solid var(--line); }
 .lp-reviews p { margin: 6px 0 0; color: var(--ink-soft); }
 .lp-review-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.lp-wa-round { width: 48px; height: 48px; min-height: 48px; padding: 0; border-radius: 50%; flex-shrink: 0; }
+.lp-rating .lp-muted { white-space: nowrap; }
