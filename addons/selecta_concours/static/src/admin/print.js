@@ -68,8 +68,11 @@ export function printConvocations(company, payload, examUrl) {
             <div style="margin-top:8px">Candidat : <strong>${e(x.name)}</strong></div>
             <div class="small">N° d'inscription : ${e(x.reference)}${x.room ? ", " + e(x.room) : ""}</div>
             <div class="code">${e(x.code)}</div>
-            <div class="small">Adresse de l'épreuve : <strong>${e(examUrl)}</strong></div>
-            <div class="small muted">Code strictement personnel, valable une seule fois. Ne le communiquez à personne. Présentez une pièce d'identité au surveillant.</div>
+            ${c.exam_mode === "remote"
+                ? `<div class="small">Épreuve <strong>à distance</strong>, depuis l'endroit de votre choix : ${e(examUrl)}</div>
+            <div class="small muted">Webcam obligatoire. Code strictement personnel, valable une seule fois. Ne le communiquez à personne.</div>`
+                : `<div class="small">Épreuve <strong>en présentiel</strong>${c.exam_venue ? " : " + e(c.exam_venue) : ""}</div>
+            <div class="small muted">Présentez-vous avec une pièce d'identité. Code strictement personnel, valable une seule fois, à saisir sur un poste de la salle.</div>`}
         </div>`
         )
         .join("");

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import hashlib
+import ipaddress
 import json
+import re
 from datetime import timedelta
 
 from odoo import api, fields, models, _
@@ -20,8 +22,17 @@ ENGINE_FIELDS = {
 FROZEN_FIELDS = {
     'duration_minutes', 'questions_per_page', 'question_ids', 'nb_questions_drawn', 'shuffle_questions',
     'shuffle_choices', 'pass_threshold', 'places', 'scoring_multi', 'negative_marking', 'negative_ratio',
-    'require_all_answers',
+    'require_all_answers', 'exam_mode', 'venue_networks',
 }
+
+
+def parse_networks(text):
+    """« 196.0.1.0/24, 41.243.12.7 » -> réseaux ipaddress ; ValueError si une entrée est invalide."""
+    nets = []
+    for part in re.split(r'[\s,;]+', text or ''):
+        if part:
+            nets.append(ipaddress.ip_network(part.strip(), strict=False))
+    return nets
 
 
 def is_engine(env):
@@ -63,6 +74,18 @@ class SelectaConcours(models.Model):
 
     # --- Règles d'épreuve -------------------------------------------------
     duration_minutes = fields.Integer(default=60, required=True)
+    # Mode de passage. Par défaut, en ligne mais en présentiel, dans les locaux de la structure ;
+    # à distance, chaque candidat compose là où il se trouve, sous surveillance par webcam.
+    exam_mode = fields.Selection([
+        ('onsite', "En ligne, en présentiel dans nos locaux"),
+        ('remote', "En ligne, à distance"),
+    ], string="Mode de passage", default='onsite', required=True)
+    exam_venue = fields.Char(string="Lieu de l'épreuve",
+                             help="Adresse et salles où les candidats composent, rappelées sur la convocation.")
+    venue_networks = fields.Char(
+        string="Réseaux de la salle d'examen",
+        help="Adresses IP ou plages (ex. 196.0.1.0/24) des postes de la salle, séparées par des virgules. "
+             "En présentiel, une connexion venue d'ailleurs est refusée. Vide : pas de contrôle par le réseau.")
     questions_per_page = fields.Integer(default=5, required=True)
     question_ids = fields.Many2many('selecta.question', 'selecta_concours_question_rel',
                                     'concours_id', 'question_id', string="Questions", check_company=True)
@@ -125,6 +148,29 @@ class SelectaConcours(models.Model):
             pts = sorted(questions.mapped('points'), reverse=True)
             n = c.nb_questions_drawn or len(pts)
             c.max_score = sum(pts[:n])
+
+    @api.constrains('exam_mode', 'proctoring_enabled', 'identity_check', 'venue_networks')
+    def _check_exam_mode(self):
+        for c in self:
+            if c.exam_mode == 'remote' and not (c.proctoring_enabled and c.identity_check):
+                raise ValidationError(_("À distance, personne ne surveille la salle : la surveillance par webcam et "
+                                        "le contrôle continu d'identité sont obligatoires."))
+            try:
+                parse_networks(c.venue_networks)
+            except ValueError:
+                raise ValidationError(_("Réseaux de la salle d'examen : « %s » n'est pas une adresse IP ou une plage "
+                                        "valide (ex. 196.0.1.0/24).", c.venue_networks))
+
+    def _venue_allows(self, ip):
+        """En présentiel, avec des réseaux déclarés : la connexion doit venir d'un poste de la salle."""
+        self.ensure_one()
+        if self.exam_mode != 'onsite' or not (self.venue_networks or '').strip():
+            return True
+        try:
+            addr = ipaddress.ip_address(ip)
+        except ValueError:
+            return False
+        return any(addr in net for net in parse_networks(self.venue_networks))
 
     @api.constrains('date_start', 'date_end')
     def _check_dates(self):

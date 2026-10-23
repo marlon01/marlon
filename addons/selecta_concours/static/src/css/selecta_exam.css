@@ -198,3 +198,4 @@
   .ex-facts { grid-template-columns: repeat(2, 1fr); }
   .ex-facts > div:nth-child(3) { border-left: 0; padding-left: 6px; }
 }
+.ex-mode { margin: 0 0 16px; padding: 10px 14px; border-radius: 10px; background: #EEF3FF; color: #14213D; font-size: 15px; }

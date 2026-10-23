@@ -84,7 +84,7 @@ Indiquez le numéro de facture en motif, puis déclarez votre paiement avec la r
         </record>
         <record id="param_support_phone" model="ir.config_parameter">
             <field name="key">selecta_saas.support_phone</field>
-            <field name="value">+243 828 317 540 · +243 831 509 420</field>
+            <field name="value">+243 831 509 420 · +243 828 317 540</field>
         </record>
     </data>
 

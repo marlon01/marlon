@@ -38,7 +38,7 @@ class SelectaAdminController(http.Controller):
         if request.session.uid:
             user = request.env['res.users'].sudo().browse(request.session.uid)
             if user._selecta_is_staff():
-                return request.redirect('/selecta/admin')
+                return request.redirect(user._selecta_home_url())
         return render_app('login', "SELECTA — Connexion du personnel", {
             'db': request.db, 'error': kw.get('error') or '',
         })

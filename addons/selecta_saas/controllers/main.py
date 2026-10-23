@@ -57,10 +57,18 @@ class SelectaSaasHome(SelectaHome):
 
     @http.route()
     def index(self, s_action=None, db=None, **kw):
-        # La racine du site présente l'offre aux visiteurs ; les utilisateurs connectés gardent le comportement Odoo.
-        if request.db and not request.session.uid:
+        # https://selecta.naxoris.com : tout le monde arrive sur la présentation ; une fois connecté,
+        # le bouton du haut mène à son espace (console de la structure ou administration centrale).
+        if request.db:
             return request.redirect('/selecta', 303)
         return super().index(s_action=s_action, db=db, **kw)
+
+    @http.route()
+    def web_login(self, redirect=None, **kw):
+        # Une seule page de connexion (/selecta/login) ; /web/login?operator=1 reste la porte des opérateurs.
+        if request.httprequest.method == 'GET' and not kw.get('operator') and not request.session.uid:
+            return request.redirect('/selecta/login', 303)
+        return super().web_login(redirect=redirect, **kw)
 
     def _login_redirect(self, uid, redirect=None):
         if not redirect:
@@ -76,8 +84,14 @@ class SelectaSaasController(SelectaExamController):
     @http.route(['/selecta', '/selecta/'], type='http', auth='public', sitemap=True)
     def root(self, **kw):
         plans = _plans()
+        space = None
+        if request.session.uid:
+            user = request.env['res.users'].sudo().browse(request.session.uid)
+            if user._selecta_is_staff():
+                url = user._selecta_home_url()
+                space = {'url': url, 'label': "Administration centrale" if url == '/selecta/platform' else "Ma console"}
         html = request.env['ir.qweb']._render('selecta_saas.landing', {
-            'plans': plans,
+            'plans': plans, 'space': space,
             'trial_days': read_setting(request.env, 'trial_days'),
             'signup_enabled': read_setting(request.env, 'signup_enabled'),
             'support_email': read_setting(request.env, 'support_email'),

@@ -65,10 +65,15 @@
                         <div class="lp-top-actions">
                             <div class="sl-lang-switch" role="group" aria-label="Langue / Language" data-no-i18n=""><button type="button" data-selecta-lang="fr" lang="fr">FR</button><button type="button" data-selecta-lang="en" lang="en">EN</button></div>
                             <a class="lp-top-link lp-hide-s" href="/selecta/exam">Espace candidat</a>
-                            <a class="lp-top-link" href="/selecta/login">Se connecter</a>
-                            <t t-call="selecta_saas.lp_cta">
-                                <t t-set="cta_class" t-value="'sl-btn sl-btn-primary sl-btn-sm lp-top-cta'"/>
-                                <t t-set="cta_label" t-value="'Essai gratuit'"/>
+                            <t t-if="space">
+                                <a class="sl-btn sl-btn-primary sl-btn-sm lp-top-cta" t-att-href="space['url']" t-out="space['label']"/>
+                            </t>
+                            <t t-else="">
+                                <a class="lp-top-link" href="/selecta/login">Se connecter</a>
+                                <t t-call="selecta_saas.lp_cta">
+                                    <t t-set="cta_class" t-value="'sl-btn sl-btn-primary sl-btn-sm lp-top-cta'"/>
+                                    <t t-set="cta_label" t-value="'Essai gratuit'"/>
+                                </t>
                             </t>
                             <details class="lp-menu">
                                 <summary aria-label="Ouvrir le menu">
@@ -82,7 +87,8 @@
                                     <a href="#faq">FAQ</a>
                                     <hr/>
                                     <a href="/selecta/exam">Espace candidat</a>
-                                    <a href="/selecta/login">Se connecter</a>
+                                    <a t-if="space" t-att-href="space['url']" t-out="space['label']"/>
+                                    <a t-else="" href="/selecta/login">Se connecter</a>
                                 </nav>
                             </details>
                         </div>
@@ -324,6 +330,10 @@
                             </header>
                             <div class="lp-faq">
                                 <details>
+                                    <summary>Les candidats composent-ils chez eux ou dans nos locaux&#160;?</summary>
+                                    <p>C’est vous qui choisissez, concours par concours. Par défaut, l’épreuve se passe en ligne mais en présentiel, sur les postes de votre salle d’examen et devant vos surveillants&#160;; vous pouvez même n’accepter que les connexions venues de votre salle. Vous pouvez aussi ouvrir une épreuve à distance&#160;: chaque candidat compose où il se trouve, sous surveillance par webcam et contrôle continu d’identité. Dans les deux cas, les candidatures se déposent physiquement auprès de votre structure, qui inscrit le candidat et lui remet sa convocation et son code personnel.</p>
+                                </details>
+                                <details>
                                     <summary>Comment fonctionne l’essai gratuit&#160;?</summary>
                                     <p>Vous créez votre espace en ligne et disposez de <t t-out="trial_days"/> jours pour tester toutes les fonctions de votre catégorie, avec un nombre limité de candidats. Aucune carte bancaire n’est demandée et rien n’est facturé automatiquement.</p>
                                 </details>
@@ -394,6 +404,11 @@
                             <a t-att-href="'mailto:%s' % contact_email" t-out="contact_email"/>
                             <a t-foreach="phones" t-as="ph" t-att-href="'tel:%s' % ph.replace(' ', '')" t-out="ph"/>
                         </address>
+                    </div>
+                    <div class="lp-container lp-foot-contact">
+                        <span>Pour plus d'informations, contactez
+                            <t t-foreach="phones" t-as="ph"><a t-att-href="'tel:%s' % ph.replace(' ', '')" t-out="ph"/><t t-if="not ph_last"> ou </t></t></span>
+                        <strong>By <t t-out="issuer"/></strong>
                     </div>
                     <div class="lp-container lp-foot-legal">
                         <span>© <t t-out="year"/> <t t-out="issuer"/>. Tous droits réservés.</span>

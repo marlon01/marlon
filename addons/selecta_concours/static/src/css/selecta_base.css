@@ -162,3 +162,6 @@ html[data-lang="fr"] .sl-lang-dark [data-selecta-lang="fr"], html[data-lang="en"
 .ex-lang { position: absolute; top: 18px; right: 18px; z-index: 2; }
 .ex-login-main { position: relative; }
 .v-lang { position: fixed; top: 16px; right: 16px; }
+/* Pied de page des pages d'accès (connexion, inscription). */
+.sl-site-foot { padding: 18px 16px 28px; text-align: center; font-size: 14px; color: var(--sl-ink-soft); }
+.sl-site-foot a { color: var(--sl-ink, #14213D); font-weight: 600; text-decoration: none; white-space: nowrap; }

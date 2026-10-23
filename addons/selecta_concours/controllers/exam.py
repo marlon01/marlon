@@ -126,6 +126,7 @@ class SelectaExamController(http.Controller):
                 'duration_minutes': c.duration_minutes, 'questions_per_page': c.questions_per_page,
                 'pass_threshold': c.pass_threshold, 'require_all_answers': c.require_all_answers,
                 'show_result': c.show_result, 'offline_prefetch': c.offline_prefetch,
+                'exam_mode': c.exam_mode, 'exam_venue': c.exam_venue or '',
                 'company': _company_branding(c.company_id),
             },
             'proctoring': {
@@ -174,6 +175,13 @@ class SelectaExamController(http.Controller):
                         'code': 'not_open'}
             if not attempt and concours.date_end and now > concours.date_end:
                 return {'error': _("La fenêtre de connexion est fermée."), 'code': 'closed'}
+            if not concours._venue_allows(ip):
+                request.env['selecta.audit.log'].sudo()._log(
+                    'login.offsite', _("Connexion hors de la salle d'examen refusée"),
+                    {'candidate': cand.reference, 'ip': ip}, concours=concours, ip=ip)
+                return {'error': _("Cette épreuve se passe en présentiel : composez depuis un poste de la salle "
+                                   "d'examen%s.", (" (%s)" % concours.exam_venue) if concours.exam_venue else ""),
+                        'code': 'offsite'}
             concours.company_id._selecta_guard('exam.login', concours=concours)
             ua = (request.httprequest.headers.get('User-Agent') or '')[:250]
             Attempt = request.env['selecta.attempt'].sudo().with_context(selecta_engine=True)

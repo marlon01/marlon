@@ -28,6 +28,11 @@
                         <noscript>JavaScript est requis pour utiliser SELECTA.</noscript>
                     </div>
                 </div>
+                <!-- Pages d'accès (connexion, inscription) : contact et éditeur. Jamais pendant une épreuve. -->
+                <footer t-if="app in ('login', 'signup')" class="sl-site-foot">
+                    Pour plus d'informations, contactez <a href="tel:+243831509420">+243 831 509 420</a>
+                    ou <a href="tel:+243828317540">+243 828 317 540</a> · <strong>By Naxoris</strong>
+                </footer>
             </body>
         </html>
     </template>

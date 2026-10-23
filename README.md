@@ -11,7 +11,7 @@ Module Odoo 18 Community (`selecta_concours`) entièrement piloté par des appli
 Le module **`selecta_saas`** transforme SELECTA en service en ligne : chaque entreprise, école ou administration crée elle-même son espace, l'utilise gratuitement pendant 14 jours, puis souscrit un abonnement selon sa catégorie. Sans ce module, `selecta_concours` reste la solution installée en salle d'examen, hors ligne, décrite plus bas.
 
 ### Parcours d'une structure
-1. **Découverte** : page de présentation et tarifs publique, `https://<domaine>/selecta` (la racine du site y mène).
+1. **Découverte** : page de présentation et tarifs publique, `https://selecta.naxoris.com` (la racine mène à `/selecta`, pour tout le monde, connecté ou non).
 2. **Inscription** : `/selecta/signup`. Catégorie, nom de la structure, administrateur (e-mail = identifiant), mot de passe. L'espace est créé immédiatement et l'essai démarre : pas de carte bancaire.
 3. **Essai gratuit** : 14 jours (réglable), toutes les fonctions de la catégorie, jusqu'à 100 candidats (réglable). Un bandeau indique les jours restants.
 4. **Abonnement** : page « Abonnement » de la console. La structure choisit sa catégorie et son cycle (mensuel, ou annuel avec 2 mois offerts) ; une facture est émise ; elle paie (Mobile Money, virement, lien de paiement en ligne) puis **déclare son paiement** avec la référence de transaction et un justificatif. L'administration centrale valide : l'abonnement est prolongé, les jours d'essai restants sont conservés.
@@ -45,6 +45,28 @@ Chaque structure est une société Odoo distincte ; ses comptes n'appartiennent 
 * Paramètres communs au serveur (assistant LLM, anti force brute) réservés à l'administrateur système.
 * Limitation des tentatives fondée sur l'adresse réelle de la connexion (`proxy_mode` derrière le proxy), pas sur un en-tête falsifiable.
 * Tests automatisés : `odoo-bin -d <base> -i selecta_saas --test-tags /selecta_saas --stop-after-init` (41 tests : cloisonnement, quotas, consultation seule, facturation, proratisation, paiement en ligne simulé, courriels, conservation des données, régressions de sécurité).
+
+### Une adresse : https://selecta.naxoris.com
+
+| Adresse | Qui | Contenu |
+|---|---|---|
+| `/` → `/selecta` | tout le monde | présentation, tarifs ; une fois connecté, bouton « Ma console » ou « Administration centrale » |
+| `/selecta/login` | personnel des structures, administration centrale | connexion unique ; chacun arrive dans son espace |
+| `/selecta/signup` | structures | création de l'espace, essai gratuit |
+| `/selecta/exam` | candidats | saisie du code personnel, épreuve |
+| `/selecta/admin` | personnel d'une structure | console des concours |
+| `/selecta/platform` | administration centrale (Naxoris) | structures, abonnements, paiements |
+
+`/web/login` mène à `/selecta/login` ; `/web/login?operator=1` reste la porte de secours des opérateurs. Contact et éditeur (« Pour plus d'informations, contactez +243 831 509 420 ou +243 828 317 540 · By Naxoris ») en pied de la présentation, de la connexion et de l'inscription ; numéros réglables dans l'administration centrale (téléphone du support).
+
+Réglages du serveur : HTTPS (installation de l'espace candidat, webcam), `proxy_mode = True` (adresse réelle des postes : limitation des tentatives et contrôle de la salle d'examen), `list_db = False`, une seule base, et `web.base.url = https://selecta.naxoris.com` avec `web.base.url.freeze = True`.
+
+### Mode de passage et dépôt des candidatures
+
+* **Candidatures déposées physiquement** : le candidat apporte son dossier à la structure ; le personnel l'inscrit à la réception (console, ou import CSV avec la date de dépôt), puis imprime sa convocation et son code. Chaque inscription garde la date de dépôt et la personne qui a reçu le dossier. Il n'existe pas d'inscription en ligne par le candidat.
+* **Épreuve en ligne, en présentiel** (choix par défaut) : les candidats composent sur les postes de la salle d'examen de la structure, devant les surveillants. Le lieu figure sur la convocation et à l'écran du candidat. Facultatif : les **réseaux de la salle** (adresses ou plages IP) ; renseignés, ils refusent toute connexion venue d'ailleurs (journalisée « connexion hors de la salle »).
+* **Épreuve en ligne, à distance** : chaque candidat compose où il se trouve ; surveillance par webcam et contrôle continu d'identité obligatoires.
+* Le mode et les réseaux sont figés à l'ouverture du concours.
 
 ### Mise en ligne (Docker, HTTPS automatique)
 ```bash
@@ -156,9 +178,10 @@ Matériel conseillé : webcam 720p, éclairage de face, Chrome/Edge récent. Ser
 1. Banque de questions (saisie ou import CSV, modèle téléchargeable).
 2. Nouveau concours : durée, questions par page, tirage, seuil, places, surveillance.
 3. Valider le questionnaire (contrôle de cohérence automatique).
-4. Inscrire les candidats (CSV `reference;nom;email;telephone;salle;piece_identite`), **générer et imprimer les convocations**.
-5. Ouvrir l'épreuve le jour J ; suivre la salle en direct.
-6. Clôture (automatique ou manuelle) → liste des admis ; consulter l'analyse IA ; **publier et sceller** le procès-verbal.
+4. Choisir le mode de passage (présentiel par défaut, ou à distance) et le lieu.
+5. Inscrire les candidats à la réception de leur dossier papier (CSV `reference;nom;email;telephone;salle;piece_identite;date_depot`), **générer et imprimer les convocations**.
+6. Ouvrir l'épreuve le jour J ; suivre la salle en direct.
+7. Clôture (automatique ou manuelle) → liste des admis ; consulter l'analyse IA ; **publier et sceller** le procès-verbal.
 
 ## 6. Démonstration
 Installée avec les données de démonstration, la base contient un concours ouvert de 16 questions et 5 candidats. Codes : `DEMO-2026-0001` à `DEMO-2026-0005`. Ne jamais activer les données de démonstration en production.
@@ -192,4 +215,4 @@ selecta_concours/
 
 ## 10. Contact
 **Naxoris**, éditeur de SELECTA.
-Démonstration et devis : **+243 828 317 540**, **+243 831 509 420**, **contact@naxoris.com**
+Pour plus d'informations : **+243 831 509 420**, **+243 828 317 540**, **contact@naxoris.com** · https://selecta.naxoris.com

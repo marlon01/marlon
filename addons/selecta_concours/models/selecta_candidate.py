@@ -32,6 +32,12 @@ class SelectaCandidate(models.Model):
     birthdate = fields.Date()
     id_document = fields.Char(string="Pièce d'identité")
     room = fields.Char(string="Salle / centre")
+    # Les candidatures se déposent physiquement : le candidat apporte son dossier à la structure,
+    # qui l'inscrit alors (aucune inscription en ligne par le candidat lui-même).
+    dossier_date = fields.Date(string="Dossier déposé le", required=True, default=fields.Date.context_today,
+                               help="Date du dépôt physique du dossier de candidature par le candidat.")
+    dossier_received_by = fields.Many2one('res.users', string="Dossier reçu par", readonly=True,
+                                          default=lambda self: self.env.user, ondelete='set null')
     code_hash = fields.Char(copy=False, index=True, groups='base.group_system')
     has_code = fields.Boolean(compute='_compute_has_code')
     code_generated_at = fields.Datetime(readonly=True, copy=False)

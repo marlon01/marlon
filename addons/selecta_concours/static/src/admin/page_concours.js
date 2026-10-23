@@ -83,6 +83,7 @@ const DEFAULTS = {
     date_start: false, date_end: false, auto_close: true, duration_minutes: 60, questions_per_page: 5, nb_questions_drawn: 0,
     shuffle_questions: true, shuffle_choices: true, pass_threshold: 50, places: 0, scoring_multi: "all_or_nothing",
     negative_marking: false, negative_ratio: 0.25, require_all_answers: true, show_result: true, proctoring_enabled: true,
+    exam_mode: "onsite", exam_venue: "", venue_networks: "",
     proctoring_level: "standard", face_absent_seconds: 5, look_away_seconds: 4, identity_check: true, require_fullscreen: true,
     offline_prefetch: true, grace_seconds: 10, offline_tolerance_seconds: 180, state: "draft", question_ids: [],
 };
@@ -143,6 +144,20 @@ export class ConcoursEditPage extends Component {
                 <div class="sl-field ad-span-2"><label>Consignes affichées aux candidats</label><textarea class="sl-textarea" rows="4" t-model="c.instructions" t-att-disabled="!canEdit"/></div>
                 <div class="sl-field"><label>Ouverture des connexions</label><input type="datetime-local" class="sl-input" t-att-value="local(c.date_start)" t-on-change="(ev) => c.date_start = this.utc(ev.target.value)" t-att-disabled="!canEdit"/><span class="sl-help">Facultatif. Avant cette heure, les codes sont refusés.</span></div>
                 <div class="sl-field"><label>Fermeture des connexions</label><input type="datetime-local" class="sl-input" t-att-value="local(c.date_end)" t-on-change="(ev) => c.date_end = this.utc(ev.target.value)" t-att-disabled="!canEdit"/><span class="sl-help">Les candidats déjà en composition terminent leur épreuve.</span></div>
+                <h3 class="ad-span-2 ad-form-title">Mode de passage</h3>
+                <div class="sl-field ad-span-2">
+                    <div class="ad-levels">
+                        <label t-foreach="modes" t-as="m" t-key="m.key" class="ad-level" t-att-class="{'is-active': c.exam_mode == m.key}">
+                            <input type="radio" name="exam_mode" t-att-value="m.key" t-att-checked="c.exam_mode == m.key" t-on-change="() => this.setMode(m.key)" t-att-disabled="frozen"/>
+                            <strong t-esc="m.label"/><span t-esc="m.help"/>
+                        </label>
+                    </div>
+                </div>
+                <t t-if="c.exam_mode == 'onsite'">
+                    <div class="sl-field ad-span-2"><label>Lieu de l'épreuve</label><input class="sl-input" t-model="c.exam_venue" t-att-disabled="!canEdit" placeholder="Ex. : Centre d'examen, 12 av. du Commerce, Gombe — salles A, B, C"/><span class="sl-help">Rappelé sur les convocations et à l'écran du candidat.</span></div>
+                    <div class="sl-field ad-span-2"><label>Réseaux de la salle d'examen (facultatif)</label><input class="sl-input sl-mono" t-model="c.venue_networks" t-att-disabled="frozen" placeholder="Ex. : 196.0.1.0/24, 41.243.12.7"/><span class="sl-help">Adresses IP ou plages des postes de la salle. Renseignées, elles refusent toute connexion venue d'ailleurs : l'épreuve ne peut se passer que dans vos locaux.</span></div>
+                </t>
+                <p t-else="" class="sl-help ad-span-2">À distance, la surveillance par webcam et le contrôle continu d'identité sont obligatoires.</p>
                 <label class="ad-toggle ad-span-2"><span class="sl-switch"><input type="checkbox" t-model="c.auto_close" t-att-disabled="!canEdit"/><span/></span><span><strong>Clôture automatique</strong><span class="sl-help">Dès que tous les inscrits ont terminé, le concours est clôturé et la liste des admis produite.</span></span></label>
             </section>
 
@@ -173,7 +188,7 @@ export class ConcoursEditPage extends Component {
 
             <!-- SURVEILLANCE -->
             <section t-if="state.tab == 'proctoring'" class="ad-panel ad-form">
-                <label class="ad-toggle ad-span-2"><span class="sl-switch"><input type="checkbox" t-model="c.proctoring_enabled" t-att-disabled="!canEdit"/><span/></span><span><strong>Surveillance IA par webcam</strong><span class="sl-help">Analyse vidéo réalisée localement sur chaque poste : aucun flux vidéo n'est transmis, seuls les clichés probatoires des incidents sont conservés.</span></span></label>
+                <label class="ad-toggle ad-span-2"><span class="sl-switch"><input type="checkbox" t-model="c.proctoring_enabled" t-att-disabled="!canEdit or c.exam_mode == 'remote'"/><span/></span><span><strong>Surveillance IA par webcam</strong><span class="sl-help">Analyse vidéo réalisée localement sur chaque poste : aucun flux vidéo n'est transmis, seuls les clichés probatoires des incidents sont conservés.</span></span></label>
                 <t t-if="c.proctoring_enabled">
                     <div class="sl-field ad-span-2"><label>Niveau de sévérité</label>
                         <div class="ad-levels">
@@ -185,7 +200,7 @@ export class ConcoursEditPage extends Component {
                     </div>
                     <div class="sl-field"><label>Absence du visage tolérée (secondes)</label><input type="number" min="2" class="sl-input" t-model.number="c.face_absent_seconds" t-att-disabled="!canEdit"/></div>
                     <div class="sl-field"><label>Regard détourné toléré (secondes)</label><input type="number" min="2" class="sl-input" t-model.number="c.look_away_seconds" t-att-disabled="!canEdit"/></div>
-                    <label class="ad-toggle"><span class="sl-switch"><input type="checkbox" t-model="c.identity_check" t-att-disabled="!canEdit"/><span/></span><span><strong>Contrôle continu d'identité</strong><span class="sl-help">L'empreinte faciale est comparée toutes les 8 secondes à celle enregistrée au départ. Toute substitution entraîne la disqualification.</span></span></label>
+                    <label class="ad-toggle"><span class="sl-switch"><input type="checkbox" t-model="c.identity_check" t-att-disabled="!canEdit or c.exam_mode == 'remote'"/><span/></span><span><strong>Contrôle continu d'identité</strong><span class="sl-help">L'empreinte faciale est comparée toutes les 8 secondes à celle enregistrée au départ. Toute substitution entraîne la disqualification.</span></span></label>
                     <label class="ad-toggle"><span class="sl-switch"><input type="checkbox" t-model="c.require_fullscreen" t-att-disabled="!canEdit"/><span/></span><span><strong>Plein écran obligatoire</strong><span class="sl-help">Toute sortie du plein écran est signalée.</span></span></label>
                     <div class="ad-span-2 ad-rules-table">
                         <table class="ad-table">
@@ -248,20 +263,21 @@ export class ConcoursEditPage extends Component {
                         <button class="sl-btn sl-btn-sm" t-on-click="() => this.generateCodes(false)" t-att-disabled="!state.selected.length"><Icon name="'refresh'"/>Régénérer la sélection</button>
                     </t>
                 </div>
-                <p class="sl-help ad-mb">Format CSV : <span class="sl-mono">reference;nom;email;telephone;salle;piece_identite</span>. Les codes d'accès sont hachés : ils ne sont affichés qu'une fois, au moment de l'impression des convocations.</p>
+                <p class="sl-help ad-mb">Les candidatures se déposent physiquement : inscrivez chaque candidat à la réception de son dossier. Format CSV : <span class="sl-mono">reference;nom;email;telephone;salle;piece_identite;date_depot</span>. Les codes d'accès sont hachés : ils ne sont affichés qu'une fois, au moment de l'impression des convocations.</p>
                 <div t-if="state.editCand" class="ad-inline-form">
                     <input class="sl-input" placeholder="N° d'inscription" t-model="state.editCand.reference"/>
                     <input class="sl-input" placeholder="Nom complet" t-model="state.editCand.name"/>
                     <input class="sl-input" placeholder="Salle" t-model="state.editCand.room"/>
                     <input class="sl-input" placeholder="E-mail" t-model="state.editCand.email"/>
                     <input class="sl-input" placeholder="Pièce d'identité" t-model="state.editCand.id_document"/>
+                    <label class="ad-inline-label">Dossier déposé le <input type="date" class="sl-input" t-model="state.editCand.dossier_date"/></label>
                     <button class="sl-btn sl-btn-primary" t-on-click="saveCandidate">Enregistrer</button>
                     <button class="sl-btn sl-btn-ghost" t-on-click="() => this.state.editCand = null">Annuler</button>
                 </div>
                 <table class="ad-table">
                     <thead><tr>
                         <th style="width:34px"><input type="checkbox" t-on-change="(ev) => this.selectAll(ev.target.checked)"/></th>
-                        <th>N°</th><th>Candidat</th><th>Salle</th><th>Code</th><th>Statut</th><th class="num">Résultat</th><th/>
+                        <th>N°</th><th>Candidat</th><th>Salle</th><th>Dossier</th><th>Code</th><th>Statut</th><th class="num">Résultat</th><th/>
                     </tr></thead>
                     <tbody>
                         <tr t-foreach="visibleCandidates" t-as="x" t-key="x.id">
@@ -269,6 +285,7 @@ export class ConcoursEditPage extends Component {
                             <td class="sl-mono" t-esc="x.reference"/>
                             <td><strong t-esc="x.name"/><div class="sl-muted ad-small" t-esc="x.email"/></td>
                             <td t-esc="x.room"/>
+                            <td class="ad-small" t-att-title="x.dossier_received_by ? 'Reçu par ' + x.dossier_received_by : ''" t-esc="x.dossier_date ? date(x.dossier_date) : '—'"/>
                             <td><span t-if="x.has_code" class="sl-badge sl-badge-ok" t-att-title="'Généré le ' + date(x.code_generated_at)">Émis</span><span t-else="" class="sl-badge">À générer</span></td>
                             <td><span t-attf-class="sl-badge {{cbadge[x.state]}}" t-esc="clabels[x.state]"/></td>
                             <td class="num" t-esc="x.percentage !== null ? pct(x.percentage) : '—'"/>
@@ -301,6 +318,10 @@ export class ConcoursEditPage extends Component {
             { key: "tolerant", label: "Tolérant", help: "5 avertissements avant disqualification. Adapté aux tests internes." },
             { key: "standard", label: "Standard", help: "2 avertissements, puis disqualification. Recommandé pour les concours." },
             { key: "zero", label: "Tolérance zéro", help: "Premier comportement suspect : disqualification immédiate." },
+        ];
+        this.modes = [
+            { key: "onsite", label: "En présentiel, dans vos locaux", help: "Par défaut. Les candidats composent en ligne sur les postes de votre salle d'examen, devant vos surveillants." },
+            { key: "remote", label: "À distance", help: "Chaque candidat compose là où il se trouve, sous surveillance par webcam et contrôle continu d'identité." },
         ];
         onWillStart(() => this.load());
         onWillUpdateProps((next) => {
@@ -347,6 +368,16 @@ export class ConcoursEditPage extends Component {
     get frozen() {
         return !this.canDesign || this.locked;
     }
+    setMode(mode) {
+        const c = this.state.c;
+        c.exam_mode = mode;
+        if (mode === "remote") {
+            // À distance, personne ne surveille la salle : webcam et contrôle d'identité obligatoires.
+            c.proctoring_enabled = true;
+            c.identity_check = true;
+        }
+    }
+
     get maxWarnings() {
         return { tolerant: 5, standard: 2, zero: 0 }[this.state.c.proctoring_level];
     }
@@ -526,7 +557,7 @@ export class ConcoursEditPage extends Component {
         this.state.selected = on ? this.visibleCandidates.map((x) => x.id) : [];
     }
     addCandidate() {
-        this.state.editCand = { reference: "", name: "", room: "", email: "", id_document: "" };
+        this.state.editCand = { reference: "", name: "", room: "", email: "", id_document: "", dossier_date: new Date().toISOString().slice(0, 10) };
     }
     editCandidate(x) {
         this.state.editCand = { ...x };
@@ -565,6 +596,7 @@ export class ConcoursEditPage extends Component {
         const data = rows.map((r) => ({
             reference: (r[0] || "").trim(), name: (r[1] || "").trim(), email: (r[2] || "").trim(),
             phone: (r[3] || "").trim(), room: (r[4] || "").trim(), id_document: (r[5] || "").trim(),
+            dossier_date: (r[6] || "").trim(),
         }));
         try {
             const res = await api("candidates_import", [this.state.c.id, data]);

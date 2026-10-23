@@ -20,6 +20,7 @@ CONCOURS_FIELDS = [
     'places', 'scoring_multi', 'negative_marking', 'negative_ratio', 'require_all_answers', 'show_result',
     'proctoring_enabled', 'proctoring_level', 'face_absent_seconds', 'look_away_seconds', 'identity_check',
     'require_fullscreen', 'offline_prefetch', 'grace_seconds', 'offline_tolerance_seconds',
+    'exam_mode', 'exam_venue', 'venue_networks',
 ]
 ROLE_GROUPS = {
     'admin': G_ADMIN, 'concepteur': G_DESIGN, 'jury': G_JURY, 'surveillant': G_PROCTOR,
@@ -323,6 +324,8 @@ class SelectaBackoffice(models.AbstractModel):
             'room': c.room or '', 'id_document': c.id_document or '', 'birthdate': c.birthdate and str(c.birthdate) or '',
             'state': c.state, 'has_code': c.has_code, 'code_generated_at': _dt(c.code_generated_at),
             'percentage': att.percentage if att else None, 'has_photo': bool(c.photo_reference),
+            'dossier_date': c.dossier_date and str(c.dossier_date) or '',
+            'dossier_received_by': c.dossier_received_by.name or '',
         }
 
     @api.model
@@ -335,7 +338,9 @@ class SelectaBackoffice(models.AbstractModel):
     def candidate_save(self, vals):
         require_group(self.env, G_ADMIN)
         clean = {k: (vals.get(k) or False) for k in ('name', 'reference', 'email', 'phone', 'room', 'id_document',
-                                                      'birthdate') if k in vals}
+                                                      'birthdate', 'dossier_date') if k in vals}
+        if 'dossier_date' in clean and not clean['dossier_date']:
+            clean.pop('dossier_date')  # date du jour par défaut
         if vals.get('id'):
             cand = self.env['selecta.candidate'].browse(int(vals['id']))
             cand.write(clean)
@@ -378,6 +383,7 @@ class SelectaBackoffice(models.AbstractModel):
                 'concours_id': concours.id, 'name': name, 'reference': ref,
                 'email': row.get('email') or False, 'phone': row.get('phone') or False,
                 'room': row.get('room') or False, 'id_document': row.get('id_document') or False,
+                **({'dossier_date': row['dossier_date']} if row.get('dossier_date') else {}),
             })
             existing.add(ref)
             created += 1
@@ -400,7 +406,8 @@ class SelectaBackoffice(models.AbstractModel):
             'codes': cands._generate_codes(),
             'concours': {'name': concours.name, 'reference': concours.reference,
                          'duration': concours.duration_minutes, 'date_start': _dt(concours.date_start),
-                         'instructions': concours.instructions or ''},
+                         'instructions': concours.instructions or '',
+                         'exam_mode': concours.exam_mode, 'exam_venue': concours.exam_venue or ''},
         }
 
     # ------------------------------------------------------------------ surveillance en direct

@@ -116,6 +116,10 @@ export class BriefingScreen extends Component {
                     </div>
                 </div>
             </header>
+            <p class="ex-mode">
+                <t t-if="info.concours.exam_mode == 'remote'">Épreuve à distance : vous composez depuis l'endroit de votre choix, sous surveillance par webcam.</t>
+                <t t-else="">Épreuve en présentiel<t t-if="info.concours.exam_venue"> : <t t-esc="info.concours.exam_venue"/></t>. Vous composez sur un poste de la salle, devant les surveillants.</t>
+            </p>
             <section class="ex-facts">
                 <div><span class="sl-figures" t-esc="info.concours.duration_minutes"/><small>minutes</small></div>
                 <div><span class="sl-figures" t-esc="info.status.question_count"/><small>questions</small></div>
