@@ -33,7 +33,13 @@
     .me-icone svg { width: 104px; height: 104px; stroke: #14213d; stroke-width: 2.2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
     .me-barre { position: absolute; left: -10px; top: 84px; width: 200px; height: 14px; border-radius: 7px; background: #c23a33; transform: rotate(-35deg); transform-origin: 0 50%; }
     /* États de départ cachés, posés en CSS pour l'image 0. */
-    #me-ecrit, #me-msg, #me-pc, #me-flash, #me-repere, #me-i1, #me-i2 { opacity: 0; }
+    /* Le choix du mode de passage (vraie console) : présentiel par défaut, ou à distance. */
+    #me-mode { position: absolute; left: 0; top: 0; width: 1040px; height: 624px; background: #eef1f7; }
+    #me-mode img { position: absolute; left: 0; top: 60px; width: 1040px; }
+    .me-mode-rep { position: absolute; top: 125px; width: 509px; height: 180px; border-radius: 18px; }
+    #me-mode-on { left: 9px; border: 6px solid #0b5fff; box-shadow: 0 0 0 10px rgba(11, 95, 255, 0.15); }
+    #me-mode-dist { left: 523px; border: 5px dashed #0b5fff; }
+    #me-ecrit, #me-msg, #me-pc, #me-flash, #me-repere, #me-i2, #me-mode, .me-mode-rep { opacity: 0; }
   </style>
 
   <div id="root" data-composition-id="message" data-width="1920" data-height="1080">
@@ -45,8 +51,7 @@
     <div id="me-bureau"></div>
     <div id="me-mini"><div id="me-mini-ecran"></div></div>
 
-    <div class="me-icone" id="me-i1" style="left: 120px"><svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/></svg><div class="me-barre" id="me-b1"></div></div>
-    <div class="me-icone" id="me-i2" style="left: 350px"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 12h7M9 16h7"/></svg><div class="me-barre" id="me-b2"></div></div>
+    <div class="me-icone" id="me-i2" style="left: 230px"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 12h7M9 16h7"/></svg><div class="me-barre" id="me-b2"></div></div>
 
     <div id="me-tel">
       <div id="me-ecran">
@@ -57,7 +62,9 @@
     </div>
 
     <div id="me-pc">
-      <div id="me-pc-ecran"><img src="assets/screens/22_tableau_de_bord.png" alt="Tableau de bord de SELECTA" /><div id="me-flash"></div><div id="me-repere"></div></div>
+      <div id="me-pc-ecran"><img src="assets/screens/22_tableau_de_bord.png" alt="Tableau de bord de SELECTA" /><div id="me-flash"></div><div id="me-repere"></div>
+        <div id="me-mode"><img src="assets/shots/mode.png" alt="Choix du mode de passage dans la console SELECTA" />
+          <div class="me-mode-rep" id="me-mode-on"></div><div class="me-mode-rep" id="me-mode-dist"></div></div></div>
       <div id="me-pc-pied"></div>
     </div>
   </div>
@@ -68,15 +75,15 @@
     const tl = gsap.timeline({ paused: true });
     gsap.set("#me-tel", { x: 760 }); // état de l'image 0, avant le premier seek
     tl.set("#me-tel", { x: 760 }, 0);
-    gsap.set("#me-b1, #me-b2", { scaleX: 0 }); // état de l'image 0, avant le premier seek
-    tl.set("#me-b1, #me-b2", { scaleX: 0 }, 0);
+    gsap.set("#me-b2", { scaleX: 0 }); // état de l'image 0, avant le premier seek
+    tl.set("#me-b2", { scaleX: 0 }, 0);
 
     // Le soir : Clarisse, épuisée, sous la lampe.
     gsap.set("#mc-head", { rotation: -7, y: 10 }); // état de l'image 0, avant le premier seek
     tl.set("#mc-head", { rotation: -7, y: 10 }, 0);
     R.mood(tl, "mc", "inquiete", 0.05);
     R.look(tl, "mc", 0, 10, 0.05);
-    R.breathe(tl, "mc", 0, 15, 0.018);
+    R.breathe(tl, "mc", 0, 19.4, 0.018);
     R.blinks(tl, "mc", [1.6, 3.9, 6.6, 9.6, 12.4]);
 
     // Le téléphone vibre : Didier écrit.
@@ -109,11 +116,20 @@
     tl.fromTo("#me-repere", { opacity: 0, scale: 1.15 }, { opacity: 1, scale: 1, duration: 0.3, ease: "expo.out", immediateRender: false }, 11.0);
 
     // « Plus de salle, plus de copies » : barrés l'un après l'autre.
-    tl.fromTo("#me-i1", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.3, ease: "back.out(1.6)", immediateRender: false }, 12.0);
-    tl.to("#me-b1", { scaleX: 1, duration: 0.25, ease: "power3.out" }, 12.4);
-    tl.fromTo("#me-i2", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.3, ease: "back.out(1.6)", immediateRender: false }, 12.9);
-    tl.to("#me-b2", { scaleX: 1, duration: 0.25, ease: "power3.out" }, 13.3);
-    R.mood(tl, "mc", "joie", 13.4);
+    // « Plus aucune copie à imprimer » : la pile de copies barrée.
+    tl.fromTo("#me-i2", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.3, ease: "back.out(1.6)", immediateRender: false }, 12.2);
+    tl.to("#me-b2", { scaleX: 1, duration: 0.25, ease: "power3.out" }, 12.7);
+    R.mood(tl, "mc", "joie", 13.0);
+
+    // 14,4–19 s : elle choisit le mode de passage : dans ses locaux (par défaut), ou à distance.
+    tl.to("#me-i2", { opacity: 0, y: -30, duration: 0.3, ease: "power2.in" }, 14.0);
+    tl.fromTo("#me-mode", { opacity: 0, x: 120 }, { opacity: 1, x: 0, duration: 0.45, ease: "expo.out", immediateRender: false }, 14.2);
+    R.mood(tl, "mc", "sourire", 14.6);
+    R.look(tl, "mc", 16, 2, 14.6);
+    tl.fromTo("#me-mode-on", { opacity: 0, scale: 1.12 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(1.8)", immediateRender: false }, 15.5);
+    tl.to("#mc-armR", { keyframes: [{ rotation: -30, duration: 0.15 }, { rotation: -10, duration: 0.2 }] }, 15.4);
+    tl.fromTo("#me-mode-dist", { opacity: 0 }, { keyframes: [{ opacity: 0.9, duration: 0.3 }, { opacity: 0.35, duration: 0.6 }, { opacity: 0.9, duration: 0.6 }] }, 17.6);
+    R.blinks(tl, "mc", [16.3, 18.6]);
     window.__timelines["message"] = tl;
   </script>
 </template>

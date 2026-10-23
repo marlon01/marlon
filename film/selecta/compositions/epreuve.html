@@ -1,11 +1,19 @@
 <template>
   <style>
-    #root { position: absolute; inset: 0; overflow: hidden; background: linear-gradient(180deg, #efe9f8 0%, #e4dcf3 100%); }
-    /* Chez Grâce : sa chambre, son bureau, l'ordinateur portable. */
-    #ep-fenetre { position: absolute; left: 90px; top: 110px; width: 380px; height: 300px; border: 16px solid #fbfcfe; border-radius: 8px;
-      background: linear-gradient(180deg, #bcd3f0 0%, #f6d9a8 100%); }
-    #ep-cadre { position: absolute; left: 560px; top: 130px; width: 150px; height: 190px; border: 10px solid #fbfcfe; background: #6a4c9c; box-shadow: 0 8px 18px rgba(20,33,61,.12); }
-    #ep-sol { position: absolute; left: 0; right: 0; top: 880px; bottom: 0; background: #cbbfe0; }
+    #root { position: absolute; inset: 0; overflow: hidden; background: linear-gradient(180deg, #eef1f6 0%, #e2e7f0 100%); }
+    /* La salle d'examen de l'entreprise : une rangée de postes, d'autres candidats, un surveillant. */
+    #ep-panneau { position: absolute; left: 90px; top: 70px; padding: 14px 26px; border-radius: 12px; background: #14213d; color: #fbfcfe; font-family: "Inter";
+      box-shadow: 0 10px 22px rgba(20,33,61,.18); }
+    #ep-panneau b { display: block; font-size: 36px; letter-spacing: 0.06em; }
+    #ep-panneau span { display: block; font-size: 28px; color: #c9d2e6; margin-top: 2px; }
+    #ep-rang { position: absolute; left: 0; right: 0; top: 330px; height: 300px; }
+    .ep-poste { position: absolute; top: 60px; width: 150px; }
+    .ep-poste .ep-tete { position: absolute; left: 45px; top: 0; width: 60px; height: 66px; border-radius: 50%; background: #5e3820; }
+    .ep-poste .ep-corps { position: absolute; left: 20px; top: 60px; width: 110px; height: 90px; border-radius: 40px 40px 8px 8px; background: #8b8f99; }
+    .ep-poste .ep-ecran { position: absolute; left: 25px; top: 80px; width: 100px; height: 66px; border-radius: 6px; background: #22304f; border: 4px solid #3b4a6b; }
+    .ep-poste .ep-table { position: absolute; left: -20px; top: 146px; width: 190px; height: 18px; border-radius: 4px; background: #8a5a3b; }
+    #ep-surveillant { position: absolute; left: 0px; top: 250px; width: 230px; height: 356px; }
+    #ep-sol { position: absolute; left: 0; right: 0; top: 880px; bottom: 0; background: #c7cdd9; }
     #ep-grace { position: absolute; left: 230px; top: 250px; width: 420px; height: 651px; }
     #ep-bureau { position: absolute; left: 60px; top: 820px; width: 840px; height: 260px; background: #8a5a3b; border-radius: 10px 10px 0 0; }
     #ep-lueur { position: absolute; left: 980px; top: 260px; width: 60px; height: 60px; margin: -30px; border-radius: 50%;
@@ -35,8 +43,13 @@
   </style>
 
   <div id="root" data-composition-id="epreuve" data-width="1920" data-height="1080">
-    <div id="ep-fenetre"></div>
-    <div id="ep-cadre"></div>
+    <div id="ep-panneau"><b>SALLE A</b><span>Examen en cours · Groupe Mayombe</span></div>
+    <div id="ep-rang">
+      <div class="ep-poste" style="left: 90px"><div class="ep-tete"></div><div class="ep-corps" style="background: #1f7a72"></div><div class="ep-ecran"></div><div class="ep-table"></div></div>
+      <div class="ep-poste" style="left: 300px"><div class="ep-tete" style="background: #3b2416"></div><div class="ep-corps" style="background: #c4502a"></div><div class="ep-ecran"></div><div class="ep-table"></div></div>
+      <div class="ep-poste" style="left: 510px"><div class="ep-tete"></div><div class="ep-corps" style="background: #0b5fff"></div><div class="ep-ecran"></div><div class="ep-table"></div></div>
+    </div>
+    <div id="ep-surveillant"></div>
     <div id="ep-sol"></div>
     <div id="ep-lueur"></div>
     <div id="ep-grace"></div>
@@ -64,12 +77,19 @@
   <script>
     SelectaRig.draw(document.querySelector("#ep-grace"), { kind: "grace", id: "eg" });
     SelectaRig.draw(document.querySelector("#ep-mini"), { kind: "grace", id: "ew" });
+    SelectaRig.draw(document.querySelector("#ep-surveillant"), { kind: "clarisse", id: "es" });
     const R = SelectaRig;
     const tl = gsap.timeline({ paused: true });
 
     // Le jour de l'épreuve : Grâce, concentrée, devant son ordinateur.
     R.mood(tl, "eg", "neutre", 0.05);
     R.mood(tl, "ew", "neutre", 0.05);
+    // Clarisse surveille la salle, au fond.
+    R.mood(tl, "es", "sourire", 0.05);
+    R.breathe(tl, "es", 0, 18);
+    R.blinks(tl, "es", [2.4, 6.9, 11.8]);
+    R.look(tl, "es", 10, 4, 3.0);
+    R.look(tl, "es", -8, 4, 8.5);
     R.breathe(tl, "eg", 0, 18);
     R.blinks(tl, "eg", [1.7, 4.6, 7.9, 10.6, 13.0]);
     R.blinks(tl, "ew", [7.0, 9.4]);

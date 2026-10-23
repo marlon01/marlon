@@ -1,6 +1,6 @@
-# Revue — SELECTA « Clarisse respire » (version 2)
+# Revue — SELECTA « Clarisse respire » (version 3)
 
-Rendu : `renders/selecta-clarisse-respire.mp4` (79 s, 1920 × 1080, 30 i/s, H.264 + AAC),
+Rendu : `renders/selecta-clarisse-respire.mp4` (90 s, 1920 × 1080, 30 i/s, H.264 + AAC),
 son normalisé après rendu (cible −15 LUFS intégrés, crête −1,5 dBFS).
 La v1 (« Des résultats incontestables », 49,5 s) est dans l'historique git (commit 7d7f172).
 
@@ -15,6 +15,18 @@ La v1 (« Des résultats incontestables », 49,5 s) est dans l'historique git (c
 - Vrais écrans SELECTA de la base de démonstration (Groupe Mayombe, fictif) : tableau de bord,
   code d'accès, épreuve, résultat candidat, résultats publiés avec procès-verbal, vérification.
 - Le nom de l'entreprise n'est pas prononcé (« Mayombe » lu « mɛjɔ̃b » par la synthèse).
+
+## Version 3 : épreuve en présentiel, dossiers déposés sur place
+- Mise à jour du produit : chaque concours choisit son mode de passage, en ligne en présentiel dans
+  les locaux de la structure (par défaut) ou à distance ; les candidatures se déposent
+  physiquement. Le film ne montre plus Grâce chez elle : elle dépose son dossier à l'accueil,
+  reçoit convocation et code, puis compose dans la salle A de l'entreprise, sous les yeux de
+  Clarisse. Le choix du mode est montré sur la vraie console (`assets/shots/mode.png`).
+- Quatre phrases nouvelles (9 à 12) ; « Plus de salle, plus de copies » devient « Plus aucune
+  copie à imprimer », la salle restant celle de la structure.
+- Carton final : contacts (+243 831 509 420 · +243 828 317 540) et selecta.naxoris.com · By Naxoris.
+- Corrigés à la relecture : tampon qui chevauchait la convocation, code coupé sur deux lignes,
+  capture du mode trop petite (recadrée), surveillante cachée par l'ordinateur.
 
 ## Mesuré / regardé / non vérifié
 - `hyperframes check` : aucune erreur. Avertissements restants voulus : bras qui tournent autour
