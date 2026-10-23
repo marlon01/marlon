@@ -180,6 +180,23 @@ export class SubscriptionPage extends Component {
                                     <span class="ss-online-amt sl-figures" t-esc="money(current.amount, current.symbol)"/>
                                 </button>
                             </div>
+                            <form t-if="state.push and state.push.step == 'form'" class="ss-push" t-on-submit.prevent="sendPush">
+                                <label for="ss-push-phone">Numéro Mobile Money (M-Pesa, Orange Money, Airtel Money, Afrimoney)</label>
+                                <div class="ss-push-row">
+                                    <input id="ss-push-phone" class="sl-input" type="tel" inputmode="tel" autocomplete="tel" placeholder="+243 81 234 5678"
+                                           t-model="state.push.phone" required="required"/>
+                                    <button type="submit" class="sl-btn sl-btn-primary" t-att-disabled="pushDigits.length &lt; 9">Envoyer la demande</button>
+                                </div>
+                                <small class="sl-muted">Vous recevrez une demande de paiement sur ce téléphone : validez-la avec votre code PIN.</small>
+                            </form>
+                            <div t-if="state.push and state.push.step != 'form'" class="ss-push ss-push-wait" role="status" aria-live="polite">
+                                <span class="sl-spinner"/>
+                                <div>
+                                    <strong t-esc="state.push.step == 'sending' ? 'Envoi de la demande…' : 'Validez le paiement sur votre téléphone'"/>
+                                    <small class="sl-muted" t-if="state.push.step == 'wait'">Saisissez votre code PIN dans la fenêtre de l'opérateur. Cette page se met à jour dès la confirmation.</small>
+                                </div>
+                                <button type="button" class="sl-btn sl-btn-sm" t-on-click="cancelPush">Fermer</button>
+                            </div>
                             <p t-if="current.online_message" class="ss-online-msg" role="status"><Icon name="'alert'" size="15"/>Dernière tentative (<t t-esc="providerLabel(current.online_provider)"/>) : <t t-esc="quoted(current.online_message)"/></p>
                         </div>
                         <h3 t-if="providers.length" class="ss-offline-title"><span>Autre moyen : paiement hors ligne</span></h3>
@@ -379,7 +396,9 @@ export class SubscriptionPage extends Component {
         this.state = useState({
             info: null, loading: true, error: "", busy: false, cycle: "monthly",
             quoting: null, checkout: null, redirecting: null, checking: false, payResult: null,
+            push: null, // Mobile Money par demande sur le téléphone : { code, phone, step: form|sending|wait, polls }
         });
+        onWillUnmount(() => clearTimeout(this.pushTimer));
         this.form = useState(this.emptyForm());
         // Retour du prestataire de paiement : /selecta/admin#/subscription?payment=paid|pending|failed|none
         const payment = this.props.route?.params?.payment;
@@ -600,7 +619,7 @@ export class SubscriptionPage extends Component {
         return "Choisir";
     }
     providerIcon(code) {
-        return code === "cinetpay" ? "mobile" : "card";
+        return code === "cinetpay" || code === "flexpay" ? "mobile" : "card";
     }
     providerLabel(code) {
         return providerName(code);
@@ -722,6 +741,11 @@ export class SubscriptionPage extends Component {
         if (!inv || this.state.redirecting) {
             return;
         }
+        if (pv.flow === "push") {
+            // Pas de page externe : le numéro est saisi ici, la demande part sur le téléphone.
+            this.state.push = { code: pv.code, phone: this.state.push?.phone || "", step: "form", polls: 0 };
+            return;
+        }
         this.state.redirecting = pv.code;
         try {
             const res = await api("billing_pay_online", [inv.id, pv.code]);
@@ -735,6 +759,66 @@ export class SubscriptionPage extends Component {
             notify(e.message || "Paiement en ligne indisponible pour le moment.", "danger", 8000);
             this.load();
         }
+    }
+
+    get pushDigits() {
+        return (this.state.push?.phone || "").replace(/\D/g, "");
+    }
+
+    async sendPush() {
+        const push = this.state.push;
+        const inv = this.current;
+        if (!push || !inv) {
+            return;
+        }
+        push.step = "sending";
+        try {
+            await api("billing_pay_online", [inv.id, push.code, push.phone]);
+            Object.assign(push, { step: "wait", polls: 0 });
+            this.pollPush();
+        } catch (e) {
+            push.step = "form";
+            notify(e.message || "Paiement Mobile Money indisponible pour le moment.", "danger", 8000);
+        }
+    }
+
+    /** Suit le paiement toutes les 5 s pendant 3 minutes, le temps de saisir le code PIN. */
+    pollPush() {
+        clearTimeout(this.pushTimer);
+        const push = this.state.push;
+        if (!push || push.step !== "wait") {
+            return;
+        }
+        if (push.polls >= 36) {
+            this.state.push = null;
+            this.state.payResult = { status: "pending" };
+            return;
+        }
+        this.pushTimer = setTimeout(async () => {
+            push.polls += 1;
+            const inv = this.current;
+            try {
+                const res = await api("billing_check_online", [inv.id]);
+                if (res.status === "paid" || res.status === "failed") {
+                    this.state.push = null;
+                    this.apply(res.info);
+                    this.state.payResult = { status: res.status };
+                    if (res.status === "paid") {
+                        notify("Paiement confirmé : votre abonnement est actif.", "ok");
+                    }
+                    return;
+                }
+            } catch {
+                // Réseau instable : nouvel essai au prochain tour.
+            }
+            this.pollPush();
+        }, 5000);
+    }
+
+    cancelPush() {
+        clearTimeout(this.pushTimer);
+        this.state.push = null;
+        this.load();
     }
 
     async checkOnline() {

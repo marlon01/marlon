@@ -59,7 +59,7 @@ export const MAIL_STATES = {
     failed: { label: "Échec", badge: "sl-badge-danger" },
     cancelled: { label: "Annulé", badge: "" },
 };
-export const PROVIDER_NAMES = { cinetpay: "CinetPay", stripe: "Stripe" };
+export const PROVIDER_NAMES = { cinetpay: "CinetPay", stripe: "Stripe", flexpay: "FlexPay" };
 
 /**
  * Mentions complémentaires d'une facture : avoir, prorata, catégorie différée, paiement en ligne.

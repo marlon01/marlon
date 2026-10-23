@@ -34,6 +34,9 @@ SETTINGS = {
     'cinetpay_enabled': ('selecta_saas.cinetpay_enabled', bool, False),
     'cinetpay_site_id': ('selecta_saas.cinetpay_site_id', str, ''),
     'stripe_enabled': ('selecta_saas.stripe_enabled', bool, False),
+    'flexpay_enabled': ('selecta_saas.flexpay_enabled', bool, False),
+    'flexpay_merchant': ('selecta_saas.flexpay_merchant', str, ''),
+    'flexpay_environment': ('selecta_saas.flexpay_environment', str, 'prod'),
     'biometric_retention_days': ('selecta.biometric_retention_days', int, 180),
     'terms_text': ('selecta_saas.terms_text', str, ''),
     'privacy_text': ('selecta_saas.privacy_text', str, ''),
@@ -43,6 +46,7 @@ SETTINGS = {
 SECRETS = {
     'cinetpay_api_key': 'selecta_saas.cinetpay_api_key',
     'stripe_secret_key': 'selecta_saas.stripe_secret_key',
+    'flexpay_token': 'selecta_saas.flexpay_token',
 }
 SMTP_FIELDS = ('smtp_host', 'smtp_port', 'smtp_user', 'smtp_encryption')
 PLAN_FIELDS = ['name', 'code', 'sequence', 'active', 'audience', 'description', 'highlight', 'price_monthly',
@@ -383,6 +387,8 @@ class SelectaSaasPlatform(models.AbstractModel):
                 if value < 0 or (key == 'trial_days' and not 1 <= value <= 90) or \
                         (key == 'biometric_retention_days' and value > 3650):
                     raise UserError(_("Valeur invalide pour %s.", key))
+            if key == 'flexpay_environment' and value not in ('prod', 'dev'):
+                raise UserError(_("Environnement FlexPay invalide (prod ou dev)."))
             if key == 'payment_link' and value and not str(value).startswith('https://'):
                 raise UserError(_("Le lien de paiement doit commencer par https://"))
             icp.set_param(param, str(value) if cast is not bool else ('True' if value else 'False'))

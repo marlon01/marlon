@@ -243,3 +243,12 @@
   .ss-result-actions .sl-btn-icon { position: absolute; top: 8px; right: 8px; }
   .ss-quote-lines td { font-size: 15px; }
 }
+
+/* Mobile Money par demande sur le téléphone (FlexPay) */
+.ss-push { margin-top: 12px; padding: 14px 16px; border: 1px solid var(--sl-border); border-radius: var(--sl-radius); background: #F8FAFD; display: grid; gap: 8px; }
+.ss-push label { font-size: 13px; font-weight: 600; color: var(--sl-ink-soft); }
+.ss-push-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.ss-push-row .sl-input { flex: 1 1 200px; }
+.ss-push-wait { grid-template-columns: auto 1fr auto; align-items: center; }
+.ss-push-wait div { display: grid; gap: 2px; }
+@media (max-width: 520px) { .ss-push-wait { grid-template-columns: auto 1fr; } .ss-push-wait .sl-btn { grid-column: 1 / -1; } }

@@ -10,16 +10,16 @@ const FROM_RE = /^(?:[^<>]+<\s*([^<>\s]+)\s*>|([^<>\s]+))$/;
 const STRIPE_RE = /^(sk_live_|sk_test_|rk_live_|rk_test_)[A-Za-z0-9_]{8,}$/;
 
 /** Informations renvoyées par settings_get qui ne sont pas des paramètres modifiables. */
-const INFO_KEYS = ["providers", "notify_urls", "mail_stats", "legal_updated", "smtp_password_set", "cinetpay_api_key_set", "stripe_secret_key_set"];
+const INFO_KEYS = ["providers", "notify_urls", "mail_stats", "legal_updated", "smtp_password_set", "cinetpay_api_key_set", "stripe_secret_key_set", "flexpay_token_set"];
 /** Secrets en écriture seule : jamais préremplis, envoyés uniquement s'ils sont saisis. */
-const SECRET_KEYS = ["smtp_password", "cinetpay_api_key", "stripe_secret_key"];
+const SECRET_KEYS = ["smtp_password", "cinetpay_api_key", "stripe_secret_key", "flexpay_token"];
 const TRIM_KEYS = ["payment_link", "support_email", "support_phone", "issuer_name", "mail_from", "platform_notify_email",
     "smtp_host", "smtp_user", "cinetpay_site_id"];
 
 const SECTIONS = [
     { id: "essai", label: "Essai et inscriptions", keys: ["signup_enabled", "trial_days", "grace_days", "trial_max_candidates"] },
     { id: "messagerie", label: "Messagerie", keys: ["mail_enabled", "mail_from", "platform_notify_email", "smtp_host", "smtp_port", "smtp_user", "smtp_encryption", "smtp_password"] },
-    { id: "en-ligne", label: "Paiement en ligne", keys: ["cinetpay_enabled", "cinetpay_site_id", "cinetpay_api_key", "stripe_enabled", "stripe_secret_key"] },
+    { id: "en-ligne", label: "Paiement en ligne", keys: ["flexpay_enabled", "flexpay_merchant", "flexpay_token", "flexpay_environment", "cinetpay_enabled", "cinetpay_site_id", "cinetpay_api_key", "stripe_enabled", "stripe_secret_key"] },
     { id: "hors-ligne", label: "Paiement hors ligne", keys: ["payment_instructions", "payment_link"] },
     { id: "support", label: "Support et facturation", keys: ["support_email", "support_phone", "issuer_name", "issuer_details"] },
     { id: "donnees", label: "Données personnelles", keys: ["biometric_retention_days"] },
@@ -196,7 +196,47 @@ export class SettingsPage extends Component {
                 <section class="ad-panel pf-section" id="pf-sec-en-ligne" aria-labelledby="pf-sec-en-ligne-h">
                     <div class="ad-panel-head"><h2 id="pf-sec-en-ligne-h" tabindex="-1">Paiement en ligne</h2></div>
                     <p class="sl-muted pf-section-intro">La structure paie depuis sa page « Abonnement ». Le paiement est toujours vérifié auprès du prestataire avant de prolonger l'abonnement : aucune validation manuelle n'est nécessaire.</p>
+                    <p class="sl-muted pf-section-intro"><strong>Choix automatique selon le pays de la structure</strong> : Mobile Money par FlexPay en RDC, par CinetPay dans les autres pays (et en RDC si FlexPay n'est pas activé) ; carte bancaire par Stripe partout.</p>
                     <div class="pf-providers">
+                        <article class="pf-provider" aria-labelledby="pf-fp-h">
+                            <header class="pf-provider-head">
+                                <div><h3 id="pf-fp-h">FlexPay</h3><span class="sl-muted ad-small">Mobile Money en RDC</span></div>
+                                <t t-set="st" t-value="providerStatus('flexpay')"/>
+                                <span t-attf-class="sl-badge {{st.badge}}" t-esc="st.label"/>
+                            </header>
+                            <label class="ad-toggle">
+                                <span class="sl-switch"><input type="checkbox" t-model="f.flexpay_enabled"/><span/></span>
+                                <span><strong>Proposer FlexPay aux structures de RDC</strong></span>
+                            </label>
+                            <p class="pf-provider-help">M-Pesa, Orange Money, Airtel Money, Afrimoney : la demande arrive sur le téléphone du payeur, qui la valide avec son code PIN, sans quitter SELECTA. Montants en CDF ou USD.</p>
+                            <span t-if="errors.flexpay_enabled" class="pf-field-error" t-esc="errors.flexpay_enabled"/>
+                            <div class="sl-field">
+                                <label for="pf-s-fpmerchant">Code marchand</label>
+                                <input id="pf-s-fpmerchant" class="sl-input sl-mono" t-model="f.flexpay_merchant" autocomplete="off" spellcheck="false"/>
+                            </div>
+                            <div class="sl-field">
+                                <label for="pf-s-fptoken" class="pf-label-row">Jeton d'accès <span t-if="info.flexpay_token_set" class="sl-badge sl-badge-ok pf-badge-sm">enregistré</span></label>
+                                <input id="pf-s-fptoken" class="sl-input sl-mono" type="password" autocomplete="new-password" spellcheck="false" t-model="f.flexpay_token"
+                                       t-att-placeholder="info.flexpay_token_set ? '•••••••• — saisir pour remplacer' : ''"/>
+                                <span class="sl-help">Fourni par FlexPay. Jamais réaffiché.</span>
+                            </div>
+                            <div class="sl-field">
+                                <label for="pf-s-fpenv">Environnement</label>
+                                <select id="pf-s-fpenv" class="sl-select" t-model="f.flexpay_environment">
+                                    <option value="prod">Production</option>
+                                    <option value="dev">Test (bac à sable)</option>
+                                </select>
+                            </div>
+                            <div class="sl-field">
+                                <label for="pf-s-fpurl">URL de rappel</label>
+                                <div class="pf-copy">
+                                    <input id="pf-s-fpurl" class="sl-input sl-mono" readonly="readonly" t-att-value="info.notify_urls.flexpay" t-on-focus="(ev) => ev.target.select()"/>
+                                    <button type="button" class="sl-btn" t-on-click="() => this.copy(info.notify_urls.flexpay)"><Icon name="'copy'" size="16"/>Copier</button>
+                                </div>
+                                <span class="sl-help">Envoyée automatiquement à chaque demande ; le statut est toujours revérifié auprès de FlexPay.</span>
+                            </div>
+                        </article>
+
                         <article class="pf-provider" aria-labelledby="pf-cp-h">
                             <header class="pf-provider-head">
                                 <div><h3 id="pf-cp-h">CinetPay</h3><span class="sl-muted ad-small">Mobile Money et cartes</span></div>
@@ -519,6 +559,9 @@ export class SettingsPage extends Component {
         }
         if (f.cinetpay_enabled && !(str(f.cinetpay_site_id) && (info.cinetpay_api_key_set || str(f.cinetpay_api_key)))) {
             e.cinetpay_enabled = "Renseignez le Site ID et la clé API pour activer CinetPay.";
+        }
+        if (f.flexpay_enabled && !(str(f.flexpay_merchant) && (info.flexpay_token_set || str(f.flexpay_token)))) {
+            e.flexpay_enabled = "Renseignez le code marchand et le jeton pour activer FlexPay.";
         }
         if (f.stripe_enabled && !(sk || info.stripe_secret_key_set)) {
             e.stripe_enabled = "Renseignez la clé secrète pour activer Stripe.";

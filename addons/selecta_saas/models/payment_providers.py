@@ -8,7 +8,13 @@ et vérifie statut, montant et devise avant d'activer l'abonnement.
 * CinetPay — Mobile Money (M-Pesa, Airtel Money, Orange Money…) et cartes, Afrique francophone (RDC incluse).
   API « checkout v2 » : https://docs.cinetpay.com
 * Stripe — cartes bancaires internationales. API Checkout Sessions : https://docs.stripe.com/api/checkout/sessions
+* FlexPay — Mobile Money en RDC (M-Pesa, Orange Money, Airtel Money, Afrimoney) : demande envoyée sur le
+  téléphone du payeur, validée par son code PIN, sans redirection. Adresses et champs d'après le SDK
+  communautaire ngandu-dev/flexpay-php (documentation officielle non publique).
+
+Choix automatique par pays (``enabled_providers``) : FlexPay pour la RDC, CinetPay ailleurs, Stripe partout.
 """
+import re
 import logging
 import math
 
@@ -30,6 +36,7 @@ class BaseProvider:
     code = None
     label = None
     method = None  # moyen de paiement enregistré sur la facture
+    flow = 'redirect'  # 'redirect' : page du prestataire ; 'push' : demande envoyée sur le téléphone
 
     def __init__(self, env):
         self.env = env
@@ -51,8 +58,8 @@ class BaseProvider:
     def _get(self, url, **kw):
         return requests.get(url, timeout=TIMEOUT, **kw)
 
-    def start(self, invoice, reference, return_url, notify_url):
-        """Crée la transaction ; retourne l'URL de paiement vers laquelle rediriger le client."""
+    def start(self, invoice, reference, return_url, notify_url, phone=None):
+        """Crée la transaction ; retourne l'URL de paiement (parcours « redirect ») ou None (« push »)."""
         raise NotImplementedError
 
     def check(self, invoice):
@@ -74,7 +81,7 @@ class CinetPay(BaseProvider):
         # CinetPay n'accepte que des montants entiers.
         return int(math.ceil(invoice.amount))
 
-    def start(self, invoice, reference, return_url, notify_url):
+    def start(self, invoice, reference, return_url, notify_url, phone=None):
         tenant = invoice.tenant_id
         payload = {
             'apikey': self.param('api_key'), 'site_id': self.param('site_id'),
@@ -137,7 +144,7 @@ class Stripe(BaseProvider):
     def cents(invoice):
         return int(round(invoice.amount * 100))
 
-    def start(self, invoice, reference, return_url, notify_url):
+    def start(self, invoice, reference, return_url, notify_url, phone=None):
         sep = '&' if '?' in return_url else '?'
         form = {
             'mode': 'payment', 'client_reference_id': reference, 'metadata[invoice]': invoice.name,
@@ -188,7 +195,84 @@ class Stripe(BaseProvider):
         return 'pending', False, "Paiement en attente de confirmation."
 
 
-PROVIDERS = {p.code: p for p in (CinetPay, Stripe)}
+class FlexPay(BaseProvider):
+    code = 'flexpay'
+    label = "Mobile Money RDC (FlexPay)"
+    method = 'mobile_money'
+    flow = 'push'
+    URLS = {'prod': 'https://backend.flexpay.cd/api/rest/v1', 'dev': 'https://beta-backend.flexpay.cd/api/rest/v1'}
+
+    def configured(self):
+        return bool(self.param('merchant') and self.param('token'))
+
+    def _api(self):
+        return self.URLS.get(self.param('environment') or 'prod', self.URLS['prod'])
+
+    def _auth(self):
+        return {'Authorization': 'Bearer %s' % self.param('token')}
+
+    @staticmethod
+    def phone(value):
+        """12 chiffres au format international sans « + » (243XXXXXXXXX)."""
+        digits = re.sub(r'\D', '', value or '')
+        if digits.startswith('00'):
+            digits = digits[2:]
+        if len(digits) == 10 and digits.startswith('0'):
+            digits = '243' + digits[1:]
+        elif len(digits) == 9:
+            digits = '243' + digits
+        return digits if len(digits) == 12 and digits.startswith('243') else False
+
+    def start(self, invoice, reference, return_url, notify_url, phone=None):
+        number = self.phone(phone)
+        if not number:
+            raise ProviderError(_("Saisissez votre numéro Mobile Money (ex. 243 81 234 5678)."))
+        if invoice.currency_id.name not in ('CDF', 'USD'):
+            raise ProviderError(_("FlexPay n'accepte que les paiements en CDF ou en USD."))
+        amount = invoice.amount
+        payload = {
+            'merchant': self.param('merchant'), 'type': '1', 'phone': number, 'reference': reference,
+            'amount': '%s' % (int(amount) if float(amount).is_integer() else round(amount, 2)),
+            'currency': invoice.currency_id.name, 'callbackUrl': notify_url,
+            'description': ("SELECTA %s" % invoice.name)[:100],
+        }
+        try:
+            data = self._post(self._api() + '/paymentService', json=payload, headers=self._auth()).json()
+        except (requests.RequestException, ValueError) as exc:
+            _logger.warning("FlexPay injoignable : %s", exc)
+            raise ProviderError(_("Le service Mobile Money est momentanément injoignable. Réessayez dans quelques minutes."))
+        if str(data.get('code')) != '0' or not data.get('orderNumber'):
+            _logger.warning("FlexPay a refusé la transaction %s : %s", reference, data)
+            raise ProviderError(_("La demande de paiement a été refusée : %s", data.get('message') or '?'))
+        invoice.online_session = str(data['orderNumber'])[:64]
+        return None
+
+    def check(self, invoice):
+        if not invoice.online_session:
+            return 'pending', False, ''
+        try:
+            data = self._get(self._api() + '/check/%s' % requests.utils.quote(invoice.online_session, safe=''),
+                             headers=self._auth()).json()
+        except (requests.RequestException, ValueError) as exc:
+            _logger.warning("FlexPay : vérification de %s impossible : %s", invoice.online_reference, exc)
+            return 'pending', False, UNREACHABLE
+        tx = data.get('transaction') or {}
+        status = str(tx.get('status', ''))
+        if str(data.get('code')) == '0' and status == '0':
+            try:
+                paid = float(tx.get('amount') or 0)
+            except (TypeError, ValueError):
+                paid = 0.0
+            if tx.get('reference') not in (None, invoice.online_reference) or paid + 1e-6 < invoice.amount or \
+                    (tx.get('currency') or invoice.currency_id.name) != invoice.currency_id.name:
+                return 'failed', False, _("Montant, devise ou référence non conforme.")
+            return 'paid', invoice.online_session, 'mobile_money'
+        if status == '1':
+            return 'failed', False, data.get('message') or _("Paiement refusé par l'opérateur.")
+        return 'pending', False, "Validez la demande sur votre téléphone avec votre code PIN."
+
+
+PROVIDERS = {p.code: p for p in (FlexPay, CinetPay, Stripe)}
 
 
 def get_provider(env, code):
@@ -196,5 +280,15 @@ def get_provider(env, code):
     return cls(env) if cls else None
 
 
-def enabled_providers(env):
-    return [p(env) for p in PROVIDERS.values() if p(env).enabled()]
+def enabled_providers(env, country_code=None):
+    """Prestataires proposés selon le pays : un seul Mobile Money (FlexPay en RDC, CinetPay ailleurs,
+    FlexPay en repli sans pays connu), plus la carte bancaire (Stripe) partout."""
+    enabled = {code: cls(env) for code, cls in PROVIDERS.items() if cls(env).enabled()}
+    mobile = None
+    if country_code == 'CD' and 'flexpay' in enabled:
+        mobile = enabled['flexpay']
+    elif 'cinetpay' in enabled:
+        mobile = enabled['cinetpay']
+    elif 'flexpay' in enabled and country_code in (None, False, 'CD'):
+        mobile = enabled['flexpay']
+    return [p for p in (mobile, enabled.get('stripe')) if p]

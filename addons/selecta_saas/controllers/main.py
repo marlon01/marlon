@@ -220,6 +220,11 @@ class SelectaSaasController(SelectaExamController):
         ref = False
         if provider == 'cinetpay':
             ref = kw.get('cpm_trans_id') or kw.get('transaction_id')
+        elif provider == 'flexpay':
+            try:
+                ref = (request.get_json_data() or {}).get('reference')
+            except Exception:  # noqa: BLE001 - corps illisible : rien à identifier
+                ref = kw.get('reference')
         elif provider == 'stripe':
             try:
                 event = request.get_json_data()

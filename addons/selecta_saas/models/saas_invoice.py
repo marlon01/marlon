@@ -20,7 +20,7 @@ from datetime import timedelta
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
-from .payment_providers import get_provider
+from .payment_providers import enabled_providers, get_provider
 
 _logger = logging.getLogger(__name__)
 
@@ -154,14 +154,16 @@ class SelectaSaasInvoice(models.Model):
             'invoice': self, 'subject': _("Paiement non validé — facture %s", self.name)})
 
     # ------------------------------------------------------------------ paiement en ligne
-    def _online_start(self, provider_code, base_url):
-        """Ouvre une transaction chez le prestataire et retourne l'URL de paiement."""
+    def _online_start(self, provider_code, base_url, phone=None):
+        """Ouvre une transaction chez le prestataire. Retourne l'URL de paiement, ou None lorsque la
+        demande est envoyée directement sur le téléphone du payeur (FlexPay)."""
         self.ensure_one()
         if self.state not in ('open', 'rejected'):
             raise UserError(_("Cette facture n'attend pas de paiement."))
-        provider = get_provider(self.env, provider_code)
-        if not provider or not provider.enabled():
-            raise UserError(_("Ce moyen de paiement en ligne n'est pas disponible."))
+        allowed = enabled_providers(self.env, self.tenant_id.country_id.code)
+        provider = next((p for p in allowed if p.code == provider_code), None)
+        if not provider:
+            raise UserError(_("Ce moyen de paiement en ligne n'est pas disponible pour votre pays."))
         if self.amount <= 0:
             raise UserError(_("Montant nul : aucune transaction à régler."))
         # Référence unique par tentative : une transaction abandonnée ne bloque jamais la suivante.
@@ -170,7 +172,7 @@ class SelectaSaasInvoice(models.Model):
                     'online_started': fields.Datetime.now(), 'online_message': False})
         return_url = '%s/selecta/saas/pay/return?ref=%s' % (base_url, reference)
         notify_url = '%s/selecta/saas/pay/notify/%s' % (base_url, provider.code)
-        url = provider.start(self, reference, return_url, notify_url)
+        url = provider.start(self, reference, return_url, notify_url, phone=phone)
         self.env['selecta.audit.log']._log('saas.payment.online', _("Paiement en ligne initié (%s)", provider.label),
                                            {'invoice': self.name, 'reference': reference}, company=self.company_id)
         return url

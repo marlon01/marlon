@@ -46,7 +46,8 @@ class SelectaBackoffice(models.AbstractModel):
             'plans': [p._public_dict() for p in self.env['selecta.saas.plan'].sudo().search([])],
             'invoices': [i._as_dict() for i in Invoice.search([('tenant_id', '=', tenant.id)], limit=50)],
             'methods': [{'key': k, 'label': v} for k, v in PAYMENT_METHODS if k != 'manual'],
-            'online_providers': [{'code': p.code, 'label': p.label} for p in enabled_providers(self.env)],
+            'online_providers': [{'code': p.code, 'label': p.label, 'flow': p.flow}
+                                 for p in enabled_providers(self.env, tenant.country_id.code)],
             'payment_instructions': icp.get_param('selecta_saas.payment_instructions') or '',
             'payment_link': icp.get_param('selecta_saas.payment_link') or '',
             'support_email': icp.get_param('selecta_saas.support_email') or '',
@@ -90,7 +91,7 @@ class SelectaBackoffice(models.AbstractModel):
             return inv._as_dict()
         icp = self.env['ir.config_parameter'].sudo()
         self.env['selecta.saas.mail']._queue('invoice_issued', tenant=tenant, values={
-            'invoice': inv, 'online': bool(enabled_providers(self.env)),
+            'invoice': inv, 'online': bool(enabled_providers(self.env, tenant.country_id.code)),
             'instructions': icp.get_param('selecta_saas.payment_instructions') or '',
             'subject': _("Facture %(n)s — %(a)s", n=inv.name, a=fmt_amount(inv.amount))})
         self.env['selecta.audit.log']._log('saas.checkout', _("Facture %(n)s : %(p)s (%(c)s)", n=inv.name, p=plan.name,
@@ -111,12 +112,14 @@ class SelectaBackoffice(models.AbstractModel):
         return quote
 
     @api.model
-    def billing_pay_online(self, invoice_id, provider):
-        """Ouvre une transaction chez le prestataire ; le navigateur est ensuite redirigé vers sa page."""
+    def billing_pay_online(self, invoice_id, provider, phone=''):
+        """Ouvre une transaction : redirection vers la page du prestataire, ou demande envoyée sur
+        le téléphone du payeur (``{'push': True}``, la page suit ensuite l'état du paiement)."""
         require_group(self.env, G_ADMIN)
         inv = self._own_invoice(invoice_id)
         base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url', '').rstrip('/')
-        return {'url': inv._online_start(provider, base_url)}
+        url = inv._online_start(provider, base_url, phone=phone)
+        return {'url': url} if url else {'push': True}
 
     @api.model
     def billing_check_online(self, invoice_id):

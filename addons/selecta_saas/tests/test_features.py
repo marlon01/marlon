@@ -237,3 +237,63 @@ class TestSaasHttp(HttpCase):
         self.assertEqual(resp.status_code, 200)
         inv.invalidate_recordset()
         self.assertEqual(inv.state, 'paid')
+
+
+@tagged('post_install', '-at_install', 'selecta_saas')
+class TestSaasFlexPay(SaasCommon):
+    """FlexPay (Mobile Money RDC) et choix automatique du prestataire selon le pays."""
+
+    def setUp(self):
+        super().setUp()
+        icp = self.env['ir.config_parameter'].sudo()
+        for key, value in (('cinetpay_enabled', 'True'), ('cinetpay_site_id', '1'), ('cinetpay_api_key', 'k'),
+                           ('stripe_enabled', 'True'), ('stripe_secret_key', 'sk_test_1'),
+                           ('flexpay_enabled', 'True'), ('flexpay_merchant', 'SELECTA'), ('flexpay_token', 'jeton')):
+            icp.set_param('selecta_saas.%s' % key, value)
+
+    def codes(self, tenant):
+        from odoo.addons.selecta_saas.models.payment_providers import enabled_providers
+        return [p.code for p in enabled_providers(self.env, tenant.country_id.code)]
+
+    def test_provider_chosen_by_country(self):
+        self.assertEqual(self.codes(self.tenant_a), ['flexpay', 'stripe'])  # RDC
+        self.tenant_b.country_id = self.env.ref('base.ci')
+        self.assertEqual(self.codes(self.tenant_b), ['cinetpay', 'stripe'])  # Côte d'Ivoire
+        self.env['ir.config_parameter'].sudo().set_param('selecta_saas.flexpay_enabled', 'False')
+        self.assertEqual(self.codes(self.tenant_a), ['cinetpay', 'stripe'])  # RDC sans FlexPay
+
+    def test_flexpay_push_payment_verified_with_flexpay(self):
+        from odoo.addons.selecta_saas.models.payment_providers import FlexPay
+        bo = self.bo(self.user_a)
+        inv = bo.billing_checkout(self.plan_pme.id, 'monthly')
+        accepted = FakeResponse({'code': '0', 'message': 'OK', 'orderNumber': 'FP-77'})
+        with patch.object(FlexPay, '_post', return_value=accepted) as post:
+            res = bo.billing_pay_online(inv['id'], 'flexpay', '081 234 5678')
+        self.assertEqual(res, {'push': True})
+        url, kwargs = post.call_args.args[0], post.call_args.kwargs
+        self.assertEqual(url, 'https://backend.flexpay.cd/api/rest/v1/paymentService')
+        self.assertEqual(kwargs['headers']['Authorization'], 'Bearer jeton')
+        body = kwargs['json']
+        self.assertEqual((body['merchant'], body['phone'], body['amount'], body['currency']),
+                         ('SELECTA', '243812345678', '79', 'USD'))
+        self.assertTrue(body['callbackUrl'].endswith('/selecta/saas/pay/notify/flexpay'))
+        record = self.env['selecta.saas.invoice'].browse(inv['id'])
+        self.assertEqual(record.online_session, 'FP-77')
+        waiting = FakeResponse({'code': '0', 'transaction': {'status': '2'}})
+        with patch.object(FlexPay, '_get', return_value=waiting):
+            self.assertEqual(record._online_check(), 'pending')
+        ok = FakeResponse({'code': '0', 'transaction': {'status': '0', 'amount': '79', 'currency': 'USD',
+                                                        'reference': record.online_reference}})
+        with patch.object(FlexPay, '_get', return_value=ok) as get:
+            self.assertEqual(record._online_check(), 'paid')
+        self.assertEqual(get.call_args.args[0], 'https://backend.flexpay.cd/api/rest/v1/check/FP-77')
+        self.assertEqual(self.tenant_a._effective_state(), 'active')
+
+    def test_flexpay_refused_outside_rdc_and_bad_number(self):
+        self.tenant_b.country_id = self.env.ref('base.ci')
+        inv_b = self.bo(self.user_b).billing_checkout(self.plan_ecole.id, 'monthly')
+        with self.assertRaises(UserError):
+            self.bo(self.user_b).billing_pay_online(inv_b['id'], 'flexpay', '243812345678')
+        inv_a = self.bo(self.user_a).billing_checkout(self.plan_pme.id, 'monthly')
+        with self.assertRaises(UserError):
+            self.bo(self.user_a).billing_pay_online(inv_a['id'], 'flexpay', '12345')

@@ -46,7 +46,7 @@ export const FEATURE_LABELS = {
 };
 
 /** Prestataires de paiement en ligne (code enregistré sur la facture → nom affiché). */
-export const PROVIDER_NAMES = { cinetpay: "CinetPay", stripe: "Stripe" };
+export const PROVIDER_NAMES = { cinetpay: "CinetPay", stripe: "Stripe", flexpay: "FlexPay" };
 
 export function providerName(code) {
     return PROVIDER_NAMES[code] || code || "";
