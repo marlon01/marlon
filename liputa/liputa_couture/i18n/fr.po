@@ -374,3 +374,27 @@ msgstr "Une photo du client avec consentement est requise"
 #: code:addons/liputa_couture/controllers/main.py:0
 msgid "Too many sign-ups from this network. Please try again later."
 msgstr "Trop d'inscriptions depuis ce réseau. Veuillez réessayer plus tard."
+
+#. module: liputa_couture
+#. odoo-python
+#: code:addons/liputa_couture/controllers/main.py:0
+msgid "Please fill in all required fields."
+msgstr "Veuillez remplir tous les champs obligatoires."
+
+#. module: liputa_couture
+#. odoo-python
+#: code:addons/liputa_couture/controllers/main.py:0
+msgid "Invalid email address."
+msgstr "Adresse e-mail invalide."
+
+#. module: liputa_couture
+#. odoo-python
+#: code:addons/liputa_couture/controllers/main.py:0
+msgid "The password must contain at least 10 characters."
+msgstr "Le mot de passe doit contenir au moins 10 caractères."
+
+#. module: liputa_couture
+#. odoo-python
+#: code:addons/liputa_couture/controllers/main.py:0
+msgid "An account already exists with this email."
+msgstr "Un compte existe déjà avec cette adresse e-mail."
