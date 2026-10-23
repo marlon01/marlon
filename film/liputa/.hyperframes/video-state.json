@@ -2554,11 +2554,11 @@
   },
   "renders": {
     "latest": {
-      "id": "02de9d28-fa76-4087-bd54-e1780b74de3f",
-      "completedAt": 1792742816994,
-      "output": "/home/user/marlon/film/liputa/renders/liputa-un-samedi-a-l-atelier.mp4",
+      "id": "f1cae7a3-fa19-41bd-abd0-8b8cb567c20e",
+      "completedAt": 1792746102871,
+      "output": "/home/user/marlon/film/liputa/renders/brut.mp4",
       "status": "completed",
-      "revision": "2e371df1-6ea4-4f43-af4b-ed885e996a28"
+      "revision": null
     },
     "retainedRevisions": [
       "2e371df1-6ea4-4f43-af4b-ed885e996a28",
