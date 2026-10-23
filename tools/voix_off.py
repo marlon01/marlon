@@ -20,7 +20,12 @@ générée N fois puis retranscrite par Whisper (small, multilingue, publié sur
 la prise la plus proche du texte est gardée. --phrases écrit aussi chaque phrase dans son propre
 fichier (01.wav, 02.wav…) pour la poser librement sur la ligne de temps du film.
 
-Écrire les mots difficiles comme ils se prononcent : « Lipouta », « code Q R ».
+Prononciation : le LEXIQUE ci-dessous réécrit les mots que la voix lit mal (« Kinshasa » était lu
+« kɛ̃ʃaza ») avant la synthèse ; les textes gardent l'orthographe normale et la vérification compare
+à cette orthographe. Pour contrôler un mot : phonemizer + espeak-ng (voir CLAUDE.md).
+
+Dialogues : une ligne qui commence par [upmc-jessica], [upmc-pierre] ou [siwis] est lue par cette
+voix ; les autres par --voix.
 
 Voix et licences (à créditer au générique quand la licence le demande) :
     siwis          voix de femme, jeu de données SIWIS, CC-BY 4.0
@@ -41,6 +46,22 @@ import soundfile as sf
 
 RELEASE = "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/"
 CACHE = pathlib.Path.home() / ".cache" / "marlon-voix"
+LEXIQUE = {  # orthographe → graphie que la voix prononce juste (vérifiée en phonèmes espeak-ng)
+    "Kinshasa": "Kinnchassa",  # kinʃasa (et non kɛ̃ʃaza)
+    "Liputa": "Lipouta",       # liputa
+    "LIPUTA": "Lipouta",
+    "SELECTA": "Sélecta",      # selɛkta
+    "Selecta": "Sélecta",
+    "QR": "Q R",
+}
+
+
+def prononcer(text):
+    for word, spoken in LEXIQUE.items():
+        text = re.sub(rf"(?<!\w){re.escape(word)}(?!\w)", spoken, text)
+    return text
+
+
 VOICES = {
     "siwis": ("fr_FR-siwis-medium", 0),
     "upmc-jessica": ("fr_FR-upmc-medium", 0),
@@ -104,21 +125,32 @@ def main():
     parser.add_argument("--phrases", help="dossier où écrire aussi chaque phrase dans son fichier")
     args = parser.parse_args()
 
-    name, speaker = VOICES[args.voix]
-    folder = model_dir(name)
-    tts = sherpa_onnx.OfflineTts(sherpa_onnx.OfflineTtsConfig(
-        model=sherpa_onnx.OfflineTtsModelConfig(
-            vits=sherpa_onnx.OfflineTtsVitsModelConfig(
-                model=str(folder / f"{name}.onnx"), tokens=str(folder / "tokens.txt"),
-                data_dir=str(folder / "espeak-ng-data")),
-            num_threads=4),
-    ))
+    engines = {}
+
+    def engine(voice):
+        name, speaker = VOICES[voice]
+        if name not in engines:
+            folder = model_dir(name)
+            engines[name] = sherpa_onnx.OfflineTts(sherpa_onnx.OfflineTtsConfig(
+                model=sherpa_onnx.OfflineTtsModelConfig(
+                    vits=sherpa_onnx.OfflineTtsVitsModelConfig(
+                        model=str(folder / f"{name}.onnx"), tokens=str(folder / "tokens.txt"),
+                        data_dir=str(folder / "espeak-ng-data")),
+                    num_threads=4),
+            ))
+        return engines[name], speaker
+
+    tts, _ = engine(args.voix)
 
     recognizer = asr_model() if args.verifier else None
 
-    def take(line):
-        audio = tts.generate(line, sid=speaker, speed=args.vitesse)  # sherpa-onnx : > 1 accélère
+    def take(line, voice):
+        model, speaker = engine(voice)
+        audio = model.generate(prononcer(line), sid=speaker, speed=args.vitesse)  # sherpa-onnx : > 1 accélère
         samples = np.asarray(audio.samples, dtype=np.float32)
+        if model.sample_rate != tts.sample_rate:
+            idx = np.linspace(0, len(samples) - 1, int(len(samples) * tts.sample_rate / model.sample_rate))
+            samples = np.interp(idx, np.arange(len(samples)), samples).astype(np.float32)
         if not recognizer:
             return samples, None
         stream = recognizer.create_stream()
@@ -140,11 +172,15 @@ def main():
             chunks.append(np.zeros(int(gap * rate), dtype=np.float32))
             t += gap
         pending_pause = 0.0
-        takes = [take(line) for _ in range(max(1, args.prises))]
+        voice = args.voix
+        tag = re.match(r"\[([\w-]+)\]\s*", line)
+        if tag and tag.group(1) in VOICES:
+            voice, line = tag.group(1), line[tag.end():]
+        takes = [take(line, voice) for _ in range(max(1, args.prises))]
         samples, heard = min(takes, key=lambda x: distance(line, x[1]) if x[1] is not None else 0)
         chunks.append(samples)
         duration = len(samples) / rate
-        entry = {"texte": line, "debut": round(t, 3), "fin": round(t + duration, 3)}
+        entry = {"texte": line, "voix": voice, "debut": round(t, 3), "fin": round(t + duration, 3)}
         if heard is not None:
             entry.update(entendu=heard, ecarts=distance(line, heard))
         if args.phrases:
@@ -158,7 +194,7 @@ def main():
     out = pathlib.Path(args.sortie)
     out.parent.mkdir(parents=True, exist_ok=True)
     sf.write(out, np.concatenate(chunks), rate)
-    meta = {"voix": args.voix, "modele": name, "vitesse": args.vitesse, "duree": round(t, 3),
+    meta = {"voix": args.voix, "modele": VOICES[args.voix][0], "vitesse": args.vitesse, "duree": round(t, 3),
             "phrases": timings}
     out.with_suffix(".json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
     words = sum(len(x["texte"].split()) for x in timings)

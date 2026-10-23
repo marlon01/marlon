@@ -1,0 +1,107 @@
+<template>
+  <style>
+    @font-face { font-family: "Bricolage Grotesque"; src: url("assets/fonts/BricolageGrotesque.ttf"); font-weight: 200 800; }
+    #root { position: absolute; inset: 0; overflow: hidden; background: linear-gradient(180deg, #fff3dc 0%, #f6e6c9 100%); }
+    /* La lumière qui s'ouvre quand l'atelier respire. */
+    #rn-souffle { position: absolute; left: 350px; top: 540px; width: 40px; height: 40px; margin: -20px 0 0 -20px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(242, 194, 48, 0.55), rgba(242, 194, 48, 0) 70%); }
+    #rn-sol { position: absolute; left: 0; right: 0; top: 880px; bottom: 0; background: #d8b48a; }
+    #rn-nadege { position: absolute; left: 120px; top: 250px; width: 420px; height: 651px; }
+    /* Les papiers d'hier deviennent des fiches nettes. */
+    .rn-fiche { position: absolute; left: 600px; width: 470px; height: 112px; }
+    .rn-papier, .rn-carte { position: absolute; inset: 0; display: flex; align-items: center; gap: 16px; padding: 0 26px; white-space: nowrap; }
+    .rn-papier { background: #f9e07a; font-family: "EB Garamond"; font-style: italic; font-size: 38px; color: #1f3a8a; box-shadow: 0 10px 22px rgba(40,24,10,.2); }
+    .rn-carte { background: #fbfcfe; border-radius: 22px; font-family: "Bricolage Grotesque"; font-size: 30px; color: #16213e; box-shadow: 0 12px 28px rgba(22,33,62,.12); }
+    .rn-carte b { font-weight: 700; }
+    .rn-carte i { width: 50px; height: 50px; border-radius: 50%; background: #e3f4ec; color: #138a5e; display: grid; place-items: center; font-style: normal; font-weight: 800; font-size: 30px; flex: none; }
+    /* Le téléphone de Nadège, en grand. */
+    #rn-tel { position: absolute; left: 1150px; top: 30px; width: 600px; height: 1020px; border-radius: 70px; background: #0f1a30; padding: 24px; box-shadow: 0 40px 80px rgba(22, 33, 62, 0.35); }
+    #rn-ecran { position: relative; width: 552px; height: 972px; border-radius: 50px; overflow: hidden; background: #f5f6fa; }
+    .rn-app { position: absolute; left: 0; top: 0; width: 552px; }
+    .rn-app img { display: block; width: 552px; }
+    .rn-repere { position: absolute; border: 5px solid #f2c230; border-radius: 14px; }
+    /* États de départ cachés, posés en CSS pour l'image 0. */
+    #rn-patron, #rn-planning, #rn-commande, #rn-f1, #rn-f2, #rn-f3, #rn-f4, #rn-f1-c, #rn-f2-c, #rn-f3-c, #rn-f4-c, #rn-patron-rep, #rn-commande-rep { opacity: 0; }
+  </style>
+
+  <div id="root" data-composition-id="renouveau" data-width="1920" data-height="1080">
+    <div id="rn-souffle"></div>
+    <div id="rn-sol"></div>
+    <div id="rn-nadege"></div>
+
+    <div class="rn-fiche" id="rn-f1" style="top: 190px">
+      <div class="rn-papier" id="rn-f1-p" style="transform: rotate(-4deg)">94 / 74 / ?</div>
+      <div class="rn-carte" id="rn-f1-c"><i>✓</i><span><b>Chantal K.</b> · 94 · 74 · 102 cm</span></div>
+    </div>
+    <div class="rn-fiche" id="rn-f2" style="top: 330px">
+      <div class="rn-papier" id="rn-f2-p" style="transform: rotate(3deg)">combien de tissu ?</div>
+      <div class="rn-carte" id="rn-f2-c"><i>✓</i><span><b>Robe sirène</b> · 3,22 m de tissu</span></div>
+    </div>
+    <div class="rn-fiche" id="rn-f3" style="top: 470px">
+      <div class="rn-papier" id="rn-f3-p" style="transform: rotate(-2deg)">qui coud quoi ?</div>
+      <div class="rn-carte" id="rn-f3-c"><i>✓</i><span><b>Junior</b> · couture · Patrick T.</span></div>
+    </div>
+    <div class="rn-fiche" id="rn-f4" style="top: 610px">
+      <div class="rn-papier" id="rn-f4-p" style="transform: rotate(4deg)">jeudi ? vendredi ?</div>
+      <div class="rn-carte" id="rn-f4-c"><i>✓</i><span><b>Livraison</b> · mercredi 28 octobre</span></div>
+    </div>
+
+    <div id="rn-tel">
+      <div id="rn-ecran">
+        <div class="rn-app" id="rn-essayage"><img src="assets/shots/essayage.png" alt="Essayage virtuel" /></div>
+        <div class="rn-app" id="rn-patron"><img src="assets/shots/patron.png" alt="Patron de coupe" />
+          <div class="rn-repere" id="rn-patron-rep" style="left: 14px; top: 84px; width: 150px; height: 56px"></div></div>
+        <div class="rn-app" id="rn-planning"><img src="assets/shots/planning.png" alt="Planning du samedi" /></div>
+        <div class="rn-app" id="rn-commande"><img src="assets/shots/commande.png" alt="Fiche de commande" />
+          <div class="rn-repere" id="rn-commande-rep" style="left: 34px; top: 428px; width: 350px; height: 58px"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    LiputaRig.draw(document.querySelector("#rn-nadege"), { kind: "nadege", id: "rn" });
+    const R = LiputaRig;
+    const tl = gsap.timeline({ paused: true });
+
+    // Le matin, Nadège tient son atelier dans sa poche.
+    R.mood(tl, "rn", "sourire", 0.05);
+    R.breathe(tl, "rn", 0, 12.4);
+    R.blinks(tl, "rn", [1.8, 4.9, 7.6, 10.4]);
+    tl.set("#rn-armR", { rotation: -40 }, 0);
+    tl.fromTo("#rn-tel", { y: 1100 }, { y: 0, duration: 0.7, ease: "expo.out" }, 0.0);
+    R.look(tl, "rn", 14, -2, 0.4);
+
+    // Chaque papier d'hier se retourne en fiche nette, sur la voix.
+    // Chaque papier reste lisible au moins 1,4 s avant de se retourner.
+    const flips = [["#rn-f1", 1.0], ["#rn-f2", 5.0], ["#rn-f3", 8.2], ["#rn-f4", 10.4]];
+    flips.forEach(([sel, t]) => {
+      tl.fromTo(sel, { opacity: 0, x: -200 }, { opacity: 1, x: 0, duration: 0.35, ease: "expo.out", immediateRender: false }, Math.max(0.1, t - 1.5));
+      tl.to(`${sel}-p`, { rotationX: 90, opacity: 0, duration: 0.18, ease: "power2.in" }, t);
+      tl.fromTo(`${sel}-c`, { opacity: 0, rotationX: -90 }, { opacity: 1, rotationX: 0, duration: 0.25, ease: "back.out(1.6)", immediateRender: false }, t + 0.18);
+    });
+
+    // Les écrans de Liputa défilent au rythme de la voix.
+    tl.to("#rn-essayage", { opacity: 0, x: -120, duration: 0.25, ease: "power3.in" }, 4.4);
+    tl.fromTo("#rn-patron", { opacity: 0, x: 140 }, { opacity: 1, x: 0, duration: 0.35, ease: "expo.out", immediateRender: false }, 4.5);
+    tl.fromTo("#rn-patron-rep", { opacity: 0, scale: 1.2 }, { opacity: 1, scale: 1, duration: 0.3, ease: "expo.out", immediateRender: false }, 5.4);
+    tl.to("#rn-patron", { opacity: 0, x: -120, duration: 0.25, ease: "power3.in" }, 7.3);
+    tl.fromTo("#rn-planning", { opacity: 0, x: 140 }, { opacity: 1, x: 0, duration: 0.35, ease: "expo.out", immediateRender: false }, 7.4);
+    tl.to("#rn-planning", { y: -120, duration: 1.6, ease: "power2.inOut" }, 7.9);
+    tl.to("#rn-planning", { opacity: 0, x: -120, duration: 0.25, ease: "power3.in" }, 9.7);
+    tl.fromTo("#rn-commande", { opacity: 0, x: 140 }, { opacity: 1, x: 0, duration: 0.35, ease: "expo.out", immediateRender: false }, 9.8);
+    tl.fromTo("#rn-commande-rep", { opacity: 0, scale: 1.2 }, { opacity: 1, scale: 1, duration: 0.3, ease: "expo.out", immediateRender: false }, 10.5);
+
+    // 12,5 s : l'atelier respire. Nadège ferme les yeux, inspire, expire ; la lumière s'ouvre.
+    R.mood(tl, "rn", "soulagee", 12.5);
+    tl.to("#rn-armR", { rotation: 0, duration: 0.6, ease: "power2.inOut" }, 12.4);
+    tl.to("#rn-tel", { x: 120, scale: 0.92, duration: 0.8, ease: "power2.inOut" }, 12.4);
+    tl.to("#rn-torso", { scaleY: 1.05, duration: 1.0, ease: "sine.inOut" }, 12.6);
+    tl.to("#rn-head", { y: -14, duration: 1.0, ease: "sine.inOut" }, 12.6);
+    tl.to("#rn-torso", { scaleY: 1, duration: 1.4, ease: "sine.inOut" }, 13.6);
+    tl.to("#rn-head", { y: 0, duration: 1.4, ease: "sine.inOut" }, 13.6);
+    tl.to("#rn-souffle", { scale: 70, duration: 2.6, ease: "power2.out" }, 12.6);
+    tl.to(["#rn-f1", "#rn-f2", "#rn-f3", "#rn-f4"], { x: 40, duration: 0.9, ease: "power2.inOut", stagger: 0.06 }, 12.6);
+    R.mood(tl, "rn", "sourire", 15.2);
+    window.__timelines["renouveau"] = tl;
+  </script>
+</template>

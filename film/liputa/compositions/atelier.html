@@ -1,0 +1,182 @@
+<template>
+  <style>
+    @font-face { font-family: "Bricolage Grotesque"; src: url("assets/fonts/BricolageGrotesque.ttf"); font-weight: 200 800; }
+    #root { position: absolute; inset: 0; overflow: hidden; background: linear-gradient(180deg, #f1e3cc 0%, #e6cfac 100%); }
+    #at-scene { position: absolute; inset: 0; transform-origin: 50% 60%; }
+    /* Fenêtre sur Kinshasa, le matin : le fleuve, les immeubles, un palmier. */
+    #at-fenetre { position: absolute; left: 110px; top: 110px; width: 560px; height: 400px; border: 18px solid #8a5a3b; border-radius: 10px; overflow: hidden;
+      background: linear-gradient(180deg, #f8d58e 0%, #f29f67 70%, #e9865a 100%); }
+    #at-fenetre svg { position: absolute; inset: 0; }
+    #at-titre { position: absolute; left: 0; right: 0; top: 330px; text-align: center; font-family: "Bricolage Grotesque"; font-weight: 800; font-size: 210px;
+      letter-spacing: -0.03em; color: #16213e; white-space: nowrap; }
+    #at-titre span { display: inline-block; }
+    /* Carton crème derrière le titre : le mot reste lisible sur Nadège et la fenêtre. */
+    #at-carton { position: absolute; left: 0; right: 0; top: 300px; height: 360px; background: rgba(246, 236, 218, 0.94); }
+    #at-sous { position: absolute; left: 0; right: 0; top: 580px; text-align: center; font-family: "Bricolage Grotesque"; font-weight: 600; font-size: 44px; color: #4a3a2a; }
+    /* Étagères de tissus en rouleaux. */
+    .at-rouleau { position: absolute; width: 74px; height: 74px; border-radius: 50%; border: 6px solid rgba(0,0,0,.12); }
+    #at-etagere { position: absolute; left: 1160px; top: 140px; width: 320px; height: 380px; }
+    #at-etagere .at-planche { position: absolute; left: 0; width: 320px; height: 14px; background: #8a5a3b; border-radius: 3px; }
+    /* Porte de l'atelier, sur la rue. */
+    #at-porte { position: absolute; left: 1520px; top: 170px; width: 300px; height: 690px; background: #20304f; border: 18px solid #6e4528; border-bottom: none; overflow: hidden; }
+    #at-battant { position: absolute; inset: 0; background: repeating-linear-gradient(180deg, #a5714a 0 60px, #8f5f3d 60px 64px); transform-origin: 0% 50%; }
+    .at-passant { position: absolute; bottom: 0; width: 160px; height: 420px; }
+    #at-chantal { position: absolute; left: -10px; bottom: -40px; width: 290px; height: 450px; }
+    #at-sol { position: absolute; left: 0; right: 0; top: 860px; bottom: 0; background: #c9a27a; }
+    #at-table { position: absolute; left: 330px; top: 770px; width: 1020px; height: 130px; background: #8a5a3b; border-radius: 10px 10px 0 0; box-shadow: 0 -8px 0 #a5714a inset; }
+    #at-machine { position: absolute; left: 400px; top: 600px; width: 250px; height: 180px; }
+    #at-nadege { position: absolute; left: 640px; top: 210px; width: 420px; height: 651px; }
+    /* Ce qui étouffe l'atelier : appels, messages, bouts de papier. */
+    .at-notif { position: absolute; display: flex; align-items: center; gap: 14px; padding: 16px 22px; border-radius: 22px; background: #fbfcfe;
+      box-shadow: 0 14px 30px rgba(40, 24, 10, 0.22); font-family: "Bricolage Grotesque"; font-size: 30px; color: #16213e; white-space: nowrap; }
+    .at-notif i { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; background: #fbe6e4; color: #c23a33; font-style: normal; font-weight: 800; flex: none; }
+    .at-papier { position: absolute; padding: 18px 22px; background: #f9e07a; box-shadow: 0 10px 22px rgba(40,24,10,.22); font-family: "EB Garamond"; font-style: italic; font-size: 36px; color: #1f3a8a; white-space: nowrap; }
+    .at-bulle { position: absolute; padding: 20px 28px; border-radius: 28px; background: #fbfcfe; box-shadow: 0 14px 30px rgba(40,24,10,.2);
+      font-family: "Bricolage Grotesque"; font-weight: 600; font-size: 38px; color: #16213e; white-space: nowrap; }
+    #at-nuit { position: absolute; inset: 0; background: #1b2440; opacity: 0; }
+    /* États de départ cachés, posés en CSS pour l'image 0. */
+    #at-n1, #at-n2, #at-n3, #at-n4, #at-n5, #at-n6, #at-n7, #at-n8, #at-bulle-chantal, #at-bulle-nadege, #at-titre span, #at-sous, #at-passant-1, #at-passant-2, #at-passant-3 { opacity: 0; }
+  </style>
+
+  <div id="root" data-composition-id="atelier" data-width="1920" data-height="1080">
+    <div id="at-scene">
+      <div id="at-fenetre">
+        <svg viewBox="0 0 560 400" preserveAspectRatio="none">
+          <circle cx="420" cy="120" r="46" fill="#fff3c4" opacity=".9"/>
+          <rect x="0" y="300" width="560" height="100" fill="#6fa7c9"/>
+          <path d="M0 300 h40 v-90 h50 v60 h30 v-120 h44 v150 h36 v-70 h40 v-40 h22 v110 h60 v-160 h30 v-20 h20 v180 h46 v-80 h50 v80 h52 v-50 h60 v50 Z" fill="#7a5d74"/>
+          <g fill="#5d4258"><rect x="190" y="150" width="8" height="10"/><rect x="210" y="170" width="8" height="10"/><rect x="330" y="170" width="8" height="10"/><rect x="345" y="200" width="8" height="10"/></g>
+          <path d="M70 400 Q76 300 64 230" stroke="#4d3b2a" stroke-width="12" fill="none"/>
+          <g fill="#3f6b46"><path d="M64 230 Q10 210 0 250 Q30 228 64 236Z"/><path d="M64 230 Q120 205 140 245 Q100 228 66 236Z"/><path d="M64 230 Q40 180 70 160 Q64 200 68 232Z"/><path d="M64 230 Q100 180 130 190 Q90 205 68 234Z"/></g>
+        </svg>
+      </div>
+
+      <div id="at-etagere">
+        <div class="at-planche" style="top: 110px"></div><div class="at-planche" style="top: 236px"></div><div class="at-planche" style="top: 362px"></div>
+        <div class="at-rouleau" style="left: 10px; top: 30px; background: repeating-linear-gradient(45deg, #e07a2f 0 10px, #1f7a72 10px 20px)"></div>
+        <div class="at-rouleau" style="left: 100px; top: 30px; background: repeating-radial-gradient(circle, #c4502a 0 6px, #f2c230 6px 12px)"></div>
+        <div class="at-rouleau" style="left: 190px; top: 30px; background: repeating-linear-gradient(-45deg, #16213e 0 8px, #f2c230 8px 16px)"></div>
+        <div class="at-rouleau" style="left: 40px; top: 156px; background: repeating-linear-gradient(90deg, #1f7a72 0 9px, #fbe9c8 9px 18px)"></div>
+        <div class="at-rouleau" style="left: 140px; top: 156px; background: repeating-radial-gradient(circle, #6a3fa0 0 7px, #f29f67 7px 14px)"></div>
+        <div class="at-rouleau" style="left: 236px; top: 156px; background: repeating-linear-gradient(45deg, #c4502a 0 10px, #fbe9c8 10px 20px)"></div>
+        <div class="at-rouleau" style="left: 20px; top: 282px; background: repeating-linear-gradient(-45deg, #e07a2f 0 9px, #16213e 9px 18px)"></div>
+        <div class="at-rouleau" style="left: 120px; top: 282px; background: repeating-radial-gradient(circle, #1f7a72 0 6px, #f2c230 6px 12px)"></div>
+      </div>
+
+      <div id="at-porte">
+        <div id="at-passants">
+          <svg class="at-passant" id="at-passant-1" viewBox="0 0 160 420" style="left: 300px"><circle cx="80" cy="70" r="46" fill="#0f1a30"/><path d="M10 420 Q20 160 80 140 Q140 160 150 420Z" fill="#0f1a30"/></svg>
+          <svg class="at-passant" id="at-passant-2" viewBox="0 0 160 420" style="left: 300px"><circle cx="80" cy="76" r="44" fill="#0f1a30"/><path d="M14 420 Q24 170 80 150 Q136 170 146 420Z" fill="#0f1a30"/></svg>
+          <svg class="at-passant" id="at-passant-3" viewBox="0 0 160 420" style="left: 300px"><circle cx="80" cy="66" r="48" fill="#0f1a30"/><path d="M8 420 Q18 150 80 132 Q142 150 152 420Z" fill="#0f1a30"/></svg>
+        </div>
+        <div id="at-chantal"></div>
+        <div id="at-battant"></div>
+      </div>
+
+      <div id="at-sol"></div>
+      <div id="at-nadege"></div>
+      <div id="at-table"></div>
+      <svg id="at-machine" viewBox="0 0 250 180">
+        <rect x="10" y="150" width="230" height="26" rx="6" fill="#16213e"/>
+        <path d="M30 150 V60 Q30 30 60 30 H200 Q226 30 226 56 V100 H190 V70 H70 V150 Z" fill="#f4efe6"/>
+        <rect x="186" y="96" width="26" height="54" fill="#d9cfbf"/><rect x="196" y="150" width="6" height="16" fill="#8b8f99"/>
+        <circle cx="70" cy="56" r="14" fill="#c4502a"/>
+      </svg>
+
+      <div class="at-notif" id="at-n1" style="left: 1040px; top: 250px"><i>!</i>Appel manqué · Esther</div>
+      <div class="at-notif" id="at-n2" style="left: 260px; top: 560px"><i>!</i>« Ma tenue est prête ? »</div>
+      <div class="at-papier" id="at-n3" style="left: 1080px; top: 470px; transform: rotate(5deg)">94 / 74 / ?</div>
+      <div class="at-notif" id="at-n4" style="left: 300px; top: 300px"><i>!</i>Appel manqué · Ruth</div>
+      <div class="at-papier" id="at-n5" style="left: 470px; top: 160px; transform: rotate(-6deg)">jeudi ? vendredi ?</div>
+      <div class="at-notif" id="at-n6" style="left: 1050px; top: 640px"><i>!</i>« Je passe ce soir »</div>
+      <div class="at-notif" id="at-n7" style="left: 360px; top: 430px"><i>!</i>Appel manqué · Patrick</div>
+      <div class="at-papier" id="at-n8" style="left: 1010px; top: 140px; transform: rotate(-3deg)">rappeler Ruth !!</div>
+
+      <div class="at-bulle" id="at-bulle-chantal" style="left: 1320px; top: 150px">… prête pour samedi ?</div>
+      <div class="at-bulle" id="at-bulle-nadege" style="left: 980px; top: 150px">Oui, oui… promis !</div>
+    </div>
+
+    <div id="at-carton"></div>
+    <div id="at-titre"><span>K</span><span>i</span><span>n</span><span>s</span><span>h</span><span>a</span><span>s</span><span>a</span></div>
+    <div id="at-sous">L'atelier de Nadège</div>
+    <div id="at-nuit"></div>
+  </div>
+
+  <script>
+    LiputaRig.draw(document.querySelector("#at-nadege"), { kind: "nadege", id: "an" });
+    LiputaRig.draw(document.querySelector("#at-chantal"), { kind: "chantal", id: "ac" });
+    const tl = gsap.timeline({ paused: true });
+    const R = LiputaRig;
+    const NOTES = ["#at-n1", "#at-n2", "#at-n3", "#at-n4", "#at-n5", "#at-n6", "#at-n7", "#at-n8"];
+        tl.set("#at-chantal", { x: 320 }, 0);
+
+    // 0–4 s : « Kinshasa » se pose sur la ville, la caméra glisse dans l'atelier.
+    tl.fromTo("#at-scene", { scale: 1.12 }, { scale: 1, duration: 4.2, ease: "power2.out" }, 0);
+    tl.fromTo("#at-titre span", { opacity: 0, y: 80, rotation: 6 }, { opacity: 1, y: 0, rotation: 0, duration: 0.45, stagger: 0.06, ease: "back.out(1.6)" }, 0.25);
+    tl.fromTo("#at-sous", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out" }, 1.2);
+    tl.to("#at-carton", { opacity: 0, duration: 0.45, ease: "power2.in" }, 4.1);
+    tl.to(["#at-titre", "#at-sous"], { y: -90, opacity: 0, filter: "blur(8px)", duration: 0.4, ease: "power3.in" }, 4.1);
+
+    // Nadège coud, tranquille : elle respire, elle cligne des yeux, elle regarde son ouvrage.
+    R.breathe(tl, "an", 0, 21);
+    R.blinks(tl, "an", [1.6, 4.4, 7.9, 10.6, 13.2, 16.4, 19.1]);
+    R.look(tl, "an", -6, 8, 0.2);
+    tl.to("#an-armL", { rotation: -8, duration: 0.5, ease: "sine.inOut" }, 1.0);
+    tl.to("#an-armL", { rotation: 0, duration: 0.5, ease: "sine.inOut" }, 2.0);
+    tl.to("#an-armL", { rotation: -8, duration: 0.5, ease: "sine.inOut" }, 3.0);
+    tl.to("#an-armL", { rotation: 0, duration: 0.5, ease: "sine.inOut" }, 4.0);
+
+    // 5,9–14,2 s : l'atelier étouffe. Appels et papiers s'abattent de plus en plus vite.
+    R.mood(tl, "an", "inquiete", 6.0);
+    R.look(tl, "an", 8, -4, 6.0);
+    const arrivals = [6.2, 7.3, 8.2, 8.9, 9.6, 10.2, 10.7, 11.15];
+    NOTES.forEach((sel, i) => {
+      const fromX = i % 2 ? 900 : -900;
+      tl.fromTo(sel, { opacity: 0, x: fromX, scale: 0.8 }, { opacity: 1, x: 0, scale: 1, duration: 0.35, ease: "expo.out", immediateRender: false }, arrivals[i]);
+      R.look(tl, "an", i % 2 ? 9 : -9, -2, arrivals[i] + 0.1);
+    });
+    // Elle porte les mains à sa tête.
+    tl.to("#an-armL", { rotation: 118, duration: 0.45, ease: "back.out(1.4)" }, 9.4);
+    tl.to("#an-armR", { rotation: -118, duration: 0.45, ease: "back.out(1.4)" }, 9.5);
+    tl.to("#an-head", { rotation: -5, duration: 0.18, ease: "sine.inOut" }, 12.4);
+    tl.to("#an-head", { rotation: 5, duration: 0.18, ease: "sine.inOut" }, 12.58);
+    tl.to("#an-head", { rotation: 0, duration: 0.2, ease: "sine.inOut" }, 12.76);
+    // Les clientes passent et repassent : la porte s'ouvre, des silhouettes traversent.
+    tl.to("#at-battant", { scaleX: 0.08, duration: 0.4, ease: "power2.out" }, 10.4);
+    [["#at-passant-1", 10.8], ["#at-passant-2", 11.6], ["#at-passant-3", 12.3]].forEach(([sel, t], i) => {
+      tl.fromTo(sel, { opacity: 1, x: i % 2 ? -330 : 0 }, { x: i % 2 ? 0 : -330, duration: 0.9, ease: "none", immediateRender: false }, t);
+      tl.set(sel, { opacity: 0 }, t + 0.9);
+    });
+
+    // 14,6–17,5 s : Chantal à la porte, inquiète.
+    tl.to(NOTES, { opacity: 0.25, duration: 0.4, ease: "power2.inOut" }, 14.2);
+    tl.to("#an-armL", { rotation: 0, duration: 0.45, ease: "power2.inOut" }, 14.3);
+    tl.to("#an-armR", { rotation: 0, duration: 0.45, ease: "power2.inOut" }, 14.35);
+    tl.to("#at-chantal", { x: 0, duration: 0.5, ease: "power3.out" }, 14.4);
+    R.mood(tl, "ac", "inquiete", 14.5);
+    R.look(tl, "an", 14, 0, 14.6);
+    R.look(tl, "ac", -12, 0, 14.6);
+    R.talk(tl, "ac", 14.65, 17.4, "inquiete");
+    tl.fromTo("#at-bulle-chantal", { opacity: 0, scale: 0.6, transformOrigin: "80% 100%" }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.7)" }, 15.6);
+    R.blinks(tl, "ac", [15.2, 17.0]);
+
+    // 17,9–20,7 s : Nadège promet avec un sourire forcé… puis le doute.
+    tl.to("#at-bulle-chantal", { opacity: 0, duration: 0.2 }, 17.8);
+    tl.to(NOTES, { opacity: 0, duration: 0.25, ease: "power2.in" }, 17.8);
+    R.mood(tl, "an", "sourire", 18.0);
+    tl.to("#an-head", { rotation: 4, duration: 0.15, ease: "sine.inOut" }, 18.1);
+    tl.to("#an-head", { rotation: 0, duration: 0.2, ease: "sine.inOut" }, 18.25);
+    tl.fromTo("#at-bulle-nadege", { opacity: 0, scale: 0.6, transformOrigin: "20% 100%" }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.7)" }, 18.1);
+    R.mood(tl, "ac", "sourire", 18.5);
+    tl.to("#at-bulle-nadege", { opacity: 0, duration: 0.2 }, 19.4);
+    tl.to("#at-chantal", { x: 320, duration: 0.6, ease: "power2.in" }, 19.4);
+    tl.to("#at-battant", { scaleX: 1, duration: 0.4, ease: "power2.in" }, 19.9);
+    R.mood(tl, "an", "inquiete", 19.8);
+    R.look(tl, "an", 0, 10, 19.8);
+    tl.to("#an-head", { rotation: -7, y: 10, duration: 0.6, ease: "power2.inOut" }, 19.9);
+
+    // 20,6–21,8 s : la nuit tombe sur l'atelier.
+    tl.to("#at-nuit", { opacity: 1, duration: 1.0, ease: "power2.inOut" }, 20.7);
+    window.__timelines["atelier"] = tl;
+  </script>
+</template>

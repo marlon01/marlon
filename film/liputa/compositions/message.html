@@ -1,0 +1,101 @@
+<template>
+  <style>
+    @font-face { font-family: "Bricolage Grotesque"; src: url("assets/fonts/BricolageGrotesque.ttf"); font-weight: 200 800; }
+    #root { position: absolute; inset: 0; overflow: hidden; background: #1b2440; }
+    #ms-ciel { position: absolute; inset: 0; background: linear-gradient(180deg, #1b2440 0%, #2c3a63 100%); }
+    #ms-aube { position: absolute; inset: 0; background: linear-gradient(180deg, #f8d58e 0%, #f6e7cf 55%, #f1e3cc 100%); opacity: 0; }
+    /* La lampe de l'atelier, le soir : un cône de lumière chaude sur Nadège et la table. */
+    #ms-lumiere { position: absolute; left: 260px; top: 120px; width: 760px; height: 820px; background: radial-gradient(ellipse at 50% 20%, rgba(248, 213, 142, 0.55), rgba(248, 213, 142, 0) 68%); }
+    #ms-lampe { position: absolute; left: 560px; top: 60px; width: 160px; height: 120px; }
+    #ms-nadege { position: absolute; left: 420px; top: 260px; width: 420px; height: 651px; }
+    #ms-table { position: absolute; left: 180px; top: 820px; width: 900px; height: 260px; background: #6e4528; border-radius: 10px 10px 0 0; }
+    #ms-mini { position: absolute; left: 860px; top: 772px; width: 92px; height: 52px; border-radius: 10px; background: #0f1a30; }
+    #ms-mini-ecran { position: absolute; inset: 6px; border-radius: 6px; background: #f2c230; opacity: 0; }
+    /* Le téléphone en grand : la conversation, puis l'inscription. */
+    #ms-tel { position: absolute; left: 1150px; top: 30px; width: 600px; height: 1020px; border-radius: 70px; background: #0f1a30; padding: 24px;
+      box-shadow: 0 40px 80px rgba(0, 0, 0, 0.45); }
+    #ms-ecran { position: relative; width: 552px; height: 972px; border-radius: 50px; overflow: hidden; background: #efe9e1; }
+    #ms-chat-tete { position: absolute; left: 0; right: 0; top: 0; height: 150px; background: #16213e; display: flex; align-items: center; gap: 20px; padding: 50px 30px 0; }
+    #ms-avatar { width: 76px; height: 76px; border-radius: 50%; background: #e07a2f; display: grid; place-items: center; font-family: "Bricolage Grotesque"; font-weight: 800; font-size: 36px; color: #fbfcfe; flex: none; }
+    #ms-chat-tete b { display: block; font-family: "Bricolage Grotesque"; font-size: 34px; color: #fbfcfe; }
+    #ms-chat-tete small { font-family: "Bricolage Grotesque"; font-size: 28px; color: #b7c2dc; }
+    #ms-ecrit { position: absolute; left: 30px; top: 210px; padding: 22px 30px; border-radius: 28px 28px 28px 8px; background: #fbfcfe; display: flex; gap: 10px; }
+    #ms-ecrit i { width: 16px; height: 16px; border-radius: 50%; background: #8b8f99; display: block; }
+    #ms-msg { position: absolute; left: 30px; right: 70px; top: 210px; padding: 26px 30px; border-radius: 28px 28px 28px 8px; background: #fbfcfe;
+      font-family: "Bricolage Grotesque"; font-size: 38px; line-height: 1.3; color: #16213e; box-shadow: 0 4px 0 rgba(0,0,0,.05); }
+    #ms-msg small { display: block; text-align: right; font-size: 28px; color: #6b7080; margin-top: 8px; }
+    .ms-app { position: absolute; left: 0; top: 0; width: 552px; }
+    .ms-app img { display: block; width: 552px; }
+    #ms-bouton { position: absolute; left: 30px; top: 1176px; width: 492px; height: 66px; border-radius: 16px; background: #fbfcfe; opacity: 0; }
+    /* États de départ cachés, posés en CSS pour l'image 0. */
+    #ms-ecrit, #ms-msg, #ms-inscription, #ms-accueil { opacity: 0; }
+  </style>
+
+  <div id="root" data-composition-id="message" data-width="1920" data-height="1080">
+    <div id="ms-ciel"></div>
+    <div id="ms-aube"></div>
+    <div id="ms-lumiere"></div>
+    <svg id="ms-lampe" viewBox="0 0 160 120"><rect x="76" y="0" width="8" height="40" fill="#0f1a30"/><path d="M30 40 H130 L150 110 H10 Z" fill="#c4502a"/></svg>
+    <div id="ms-nadege"></div>
+    <div id="ms-table"></div>
+    <div id="ms-mini"><div id="ms-mini-ecran"></div></div>
+
+    <div id="ms-tel">
+      <div id="ms-ecran">
+        <div id="ms-chat">
+          <div id="ms-chat-tete"><div id="ms-avatar">P</div><div><b>Papy · Tailleur</b><small>en ligne</small></div></div>
+          <div id="ms-ecrit"><i></i><i></i><i></i></div>
+          <div id="ms-msg">Installe Liputa, ma sœur. Mon atelier tient enfin ses dates.<small>21:47</small></div>
+        </div>
+        <div class="ms-app" id="ms-inscription"><img src="assets/shots/inscription.png" alt="Création de l'atelier sur Liputa" /><div id="ms-bouton"></div></div>
+        <div class="ms-app" id="ms-accueil"><img src="assets/shots/accueil_long.png" alt="Accueil de l'atelier sur Liputa" /></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    LiputaRig.draw(document.querySelector("#ms-nadege"), { kind: "nadege", id: "mn" });
+    const R = LiputaRig;
+    const tl = gsap.timeline({ paused: true });
+    tl.set("#ms-tel", { x: 760 }, 0);
+
+    // Le soir : Nadège, épuisée, sous la lampe.
+    tl.set("#mn-head", { rotation: -7, y: 10 }, 0);
+    R.mood(tl, "mn", "inquiete", 0.05);
+    R.look(tl, "mn", 0, 10, 0.05);
+    R.breathe(tl, "mn", 0, 14, 0.018);
+    R.blinks(tl, "mn", [0.9, 3.4, 6.1, 9.0, 11.8]);
+
+    // Le téléphone vibre sur la table : le message de Papy.
+    tl.to("#ms-mini-ecran", { opacity: 1, duration: 0.15 }, 0.9);
+    [0.9, 1.5].forEach((t) => tl.to("#ms-mini", { keyframes: [{ x: -4, duration: 0.04 }, { x: 4, duration: 0.04 }, { x: -3, duration: 0.04 }, { x: 0, duration: 0.04 }], ease: "none" }, t));
+    R.look(tl, "mn", 12, 10, 1.3);
+    tl.to("#mn-head", { rotation: 2, y: 0, duration: 0.4, ease: "power2.out" }, 1.5);
+    tl.to("#mn-armR", { rotation: -36, duration: 0.5, ease: "power2.out" }, 1.8);
+    tl.to("#ms-tel", { x: 0, duration: 0.6, ease: "expo.out" }, 2.2);
+    tl.fromTo("#ms-ecrit", { opacity: 0, scale: 0.6, transformOrigin: "0% 100%" }, { opacity: 1, scale: 1, duration: 0.25, ease: "back.out(1.8)" }, 2.8);
+    [3.0, 3.25, 3.5, 3.75, 4.0].forEach((t, i) => tl.fromTo(`#ms-ecrit i:nth-child(${(i % 3) + 1})`, { y: 0 }, { keyframes: [{ y: -8, duration: 0.12 }, { y: 0, duration: 0.12 }] }, t));
+    tl.to("#ms-ecrit", { opacity: 0, duration: 0.15 }, 4.25);
+    tl.fromTo("#ms-msg", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.3, ease: "back.out(1.5)" }, 4.3);
+
+    // Elle lit, et quelque chose se rallume : l'espoir.
+    R.look(tl, "mn", 14, -2, 4.6);
+    R.mood(tl, "mn", "espoir", 6.4);
+    tl.to("#mn-head", { rotation: 0, duration: 0.3, ease: "back.out(1.5)" }, 6.4);
+
+    // Le lendemain : l'aube, et l'inscription sur Liputa.
+    tl.to("#ms-aube", { opacity: 1, duration: 0.8, ease: "power2.inOut" }, 8.2);
+    tl.to("#ms-lumiere", { opacity: 0, duration: 0.6 }, 8.2);
+    R.mood(tl, "mn", "sourire", 8.8);
+    tl.to("#ms-chat", { opacity: 0, x: -120, duration: 0.3, ease: "power3.in" }, 8.5);
+    tl.fromTo("#ms-inscription", { opacity: 0, x: 160 }, { opacity: 1, x: 0, duration: 0.4, ease: "expo.out", immediateRender: false }, 8.7);
+    tl.to("#ms-inscription", { y: -300, duration: 1.4, ease: "power2.inOut" }, 9.9);
+    tl.to("#ms-bouton", { keyframes: [{ opacity: 0.45, duration: 0.08 }, { opacity: 0, duration: 0.25 }] }, 11.5);
+    tl.to("#ms-inscription", { scale: 0.98, duration: 0.08, yoyo: true, repeat: 1, ease: "power2.out" }, 11.5);
+    // L'atelier virtuel existe : « Bonjour Nadège ».
+    tl.to("#ms-inscription", { opacity: 0, y: -360, duration: 0.3, ease: "power3.in" }, 11.9);
+    tl.fromTo("#ms-accueil", { opacity: 0, y: 140 }, { opacity: 1, y: 0, duration: 0.45, ease: "expo.out", immediateRender: false }, 12.1);
+    R.mood(tl, "mn", "joie", 12.3);
+    window.__timelines["message"] = tl;
+  </script>
+</template>
