@@ -1,0 +1,119 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; background: linear-gradient(180deg, #efe9f8 0%, #e4dcf3 100%); }
+    /* Chez Grâce : sa chambre, son bureau, l'ordinateur portable. */
+    #ep-fenetre { position: absolute; left: 90px; top: 110px; width: 380px; height: 300px; border: 16px solid #fbfcfe; border-radius: 8px;
+      background: linear-gradient(180deg, #bcd3f0 0%, #f6d9a8 100%); }
+    #ep-cadre { position: absolute; left: 560px; top: 130px; width: 150px; height: 190px; border: 10px solid #fbfcfe; background: #6a4c9c; box-shadow: 0 8px 18px rgba(20,33,61,.12); }
+    #ep-sol { position: absolute; left: 0; right: 0; top: 880px; bottom: 0; background: #cbbfe0; }
+    #ep-grace { position: absolute; left: 230px; top: 250px; width: 420px; height: 651px; }
+    #ep-bureau { position: absolute; left: 60px; top: 820px; width: 840px; height: 260px; background: #8a5a3b; border-radius: 10px 10px 0 0; }
+    #ep-lueur { position: absolute; left: 980px; top: 260px; width: 60px; height: 60px; margin: -30px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(19, 138, 94, 0.45), rgba(19, 138, 94, 0) 70%); }
+    #ep-pc { position: absolute; left: 760px; top: 120px; width: 1080px; height: 700px; border-radius: 26px; background: #0f1a30; box-shadow: 0 40px 80px rgba(20, 33, 61, 0.3); }
+    #ep-pc-ecran { position: absolute; left: 20px; top: 20px; width: 1040px; height: 624px; border-radius: 12px; overflow: hidden; background: #fbfcfe; }
+    .ep-app { position: absolute; left: 0; top: 0; width: 1040px; }
+    .ep-app img { display: block; width: 1040px; }
+    #ep-pc-pied { position: absolute; left: -60px; top: 690px; width: 1200px; height: 34px; border-radius: 0 0 30px 30px; background: #c9cfdb; }
+    .ep-repere { position: absolute; border: 5px solid #0b5fff; border-radius: 10px; }
+    #ep-flash { position: absolute; left: 581px; top: 359px; width: 335px; height: 38px; border-radius: 6px; background: #fbfcfe; }
+    /* La caméra de surveillance : le visage de Grâce, vérifié. */
+    #ep-cam { position: absolute; left: 790px; top: 380px; width: 230px; height: 220px; border-radius: 14px; overflow: hidden; background: #2b3a5c; border: 4px solid #fbfcfe;
+      box-shadow: 0 12px 26px rgba(20,33,61,.3); }
+    #ep-mini { position: absolute; left: -35px; top: -80px; width: 300px; height: 465px; }
+    #ep-coins { position: absolute; left: 30px; top: 18px; width: 170px; height: 170px; border: 5px solid #19c27f; border-radius: 16px;
+      -webkit-mask: linear-gradient(#000 0 0) top left / 40px 40px no-repeat, linear-gradient(#000 0 0) top right / 40px 40px no-repeat,
+        linear-gradient(#000 0 0) bottom left / 40px 40px no-repeat, linear-gradient(#000 0 0) bottom right / 40px 40px no-repeat; }
+    #ep-scan { position: absolute; left: 0; right: 0; top: 0; height: 6px; background: #19c27f; box-shadow: 0 0 18px #19c27f; }
+    #ep-badge { position: absolute; left: 1080px; top: 700px; padding: 14px 26px; border-radius: 40px; background: #138a5e; color: #fbfcfe;
+      font-family: "Inter"; font-weight: 700; font-size: 32px; white-space: nowrap; box-shadow: 0 10px 24px rgba(19,138,94,.3); }
+    #ep-badge2 { position: absolute; left: 1080px; top: 700px; padding: 14px 26px; border-radius: 40px; background: #14213d; color: #fbfcfe;
+      font-family: "Inter"; font-weight: 600; font-size: 32px; white-space: nowrap; }
+    #ep-eclats { position: absolute; left: 230px; top: 160px; width: 420px; height: 360px; }
+    /* États de départ cachés, posés en CSS pour l'image 0. */
+    #ep-epreuve, #ep-resultat, #ep-code-rep, #ep-flash, #ep-cam, #ep-badge, #ep-badge2, #ep-res-rep, #ep-eclats, #ep-lueur { opacity: 0; }
+  </style>
+
+  <div id="root" data-composition-id="epreuve" data-width="1920" data-height="1080">
+    <div id="ep-fenetre"></div>
+    <div id="ep-cadre"></div>
+    <div id="ep-sol"></div>
+    <div id="ep-lueur"></div>
+    <div id="ep-grace"></div>
+    <div id="ep-bureau"></div>
+    <svg id="ep-eclats" viewBox="0 0 420 360" aria-hidden="true" fill="#f2c230">
+      <path d="M40 120 l8 22 22 8 -22 8 -8 22 -8 -22 -22 -8 22 -8z"/><path d="M370 90 l7 18 18 7 -18 7 -7 18 -7 -18 -18 -7 18 -7z"/>
+      <path d="M330 250 l6 15 15 6 -15 6 -6 15 -6 -15 -15 -6 15 -6z"/><path d="M80 290 l5 12 12 5 -12 5 -5 12 -5 -12 -12 -5 12 -5z"/>
+    </svg>
+
+    <div id="ep-pc">
+      <div id="ep-pc-ecran">
+        <div class="ep-app" id="ep-code"><img src="assets/screens/33_candidat_code.png" alt="Saisie du code personnel" />
+          <div class="ep-repere" id="ep-code-rep" style="left: 576px; top: 280px; width: 345px; height: 72px"></div><div id="ep-flash"></div></div>
+        <div class="ep-app" id="ep-epreuve"><img src="assets/screens/35_candidat_epreuve.png" alt="Épreuve en ligne" /></div>
+        <div class="ep-app" id="ep-resultat"><img src="assets/screens/34_candidat_resultat.png" alt="Résultat immédiat : admis" />
+          <div class="ep-repere" id="ep-res-rep" style="left: 186px; top: 54px; width: 560px; height: 186px; border-color: #138a5e"></div></div>
+        <div id="ep-cam"><div id="ep-mini"></div><div id="ep-coins"></div><div id="ep-scan"></div></div>
+      </div>
+      <div id="ep-pc-pied"></div>
+    </div>
+    <div id="ep-badge">Identité vérifiée ✓</div>
+    <div id="ep-badge2">Visage contrôlé toutes les 8 s</div>
+  </div>
+
+  <script>
+    SelectaRig.draw(document.querySelector("#ep-grace"), { kind: "grace", id: "eg" });
+    SelectaRig.draw(document.querySelector("#ep-mini"), { kind: "grace", id: "ew" });
+    const R = SelectaRig;
+    const tl = gsap.timeline({ paused: true });
+
+    // Le jour de l'épreuve : Grâce, concentrée, devant son ordinateur.
+    R.mood(tl, "eg", "neutre", 0.05);
+    R.mood(tl, "ew", "neutre", 0.05);
+    R.breathe(tl, "eg", 0, 18);
+    R.blinks(tl, "eg", [1.7, 4.6, 7.9, 10.6, 13.0]);
+    R.blinks(tl, "ew", [7.0, 9.4]);
+    R.look(tl, "eg", 16, -2, 0.2);
+    gsap.set("#eg-armR", { rotation: -30 }); // état de l'image 0, avant le premier seek
+    tl.set("#eg-armR", { rotation: -30 }, 0);
+    tl.fromTo("#ep-pc", { y: 900 }, { y: 0, duration: 0.7, ease: "expo.out" }, 0.0);
+
+    // 1,0–5,6 s : son code personnel, puis « Accéder à mon épreuve ».
+    tl.fromTo("#ep-code-rep", { opacity: 0, scale: 1.15 }, { opacity: 1, scale: 1, duration: 0.3, ease: "expo.out", immediateRender: false }, 2.2);
+    tl.to("#eg-armR", { keyframes: [{ rotation: -38, duration: 0.08 }, { rotation: -30, duration: 0.08 }, { rotation: -38, duration: 0.08 }, { rotation: -30, duration: 0.08 }] }, 2.4);
+    tl.to("#ep-flash", { keyframes: [{ opacity: 0.6, duration: 0.08 }, { opacity: 0, duration: 0.25 }] }, 3.6);
+    tl.to("#ep-code", { opacity: 0, x: -140, duration: 0.3, ease: "power3.in" }, 4.0);
+    tl.fromTo("#ep-epreuve", { opacity: 0, x: 160 }, { opacity: 1, x: 0, duration: 0.4, ease: "expo.out", immediateRender: false }, 4.2);
+
+    // 6,0–10,8 s : la caméra vérifie son identité, puis son visage toutes les 8 s.
+    tl.fromTo("#ep-cam", { opacity: 0, scale: 0.5, transformOrigin: "100% 100%" }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(1.6)", immediateRender: false }, 6.0);
+    tl.fromTo("#ep-scan", { y: 0 }, { y: 214, duration: 0.9, ease: "sine.inOut" }, 6.4);
+    tl.fromTo("#ep-coins", { scale: 1.3, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.3, ease: "expo.out" }, 7.2);
+    tl.fromTo("#ep-badge", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.3, ease: "back.out(1.6)", immediateRender: false }, 7.4);
+    tl.to("#ep-badge", { opacity: 0, y: -20, duration: 0.25, ease: "power2.in" }, 9.0);
+    tl.fromTo("#ep-badge2", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.3, ease: "back.out(1.6)", immediateRender: false }, 9.2);
+    tl.fromTo("#ep-scan", { y: 0 }, { y: 214, duration: 0.9, ease: "sine.inOut", immediateRender: false }, 9.4);
+    R.look(tl, "eg", 16, 4, 8.0);
+
+    // 11,3–15,1 s : dernière page… le résultat, tout de suite.
+    tl.to(["#ep-cam", "#ep-badge2"], { opacity: 0, duration: 0.25, ease: "power2.in" }, 11.5);
+    tl.to("#eg-armR", { keyframes: [{ rotation: -40, duration: 0.08 }, { rotation: -30, duration: 0.1 }] }, 12.0);
+    tl.to("#ep-epreuve", { opacity: 0, y: -120, duration: 0.3, ease: "power3.in" }, 12.1);
+    tl.fromTo("#ep-resultat", { opacity: 0, scale: 0.94 }, { opacity: 1, scale: 1, duration: 0.45, ease: "expo.out", immediateRender: false }, 12.3);
+    tl.fromTo("#ep-res-rep", { opacity: 0, scale: 1.15 }, { opacity: 1, scale: 1, duration: 0.3, ease: "expo.out", immediateRender: false }, 12.9);
+    tl.set("#ep-lueur", { opacity: 1 }, 12.6);
+    tl.to("#ep-lueur", { scale: 40, duration: 2.0, ease: "power2.out" }, 12.6);
+    R.mood(tl, "eg", "espoir", 12.8);
+    R.look(tl, "eg", 16, -4, 12.8);
+    R.mood(tl, "eg", "joie", 14.0);
+
+    // 15,6–16,9 s : « Admise ? Déjà ? » — bras levés, éclats.
+    tl.to("#eg-armL", { rotation: 140, duration: 0.4, ease: "back.out(1.6)" }, 15.5);
+    tl.to("#eg-armR", { rotation: -140, duration: 0.4, ease: "back.out(1.6)" }, 15.55);
+    R.talk(tl, "eg", 15.6, 16.9, "joie");
+    R.look(tl, "eg", 0, -4, 15.6);
+    tl.fromTo("#ep-eclats", { opacity: 0, scale: 0.6, transformOrigin: "50% 50%" }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)", immediateRender: false }, 15.7);
+    tl.to("#ep-eclats", { rotation: 8, duration: 1.6, ease: "sine.inOut" }, 16.1);
+    window.__timelines["epreuve"] = tl;
+  </script>
+</template>

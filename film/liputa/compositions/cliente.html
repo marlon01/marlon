@@ -52,10 +52,12 @@
     LiputaRig.draw(document.querySelector("#cl-chantal2"), { kind: "chantal", id: "cd" });
     const R = LiputaRig;
     const tl = gsap.timeline({ paused: true });
+        gsap.set("#cl-b1, #cl-b2", { scaleX: 0 }); // état de l'image 0, avant le premier seek
         tl.set("#cl-b1, #cl-b2", { scaleX: 0 }, 0);
 
     // Chez elle, Chantal regarde son téléphone.
     R.mood(tl, "cc", "neutre", 0.05);
+    gsap.set("#cc-armR", { rotation: -50 }); // état de l'image 0, avant le premier seek
     tl.set("#cc-armR", { rotation: -50 }, 0);
     R.look(tl, "cc", 14, 4, 0.1);
     R.breathe(tl, "cc", 0, 8.2);

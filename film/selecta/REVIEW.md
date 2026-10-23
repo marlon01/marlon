@@ -1,37 +1,37 @@
-# Revue — SELECTA (version 1)
+# Revue — SELECTA « Clarisse respire » (version 2)
 
-Rendu : `renders/selecta-resultats-incontestables.mp4` (49,5 s, 1920 × 1080, 30 i/s, H.264 + AAC),
-son normalisé après rendu à −14,9 LUFS, crête −1,5 dBFS.
+Rendu : `renders/selecta-clarisse-respire.mp4` (79 s, 1920 × 1080, 30 i/s, H.264 + AAC),
+son normalisé après rendu (cible −15 LUFS intégrés, crête −1,5 dBFS).
+La v1 (« Des résultats incontestables », 49,5 s) est dans l'historique git (commit 7d7f172).
 
 ## Choix de réalisation
-- Structure demandée par la direction : la problématique (coût, volume de copies, attente des
-  résultats, triche, fiabilité), puis la réponse de SELECTA point par point.
-- Problème dessiné (bureau, piles de copies, téléphone, copie contestée) ; solution uniquement en
-  vrais écrans, capturés en français sur une base de démonstration remplie par le vrai moteur
-  d'épreuve (40 candidats fictifs, procès-verbal réellement scellé et vérifiable).
-- La copie contestée devient l'écran d'épreuve : le passage du papier au numérique est un seul geste.
-- « Sélecta » et « code Q R » sont écrits phonétiquement dans le texte de synthèse.
-
-## Données de démonstration retouchées pour l'image
-- Les compositions étant simulées instantanément, des durées réalistes (9 à 21 min, croissantes
-  avec le rang) ont été inscrites avant publication ; elles n'affectent pas les notes.
-- Un candidat a reçu un code réaliste (K7QP-M4XR-9TBA) au lieu du code de démonstration.
-- L'écran d'épreuve vient d'une copie du concours sans surveillance caméra (le conteneur n'a pas de
-  caméra ; l'ancienne capture montrait une mire de test verte).
+- Même traitement que le film Liputa v2, à la demande de la direction : une héroïne en
+  difficulté (Clarisse), le bouche-à-oreille (Didier), la solution créée en ligne, le
+  soulagement (« Clarisse respire ») et l'usager rassuré (Grâce, résultat immédiat, plus
+  d'appels ni de réclamations).
+- Les cinq problèmes de la v1 restent nommés à l'image : coût (factures, 6 900 $), volume
+  (piles de copies), attente (semaines, appel de Grâce), triche (copies identiques), fiabilité
+  (réclamation « CONTESTÉ »).
+- Vrais écrans SELECTA de la base de démonstration (Groupe Mayombe, fictif) : tableau de bord,
+  code d'accès, épreuve, résultat candidat, résultats publiés avec procès-verbal, vérification.
+- Le nom de l'entreprise n'est pas prononcé (« Mayombe » lu « mɛjɔ̃b » par la synthèse).
 
 ## Mesuré / regardé / non vérifié
-- `hyperframes check` : aucune erreur ni avertissement restant.
-- Plans vérifiés image par image ; corrigés : chronomètre coupé, zoom qui tranchait le panneau du
-  code, cadre « Admis » décalé, piles trop petites puis trop hautes, textes sous 28 px.
-- Voix vérifiée par retranscription Whisper (meilleure de 4 prises). **Son non écouté**, mesuré.
+- `hyperframes check` : aucune erreur. Avertissements restants voulus : bras qui tournent autour
+  de l'épaule, pied d'ordinateur qui dépasse de son cadre, texte circulaire du sceau (logo).
+- Corrigés à la relecture des images : chevauchement des pages du calendrier, total des
+  factures affiché trop peu de temps, bruitages superposés sur une même piste, téléphone et
+  lueur visibles à la première image d'une scène (états de départ posés aussi hors timeline,
+  correction reportée sur le film Liputa).
+- **Le son n'a pas été écouté**, seulement mesuré ; prononciation vérifiée par Whisper
+  (meilleure de 5 prises par phrase).
 
 ## Limites connues
-- Pas de musique de fond (sources bloquées par la politique réseau).
-- La page de vérification affiche « 100.00 % » (point décimal) en français : à corriger dans
-  `selecta_concours/views/selecta_templates.xml`.
-- Plan le plus faible : le procès-verbal (bandeau peu haut, texte petit) ; à agrandir ou remplacer
-  par la version imprimée du procès-verbal.
+- Pas de musique de fond (sites de musique bloqués par la politique réseau).
+- Voix de synthèse locale : correctes, moins naturelles qu'un comédien.
+- Le résultat de Grâce s'affiche « Admis » (libellé de l'application, non accordé).
 
 ## Crédits à mentionner
-- Voix : Piper « fr_FR-siwis-medium », jeu de données SIWIS, CC-BY 4.0.
-- Bruitages : Pixabay Content License.
+- Voix : Piper « fr_FR-siwis-medium » (SIWIS, CC-BY 4.0) ; « fr_FR-upmc-medium », locuteurs
+  Jessica et Pierre (UPMC, CC-BY-SA 4.0).
+- Bruitages : Pixabay Content License. Police : Inter (OFL).

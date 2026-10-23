@@ -67,6 +67,7 @@
     R.mood(tl, "rn", "sourire", 0.05);
     R.breathe(tl, "rn", 0, 12.4);
     R.blinks(tl, "rn", [1.8, 4.9, 7.6, 10.4]);
+    gsap.set("#rn-armR", { rotation: -40 }); // état de l'image 0, avant le premier seek
     tl.set("#rn-armR", { rotation: -40 }, 0);
     tl.fromTo("#rn-tel", { y: 1100 }, { y: 0, duration: 0.7, ease: "expo.out" }, 0.0);
     R.look(tl, "rn", 14, -2, 0.4);

@@ -2,17 +2,21 @@
   <style>
     #root { position: absolute; inset: 0; overflow: hidden; background: #fbfcfe; }
     /* Le sceau de SELECTA (repris de la page de présentation), frappé une fois. */
-    #fi-sceau { position: absolute; left: 800px; top: 90px; width: 320px; height: 320px; color: #0b5fff; }
-    #fi-marque { position: absolute; left: 0; right: 0; top: 470px; display: flex; justify-content: center; align-items: center; gap: 28px; }
+    #fi-sceau { position: absolute; left: 850px; top: 40px; width: 220px; height: 220px; color: #0b5fff; }
+    #fi-marque { position: absolute; left: 0; right: 0; top: 300px; display: flex; justify-content: center; align-items: center; gap: 28px; }
     #fi-pastille {
       width: 112px; height: 112px; border-radius: 50%; display: grid; place-items: center; background: #14213d; color: #fff;
       font-family: "Inter"; font-weight: 700; font-size: 60px; box-shadow: 0 0 0 7px #fbfcfe, 0 0 0 11px #0b5fff;
     }
     #fi-mot { font-family: "Inter"; font-weight: 700; font-size: 124px; letter-spacing: 0.16em; color: #14213d; line-height: 1; }
     #fi-mot span { display: inline-block; }
-    #fi-slogan { position: absolute; left: 0; right: 0; top: 660px; text-align: center; font-family: "Inter"; font-weight: 600; font-size: 56px; letter-spacing: -0.01em; color: #14213d; }
-    #fi-essai { position: absolute; left: 0; right: 0; top: 765px; text-align: center; font-family: "Inter"; font-size: 40px; color: #4a587a; }
-    #fi-filet { position: absolute; left: 760px; width: 400px; top: 835px; height: 5px; border-radius: 3px; background: #0b5fff; transform-origin: 50% 50%; }
+    #fi-slogan { position: absolute; left: 0; right: 0; top: 490px; text-align: center; font-family: "Inter"; font-weight: 600; font-size: 50px; letter-spacing: -0.01em; color: #14213d; }
+    #fi-essai { position: absolute; left: 0; right: 0; top: 585px; text-align: center; font-family: "Inter"; font-size: 40px; color: #4a587a; }
+    #fi-filet { position: absolute; left: 760px; width: 400px; top: 655px; height: 5px; border-radius: 3px; background: #0b5fff; transform-origin: 50% 50%; }
+    #fi-clarisse { position: absolute; left: 60px; top: 600px; width: 380px; height: 589px; }
+    #fi-grace { position: absolute; left: 1480px; top: 600px; width: 380px; height: 589px; }
+    /* États de départ cachés, posés en CSS pour l'image 0. */
+    #fi-slogan, #fi-essai { opacity: 0; }
   </style>
 
   <div id="root" data-composition-id="fin" data-width="1920" data-height="1080">
@@ -30,18 +34,40 @@
     <div id="fi-slogan">Des concours en ligne aux résultats incontestables</div>
     <div id="fi-essai">Essai gratuit de 14 jours</div>
     <div id="fi-filet"></div>
+    <div id="fi-clarisse"></div>
+    <div id="fi-grace"></div>
   </div>
 
   <script>
+    SelectaRig.draw(document.querySelector("#fi-clarisse"), { kind: "clarisse", id: "fk" });
+    SelectaRig.draw(document.querySelector("#fi-grace"), { kind: "grace", id: "fg" });
+    const R = SelectaRig;
     const tl = gsap.timeline({ paused: true });
-    // Le sceau est frappé comme un tampon officiel.
+    R.mood(tl, "fk", "sourire", 0.05);
+    R.mood(tl, "fg", "joie", 0.05);
+    // Clarisse et Grâce entrent par les côtés et saluent.
+    tl.fromTo("#fi-clarisse", { x: -440 }, { x: 0, duration: 0.7, ease: "expo.out" }, 0.1);
+    tl.fromTo("#fi-grace", { x: 440 }, { x: 0, duration: 0.7, ease: "expo.out" }, 0.25);
+    [["#fk-armR", -150, 1.0], ["#fg-armL", 150, 1.2]].forEach(([sel, r, t]) => {
+      tl.to(sel, { rotation: r, duration: 0.35, ease: "back.out(1.6)" }, t);
+      [0, 1, 2].forEach((k) => {
+        tl.to(sel, { rotation: r + 18, duration: 0.18, ease: "sine.inOut" }, t + 0.4 + k * 0.36);
+        tl.to(sel, { rotation: r, duration: 0.18, ease: "sine.inOut" }, t + 0.58 + k * 0.36);
+      });
+      tl.to(sel, { rotation: 0, duration: 0.45, ease: "power2.inOut" }, t + 1.8);
+    });
+    R.blinks(tl, "fk", [2.6, 6.1]);
+    R.blinks(tl, "fg", [3.3, 7.0]);
+    R.breathe(tl, "fk", 0, 8.2);
+    R.breathe(tl, "fg", 1.1, 8.2);
+    // Le sceau est frappé comme un tampon officiel, puis la marque.
     tl.fromTo("#fi-sceau", { scale: 1.8, rotation: -24, opacity: 0 }, { scale: 1, rotation: 0, opacity: 1, duration: 0.32, ease: "power4.in" }, 0.25);
     tl.fromTo("#fi-pastille", { scale: 0.5, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.45, ease: "back.out(1.5)" }, 0.6);
     tl.fromTo("#fi-mot span", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.16, stagger: 0.07, ease: "power3.out" }, 0.8);
     // Le slogan arrive sur la voix, puis l'offre d'essai.
-    tl.fromTo("#fi-slogan", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 1.75);
-    tl.fromTo("#fi-essai", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "power2.out" }, 3.2);
-    tl.fromTo("#fi-filet", { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: "expo.out" }, 3.3);
+    tl.fromTo("#fi-slogan", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out", immediateRender: false }, 1.9);
+    tl.fromTo("#fi-essai", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "power2.out", immediateRender: false }, 4.6);
+    tl.fromTo("#fi-filet", { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: "expo.out" }, 4.7);
     window.__timelines["fin"] = tl;
   </script>
 </template>

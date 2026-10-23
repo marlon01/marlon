@@ -1,33 +1,30 @@
-# SPEC — SELECTA « Des résultats incontestables »
+# SPEC — SELECTA « Clarisse respire » (v2)
+
+La v1 (« Des résultats incontestables », 49,5 s, commit 7d7f172) listait le problème puis la
+solution, sans personnage. La direction a demandé pour Liputa, puis pour SELECTA, une histoire
+avec de l'émotion, des personnages et du motion design.
 
 ```text
-GOAL:    un directeur des ressources humaines reconnaît son concours sur papier (coût, piles de
-         copies, attente, contestations) et retient « en ligne, corrigé tout de suite, impossible à
-         contester ».
-OUTPUT:  HyperFrames, 1920 x 1080, 30 fps ; voix off française (SIWIS), sans musique (aucune source).
-TIME:    49,5 s x 30 = 1485 images. La voix est l'horloge : une phrase par fichier, posée sur son plan.
-LOOK:    deux mondes.
-         Problème : bureau gris administratif #D5DAE3 (grain 7 %), papier #FBFCFE, encre #14213D,
-         rouge #C2352B réservé à la note contestée. Illustration assumée, aucun faux écran.
-         Solution : fond #EEF1F7, vrais écrans SELECTA dans des cadres arrondis (20 px, ombre
-         0 20 48 rgba(20,33,61,.16)). Accent bleu de marque #0B5FFF (chronomètre, sceau),
-         vert #0E8A5F (« Admis », QR code), rouge pour l'incident de surveillance.
-         Police Inter (proche du système de l'application).
-SHOTS:
-  1   0–4,6 s    Piles de copies qui montent.
-  2   4,9–8,8    Salles à louer, surveillants à payer, correction : semaine 1 → 4.
-  3   9,0–11,9   Le téléphone du candidat : « Toujours aucune nouvelle. »
-  4   12,2–16,4  Copie n° 0427 : tampon « NOTE CONTESTÉE », point d'interrogation.
-  5   16,6–21,7  La copie grandit et devient l'écran d'épreuve ; chronomètre repéré, poussée sur la question.
-  6   21,9–26,0  Saisie du code K7QP-M4XR-9TBA, poussée sur le champ.
-  7   26,0–31,6  Surveillance en direct : compteurs, puis incident « Plusieurs personnes détectées », disqualifié.
-  8   31,7–35,8  Résultat du candidat : Admis, 100 %, poussée sur la décision.
-  9   35,8–38,6  Procès-verbal scellé : empreinte SHA-256, QR code repéré.
-  10  38,6–42,0  Page publique de vérification : « Document authentique », liste des 10 admis.
-  11  41,6–49,5  Sceau « SCELLÉ · SELECTA · VÉRIFIABLE » frappé, marque, slogan, essai gratuit.
-BANNED:  fond sombre et éléments flottants ; lueurs ; dégradés violets ; trois cartes en ligne ;
-         logo dans un coin ; faux écrans ; chiffres inventés présentés comme réels.
+GOAL:    un DRH se reconnaît dans Clarisse (coût, piles de copies, attente, contestations, soupçons
+         de triche) et retient : en ligne, corrigé tout de suite, scellé, personne ne conteste.
+ARC:     difficulté → conseil d'un collègue (Didier) → concours créé en ligne → l'épreuve de Grâce,
+         résultat immédiat → résultats scellés, plus d'appels ni de réclamations → Clarisse respire.
+OUTPUT:  HyperFrames, 1920 x 1080, 30 fps, 79 s, voix off française.
+PERSOS:  dessin vectoriel animé (assets/rig.js, même mécanique que le film Liputa) :
+         Clarisse, DRH, tailleur bleu nuit, lunettes, badge ; Grâce, candidate, tresses, haut violet ;
+         Didier, DRH ami, présent par son message (avatar « D »).
+VOIX:    narratrice SIWIS ; Grâce UPMC Jessica ; Didier UPMC Pierre (tools/voix_off.py).
+LOOK:    bureau gris-bleu #EEF1F6, nuit #1B2440 sous la lampe, chambre lavande de Grâce ;
+         encre #14213D, bleu SELECTA #0B5FFF, rouge #C23A33 réservé aux coûts et contestations,
+         vert #138A5E réservé à ce qui est vérifié. Inter. Vrais écrans SELECTA dans un ordinateur.
 ```
 
-Matériel : captures de la base de démonstration (`tools/selecta_film_seed.py`,
-`tools/selecta_film_capture.mjs`), structure fictive « Groupe Mayombe (démonstration) ».
+## Scènes
+
+| Scène (fichier) | Temps | Ce qu'on voit |
+|---|---|---|
+| `bureau` | 0–25 s | Titre « Kinshasa » ; Clarisse et l'affiche « 40 agents » ; factures (salles, surveillants, copies : 6 900 $) ; piles de copies et semaines de correction ; Grâce appelle pour ses résultats ; réclamation « CONTESTÉ », copies identiques ; la nuit. |
+| `message` | 24,6–39,6 s | La nuit, Didier écrit : « Passe à SELECTA… corrigé en une minute » ; l'espoir. L'aube : tableau de bord SELECTA ; salle et copies barrées. |
+| `epreuve` | 39,2–57,4 s | Chez Grâce : code personnel, épreuve, caméra (identité vérifiée, visage toutes les 8 s), résultat « Admis » dès la dernière page ; « Admise ? Déjà ? ». |
+| `confiance` | 57–71,2 s | Procès-verbal scellé (sceau), vérification par code QR sur téléphone ; téléphone barré, « 0 réclamation » ; Clarisse respire. |
+| `fin` | 70,8–79 s | Clarisse et Grâce saluent ; sceau, SELECTA, slogan, essai gratuit de 14 jours. |

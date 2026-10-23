@@ -1,0 +1,95 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; background: linear-gradient(180deg, #eef1f6 0%, #e2e7f0 100%); }
+    /* La lumière qui s'ouvre quand Clarisse respire. */
+    #co-souffle { position: absolute; left: 400px; top: 560px; width: 40px; height: 40px; margin: -20px 0 0 -20px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(11, 95, 255, 0.28), rgba(11, 95, 255, 0) 70%); }
+    #co-sol { position: absolute; left: 0; right: 0; top: 880px; bottom: 0; background: #c7cdd9; }
+    #co-clarisse { position: absolute; left: 190px; top: 250px; width: 420px; height: 651px; }
+    #co-bureau { position: absolute; left: 40px; top: 820px; width: 760px; height: 260px; background: #4b5a78; border-radius: 10px 10px 0 0; }
+    #co-pc { position: absolute; left: 760px; top: 120px; width: 1080px; height: 700px; border-radius: 26px; background: #0f1a30; box-shadow: 0 40px 80px rgba(20, 33, 61, 0.3); }
+    #co-pc-ecran { position: absolute; left: 20px; top: 20px; width: 1040px; height: 624px; border-radius: 12px; overflow: hidden; background: #fbfcfe; }
+    #co-pc-ecran img { display: block; width: 1040px; }
+    #co-pc-pied { position: absolute; left: -60px; top: 690px; width: 1200px; height: 34px; border-radius: 0 0 30px 30px; background: #c9cfdb; }
+    #co-pv-rep { position: absolute; left: 212px; top: 124px; width: 808px; height: 100px; border: 5px solid #138a5e; border-radius: 12px; }
+    #co-sceau { position: absolute; left: 1520px; top: 40px; width: 230px; height: 230px; color: #138a5e; }
+    /* Le téléphone qui vérifie le procès-verbal par son code QR. */
+    #co-tel { position: absolute; left: 640px; top: 300px; width: 380px; height: 700px; border-radius: 50px; background: #0f1a30; padding: 18px; box-shadow: 0 30px 60px rgba(20,33,61,.35); }
+    #co-tel-ecran { width: 344px; height: 664px; border-radius: 36px; overflow: hidden; background: #fbfcfe; }
+    #co-tel-ecran img { display: block; width: 344px; }
+    /* Plus d'appels, plus de réclamations. */
+    #co-icone { position: absolute; left: 130px; top: 90px; width: 180px; height: 180px; border-radius: 40px; background: #fbfcfe; box-shadow: 0 14px 30px rgba(20,33,61,.14); display: grid; place-items: center; }
+    #co-icone svg { width: 104px; height: 104px; stroke: #14213d; stroke-width: 2.2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    #co-barre { position: absolute; left: -10px; top: 84px; width: 200px; height: 14px; border-radius: 7px; background: #c23a33; transform: rotate(-35deg); transform-origin: 0 50%; }
+    #co-zero { position: absolute; left: 360px; top: 110px; padding: 14px 28px; border: 6px solid #138a5e; border-radius: 14px; color: #138a5e; background: rgba(251,252,254,.92);
+      font-family: "Inter"; font-weight: 800; font-size: 46px; white-space: nowrap; transform: rotate(-6deg); }
+    /* États de départ cachés, posés en CSS pour l'image 0. */
+    #co-pv-rep, #co-sceau, #co-tel, #co-icone, #co-zero { opacity: 0; }
+  </style>
+
+  <div id="root" data-composition-id="confiance" data-width="1920" data-height="1080">
+    <div id="co-souffle"></div>
+    <div id="co-sol"></div>
+    <div id="co-clarisse"></div>
+    <div id="co-bureau"></div>
+    <div id="co-pc">
+      <div id="co-pc-ecran"><img src="assets/screens/30_resultats_publies.png" alt="Résultats publiés et procès-verbal scellé" /><div id="co-pv-rep"></div></div>
+      <div id="co-pc-pied"></div>
+    </div>
+    <svg id="co-sceau" viewBox="0 0 120 120" aria-hidden="true">
+      <defs><path id="co-arc" d="M60 60m-44 0a44 44 0 1 1 88 0a44 44 0 1 1-88 0" /></defs>
+      <circle cx="60" cy="60" r="56" fill="#fbfcfe" stroke="currentColor" stroke-width="2.5" />
+      <circle cx="60" cy="60" r="34" fill="none" stroke="currentColor" stroke-width="1.5" />
+      <text font-family="Inter" font-size="10.5" font-weight="700" fill="currentColor"><textPath href="#co-arc" textLength="272" lengthAdjust="spacing">SCELLÉ · SELECTA · VÉRIFIABLE ·</textPath></text>
+      <path d="M47 61l9 9 18-19" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+    <div id="co-tel"><div id="co-tel-ecran"><img src="assets/shots/verification.png" alt="Page de vérification : document authentique" /></div></div>
+    <div id="co-icone"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg><div id="co-barre"></div></div>
+    <div id="co-zero">0 réclamation</div>
+  </div>
+
+  <script>
+    SelectaRig.draw(document.querySelector("#co-clarisse"), { kind: "clarisse", id: "kc" });
+    const R = SelectaRig;
+    const tl = gsap.timeline({ paused: true });
+    gsap.set("#co-barre", { scaleX: 0 }); // état de l'image 0, avant le premier seek
+    tl.set("#co-barre", { scaleX: 0 }, 0);
+
+    // Le bureau est rangé ; les résultats sont publiés.
+    R.mood(tl, "kc", "sourire", 0.05);
+    R.breathe(tl, "kc", 0, 10.6);
+    R.blinks(tl, "kc", [1.9, 4.8, 7.7]);
+    gsap.set("#kc-armR", { rotation: -30 }); // état de l'image 0, avant le premier seek
+    tl.set("#kc-armR", { rotation: -30 }, 0);
+    tl.fromTo("#co-pc", { y: 900 }, { y: 0, duration: 0.7, ease: "expo.out" }, 0.0);
+    R.look(tl, "kc", 16, -2, 0.4);
+
+    // 0,8–5,1 s : le procès-verbal est scellé, chacun le vérifie par son code QR.
+    tl.fromTo("#co-pv-rep", { opacity: 0, scale: 1.1 }, { opacity: 1, scale: 1, duration: 0.3, ease: "expo.out", immediateRender: false }, 1.2);
+    tl.fromTo("#co-sceau", { opacity: 0, scale: 1.8, rotation: -24 }, { opacity: 1, scale: 1, rotation: 0, duration: 0.3, ease: "power4.in", immediateRender: false }, 1.8);
+    tl.to("#co-pc", { keyframes: [{ y: 6, duration: 0.05 }, { y: 0, duration: 0.1 }] }, 2.1);
+    tl.fromTo("#co-tel", { opacity: 0, y: 500 }, { opacity: 1, y: 0, duration: 0.55, ease: "expo.out", immediateRender: false }, 3.3);
+    R.look(tl, "kc", 16, 4, 3.5);
+
+    // 5,6–10,1 s : plus d'appels, et personne ne conteste.
+    tl.to("#co-tel", { opacity: 0, y: 500, duration: 0.4, ease: "power3.in" }, 5.6);
+    tl.fromTo("#co-icone", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.3, ease: "back.out(1.6)", immediateRender: false }, 5.9);
+    tl.to("#co-barre", { scaleX: 1, duration: 0.25, ease: "power3.out" }, 6.6);
+    R.look(tl, "kc", 0, -6, 6.0);
+    tl.fromTo("#co-zero", { opacity: 0, scale: 2 }, { opacity: 1, scale: 1, duration: 0.25, ease: "power4.in", immediateRender: false }, 8.6);
+    R.mood(tl, "kc", "joie", 8.9);
+
+    // 10,6 s : Clarisse respire. Les yeux se ferment, la lumière s'ouvre.
+    tl.to(["#co-icone", "#co-zero"], { opacity: 0, y: -30, duration: 0.4, ease: "power2.in" }, 10.3);
+    R.mood(tl, "kc", "soulagee", 10.8);
+    tl.to("#kc-armR", { rotation: 0, duration: 0.6, ease: "power2.inOut" }, 10.6);
+    tl.to(["#co-pc", "#co-sceau"], { x: 140, scale: 0.92, duration: 0.8, ease: "power2.inOut" }, 10.6);
+    tl.to("#kc-torso", { scaleY: 1.05, duration: 1.0, ease: "sine.inOut" }, 10.9);
+    tl.to("#kc-head", { y: -14, duration: 1.0, ease: "sine.inOut" }, 10.9);
+    tl.to("#kc-torso", { scaleY: 1, duration: 1.4, ease: "sine.inOut" }, 11.9);
+    tl.to("#kc-head", { y: 0, duration: 1.4, ease: "sine.inOut" }, 11.9);
+    tl.to("#co-souffle", { scale: 70, duration: 2.6, ease: "power2.out" }, 10.9);
+    R.mood(tl, "kc", "sourire", 13.4);
+    window.__timelines["confiance"] = tl;
+  </script>
+</template>

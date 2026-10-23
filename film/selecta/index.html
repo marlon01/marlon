@@ -3,47 +3,78 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=1920, height=1080" />
-    <title>SELECTA — Des résultats incontestables</title>
+    <title>SELECTA — Clarisse respire</title>
     <script src="assets/vendor/gsap.min.js"></script>
+    <script src="assets/rig.js"></script>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
-      html, body { width: 1920px; height: 1080px; overflow: hidden; background: #eef1f7; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: #eef1f6; }
       #main { position: relative; width: 1920px; height: 1080px; overflow: hidden; }
     </style>
   </head>
   <body>
-    <!-- Film SELECTA : le problème (coût, copies, attente, triche, fiabilité), puis la solution. SCRIPT.md, SPEC.md. -->
-    <div id="main" data-composition-id="main" data-start="0" data-duration="49.5" data-width="1920" data-height="1080">
-      <div id="probleme" data-composition-id="probleme" data-composition-src="compositions/probleme.html"
-           data-start="0" data-duration="17.4" data-track-index="1" data-track-kind="graphics"
-           data-width="1920" data-height="1080" style="z-index: 2"></div>
-      <div id="solution" data-composition-id="solution" data-composition-src="compositions/solution.html"
-           data-start="16.6" data-duration="25.4" data-track-index="2" data-track-kind="graphics"
-           data-width="1920" data-height="1080" style="z-index: 1"></div>
-      <div id="fin" data-composition-id="fin" data-composition-src="compositions/fin.html"
-           data-start="41.6" data-duration="7.9" data-track-index="3" data-track-kind="graphics"
-           data-width="1920" data-height="1080" style="z-index: 3"></div>
+    <!-- SELECTA v2 : Clarisse, DRH à Kinshasa, le concours papier, le conseil de Didier, l'épreuve de Grâce, des résultats que personne ne conteste. SCRIPT.md, SPEC.md. -->
+    <div id="main" data-composition-id="main" data-start="0" data-duration="79" data-width="1920" data-height="1080">
+      <div id="bureau" data-composition-id="bureau" data-composition-src="compositions/bureau.html" data-start="0" data-duration="25.0" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 1"></div>
+      <div id="message" data-composition-id="message" data-composition-src="compositions/message.html" data-start="24.6" data-duration="15.0" data-track-index="2" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 2"></div>
+      <div id="epreuve" data-composition-id="epreuve" data-composition-src="compositions/epreuve.html" data-start="39.2" data-duration="18.2" data-track-index="3" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 3"></div>
+      <div id="confiance" data-composition-id="confiance" data-composition-src="compositions/confiance.html" data-start="57.0" data-duration="14.2" data-track-index="4" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 4"></div>
+      <div id="fin" data-composition-id="fin" data-composition-src="compositions/fin.html" data-start="70.8" data-duration="8.2" data-track-index="5" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 5"></div>
 
-      <!-- Voix off (SIWIS, CC-BY 4.0), une phrase par fichier. -->
-      <audio id="vo-01" class="clip" src="assets/audio/phrases/01.wav" data-duration="3.437" data-start="1.0" data-track-index="10" data-volume="1"></audio>
-      <audio id="vo-02" class="clip" src="assets/audio/phrases/02.wav" data-duration="3.81" data-start="4.9" data-track-index="10" data-volume="1"></audio>
-      <audio id="vo-03" class="clip" src="assets/audio/phrases/03.wav" data-duration="2.88" data-start="9.0" data-track-index="10" data-volume="1"></audio>
-      <audio id="vo-04" class="clip" src="assets/audio/phrases/04.wav" data-duration="3.998" data-start="12.2" data-track-index="10" data-volume="1"></audio>
-      <audio id="vo-05" class="clip" src="assets/audio/phrases/05.wav" data-duration="4.487" data-start="17.2" data-track-index="10" data-volume="1"></audio>
-      <audio id="vo-06" class="clip" src="assets/audio/phrases/06.wav" data-duration="3.894" data-start="22.0" data-track-index="10" data-volume="1"></audio>
-      <audio id="vo-07" class="clip" src="assets/audio/phrases/07.wav" data-duration="5.157" data-start="26.2" data-track-index="10" data-volume="1"></audio>
-      <audio id="vo-08" class="clip" src="assets/audio/phrases/08.wav" data-duration="3.955" data-start="31.7" data-track-index="10" data-volume="1"></audio>
-      <audio id="vo-09" class="clip" src="assets/audio/phrases/09.wav" data-duration="5.461" data-start="36.0" data-track-index="10" data-volume="1"></audio>
-      <audio id="vo-10" class="clip" src="assets/audio/phrases/10.wav" data-duration="4.26" data-start="42.2" data-track-index="10" data-volume="1"></audio>
+      <!-- Voix : narratrice SIWIS (CC-BY 4.0) ; Grâce UPMC Jessica et Didier UPMC Pierre (CC-BY-SA 4.0). -->
+      <audio id="vo-01" class="clip" src="assets/audio/phrases/01.wav" data-start="1.2" data-duration="5.816" data-track-index="10" data-volume="1"></audio>
+      <audio id="vo-02" class="clip" src="assets/audio/phrases/02.wav" data-start="7.4" data-duration="1.916" data-track-index="10" data-volume="1"></audio>
+      <audio id="vo-03" class="clip" src="assets/audio/phrases/03.wav" data-start="9.7" data-duration="4.144" data-track-index="10" data-volume="1"></audio>
+      <audio id="vo-04" class="clip" src="assets/audio/phrases/04.wav" data-start="14.2" data-duration="2.164" data-track-index="10" data-volume="1"></audio>
+      <audio id="vo-05" class="clip" src="assets/audio/phrases/05.wav" data-start="17.0" data-duration="2.524" data-track-index="10" data-volume="1"></audio>
+      <audio id="vo-06" class="clip" src="assets/audio/phrases/06.wav" data-start="20.0" data-duration="3.547" data-track-index="10" data-volume="1"></audio>
+      <audio id="vo-07" class="clip" src="assets/audio/phrases/07.wav" data-start="25.6" data-duration="2.274" data-track-index="10" data-volume="1"></audio>
+      <audio id="vo-08" class="clip" src="assets/audio/phrases/08.wav" data-start="28.7" data-duration="4.393" data-track-index="10" data-volume="1"></audio>
+      <audio id="vo-09" class="clip" src="assets/audio/phrases/09.wav" data-start="33.8" data-duration="4.74" data-track-index="10" data-volume="1"></audio>
+      <audio id="vo-10" class="clip" src="assets/audio/phrases/10.wav" data-start="40.2" data-duration="4.6" data-track-index="10" data-volume="1"></audio>
+      <audio id="vo-11" class="clip" src="assets/audio/phrases/11.wav" data-start="45.2" data-duration="4.812" data-track-index="10" data-volume="1"></audio>
+      <audio id="vo-12" class="clip" src="assets/audio/phrases/12.wav" data-start="50.5" data-duration="3.807" data-track-index="10" data-volume="1"></audio>
+      <audio id="vo-13" class="clip" src="assets/audio/phrases/13.wav" data-start="54.8" data-duration="1.277" data-track-index="10" data-volume="1"></audio>
+      <audio id="vo-14" class="clip" src="assets/audio/phrases/14.wav" data-start="57.8" data-duration="4.259" data-track-index="10" data-volume="1"></audio>
+      <audio id="vo-15" class="clip" src="assets/audio/phrases/15.wav" data-start="62.6" data-duration="4.47" data-track-index="10" data-volume="1"></audio>
+      <audio id="vo-16" class="clip" src="assets/audio/phrases/16.wav" data-start="67.6" data-duration="2.391" data-track-index="10" data-volume="1"></audio>
+      <audio id="vo-17" class="clip" src="assets/audio/phrases/17.wav" data-start="71.8" data-duration="4.354" data-track-index="10" data-volume="1"></audio>
 
       <!-- Bruitages (Pixabay Content License), chacun sur une action visible. -->
-      <audio id="sfx-conteste" class="clip" src="assets/audio/error.mp3" data-duration="1.62" data-start="13.3" data-track-index="11" data-volume="0.3"></audio>
-      <audio id="sfx-ouverture" class="clip" src="assets/audio/whoosh-short.mp3" data-duration="0.575" data-start="16.7" data-track-index="12" data-volume="0.5"></audio>
-      <audio id="sfx-code" class="clip" src="assets/audio/typing.mp3" data-duration="1.541" data-start="22.4" data-track-index="11" data-volume="0.35"></audio>
-      <audio id="sfx-ecran" class="clip" src="assets/audio/whoosh.mp3" data-duration="0.575" data-start="26.0" data-track-index="12" data-volume="0.4"></audio>
-      <audio id="sfx-admis" class="clip" src="assets/audio/pop.mp3" data-duration="0.72" data-start="32.3" data-track-index="11" data-volume="0.35"></audio>
-      <audio id="sfx-pv" class="clip" src="assets/audio/click-soft.mp3" data-duration="0.366" data-start="36.6" data-track-index="12" data-volume="0.45"></audio>
-      <audio id="sfx-sceau" class="clip" src="assets/audio/impact-bass-2.mp3" data-duration="2.592" data-start="42.15" data-track-index="11" data-volume="0.5"></audio>
+      <audio id="sfx-01" class="clip" src="assets/audio/pop.mp3" data-start="4.45" data-duration="0.72" data-track-index="11" data-volume="0.3"></audio>
+      <audio id="sfx-02" class="clip" src="assets/audio/pop.mp3" data-start="9.95" data-duration="0.72" data-track-index="11" data-volume="0.3"></audio>
+      <audio id="sfx-03" class="clip" src="assets/audio/pop.mp3" data-start="11.05" data-duration="0.72" data-track-index="11" data-volume="0.3"></audio>
+      <audio id="sfx-04" class="clip" src="assets/audio/pop.mp3" data-start="12.35" data-duration="0.72" data-track-index="11" data-volume="0.3"></audio>
+      <audio id="sfx-05" class="clip" src="assets/audio/impact-bass-2.mp3" data-start="12.95" data-duration="2.592" data-track-index="12" data-volume="0.45"></audio>
+      <audio id="sfx-06" class="clip" src="assets/audio/whoosh-short.mp3" data-start="14.15" data-duration="0.575" data-track-index="11" data-volume="0.3"></audio>
+      <audio id="sfx-07" class="clip" src="assets/audio/click-soft.mp3" data-start="15.05" data-duration="0.366" data-track-index="11" data-volume="0.4"></audio>
+      <audio id="sfx-08" class="clip" src="assets/audio/click-soft.mp3" data-start="15.85" data-duration="0.366" data-track-index="11" data-volume="0.4"></audio>
+      <audio id="sfx-09" class="clip" src="assets/audio/notification.mp3" data-start="16.5" data-duration="2.455" data-track-index="11" data-volume="0.35"></audio>
+      <audio id="sfx-10" class="clip" src="assets/audio/pop.mp3" data-start="17.65" data-duration="0.72" data-track-index="12" data-volume="0.3"></audio>
+      <audio id="sfx-11" class="clip" src="assets/audio/whoosh.mp3" data-start="20.0" data-duration="0.575" data-track-index="11" data-volume="0.3"></audio>
+      <audio id="sfx-12" class="clip" src="assets/audio/impact-bass-2.mp3" data-start="21.45" data-duration="2.592" data-track-index="11" data-volume="0.4"></audio>
+      <audio id="sfx-13" class="clip" src="assets/audio/error.mp3" data-start="22.45" data-duration="1.62" data-track-index="12" data-volume="0.25"></audio>
+      <audio id="sfx-14" class="clip" src="assets/audio/notification.mp3" data-start="25.8" data-duration="2.455" data-track-index="11" data-volume="0.3"></audio>
+      <audio id="sfx-15" class="clip" src="assets/audio/typing.mp3" data-start="27.6" data-duration="1.541" data-track-index="12" data-volume="0.3"></audio>
+      <audio id="sfx-16" class="clip" src="assets/audio/ping.mp3" data-start="28.7" data-duration="1.32" data-track-index="11" data-volume="0.35"></audio>
+      <audio id="sfx-17" class="clip" src="assets/audio/whoosh.mp3" data-start="33.8" data-duration="0.575" data-track-index="11" data-volume="0.3"></audio>
+      <audio id="sfx-18" class="clip" src="assets/audio/click.mp3" data-start="35.0" data-duration="0.366" data-track-index="11" data-volume="0.45"></audio>
+      <audio id="sfx-19" class="clip" src="assets/audio/click-soft.mp3" data-start="37.0" data-duration="0.366" data-track-index="11" data-volume="0.4"></audio>
+      <audio id="sfx-20" class="clip" src="assets/audio/click-soft.mp3" data-start="37.9" data-duration="0.366" data-track-index="11" data-volume="0.4"></audio>
+      <audio id="sfx-21" class="clip" src="assets/audio/typing.mp3" data-start="41.6" data-duration="1.541" data-track-index="11" data-volume="0.3"></audio>
+      <audio id="sfx-22" class="clip" src="assets/audio/click.mp3" data-start="42.8" data-duration="0.366" data-track-index="12" data-volume="0.45"></audio>
+      <audio id="sfx-23" class="clip" src="assets/audio/whoosh-short.mp3" data-start="43.4" data-duration="0.575" data-track-index="11" data-volume="0.3"></audio>
+      <audio id="sfx-24" class="clip" src="assets/audio/ping.mp3" data-start="45.4" data-duration="1.32" data-track-index="11" data-volume="0.3"></audio>
+      <audio id="sfx-25" class="clip" src="assets/audio/ping.mp3" data-start="46.6" data-duration="1.32" data-track-index="12" data-volume="0.35"></audio>
+      <audio id="sfx-26" class="clip" src="assets/audio/click.mp3" data-start="51.2" data-duration="0.366" data-track-index="11" data-volume="0.4"></audio>
+      <audio id="sfx-27" class="clip" src="assets/audio/sparkle.mp3" data-start="51.5" data-duration="1.802" data-track-index="12" data-volume="0.35"></audio>
+      <audio id="sfx-28" class="clip" src="assets/audio/sparkle.mp3" data-start="54.9" data-duration="1.802" data-track-index="11" data-volume="0.35"></audio>
+      <audio id="sfx-29" class="clip" src="assets/audio/impact-bass-2.mp3" data-start="58.95" data-duration="2.592" data-track-index="11" data-volume="0.4"></audio>
+      <audio id="sfx-30" class="clip" src="assets/audio/whoosh-short.mp3" data-start="60.3" data-duration="0.575" data-track-index="12" data-volume="0.3"></audio>
+      <audio id="sfx-31" class="clip" src="assets/audio/click-soft.mp3" data-start="63.6" data-duration="0.366" data-track-index="11" data-volume="0.4"></audio>
+      <audio id="sfx-32" class="clip" src="assets/audio/pop.mp3" data-start="65.75" data-duration="0.72" data-track-index="11" data-volume="0.35"></audio>
+      <audio id="sfx-33" class="clip" src="assets/audio/whoosh.mp3" data-start="67.6" data-duration="0.575" data-track-index="11" data-volume="0.25"></audio>
+      <audio id="sfx-34" class="clip" src="assets/audio/impact-bass-2.mp3" data-start="71.35" data-duration="2.592" data-track-index="11" data-volume="0.45"></audio>
     </div>
     <script>
       window.__timelines = window.__timelines || {};

@@ -1,27 +1,27 @@
-# SELECTA : le problème, puis la solution — texte de la voix off
+# Script — SELECTA « Clarisse respire » (v2)
 
-Version française, voix SIWIS (CC-BY 4.0), environ 150 mots par minute, 45 s de voix pour un
-film de 55 à 60 s. Le texte exact envoyé à la synthèse est `voix.txt` : « Sélecta » et
-« code Q R » y sont écrits comme ils se prononcent.
+Texte lu : `voix.txt` (une ligne = une phrase = un fichier `assets/audio/phrases/NN.wav`).
+Génération : `tools/voix_off.py --voix siwis --vitesse 0.9 --prises 5 --verifier` ; une ligne
+préfixée `[upmc-jessica]` (Grâce) ou `[upmc-pierre]` (Didier) est lue par cette voix.
+Deux phrases reformulées après la vérification Whisper (« casse-tête », « authenticité … code Q R »
+mal compris).
 
-Problématique fixée par la direction : le coût, le volume de copies à corriger, l'attente des
-résultats, la triche et la fiabilité. Chaque phrase de la solution correspond à une fonction réelle
-(code et captures).
-
-| Temps voix | Voix off | À l'image | Problème traité |
-|---|---|---|---|
-| 0,0–3,5 s | Un concours de recrutement, ce sont d'abord des montagnes de copies. | Piles de copies qui montent | volume |
-| 3,8–7,9 s | Des salles à louer, des surveillants à payer, des semaines de correction. | Salle vide, compteur de coûts, calendrier qui défile | coût, délai |
-| 8,2–11,0 s | Pendant ce temps, les candidats attendent leurs résultats. | Un téléphone, aucune notification | attente |
-| 11,4–15,0 s | Et quand une note est contestée, comment prouver que personne n'a triché ? | Une copie barrée d'un point d'interrogation | triche, fiabilité |
-| 15,8–20,6 s | Avec Sélecta, l'épreuve se passe en ligne, sans salle d'examen à louer. | La pile de copies devient la page d'épreuve | coût |
-| 20,9–24,3 s | Chaque candidat reçoit un code personnel, valable une seule fois. | Écran « Code d'accès » | triche |
-| 24,7–29,8 s | La caméra vérifie son identité, puis compare son visage toutes les huit secondes. | Contrôle d'identité, surveillance en direct | triche |
-| 30,2–34,1 s | La correction est automatique : le résultat s'affiche dès la dernière page. | Résultat et reçu du candidat | volume, attente |
-| 34,5–39,9 s | Le procès-verbal est scellé, et chacun peut vérifier son authenticité grâce à un code QR. | Procès-verbal, empreinte SHA-256, page de vérification | fiabilité |
-| 40,7–44,7 s | Sélecta. Des concours en ligne aux résultats incontestables. | Carton final | — |
-
-Sources : « sans salle d'examen à louer » et « des concours en ligne aux résultats
-incontestables » sont les textes de la page de présentation ; code unique, contrôle d'identité,
-comparaison toutes les 8 secondes, correction automatique et procès-verbal scellé viennent des
-écrans et des traductions de `selecta_concours`.
+| # | Début (s) | Voix | Texte | À l'image |
+|---|---|---|---|---|
+| 1 | 1,2 | narratrice | Kinshasa. Clarisse dirige les ressources humaines d'une grande entreprise, qui recrute quarante agents. | Titre, Clarisse, affiche « 40 agents » |
+| 2 | 7,4 | narratrice | Pour elle, les ennuis commencent. | Visage inquiet |
+| 3 | 9,7 | narratrice | Des salles à louer, des surveillants à payer, des milliers de copies à imprimer. | Trois factures, total 6 900 $ |
+| 4 | 14,2 | narratrice | Puis des semaines de correction, à la main. | Piles de copies, semaines 1-2-3, mains sur la tête |
+| 5 | 17,0 | Grâce | Bonjour Madame, les résultats sont sortis ? | Appel de Grâce en médaillon |
+| 6 | 20,0 | narratrice | Et quand une note est contestée, comment prouver que personne n'a triché ? | Réclamation, tampon « CONTESTÉ », copies identiques |
+| 7 | 25,6 | narratrice | Un soir, son collègue Didier lui écrit. | Lampe, téléphone qui vibre |
+| 8 | 28,7 | Didier | Passe à Sélecta. Notre dernier concours a été corrigé en une minute. | Message de Didier ; espoir |
+| 9 | 33,8 | narratrice | Le lendemain, Clarisse crée son concours en ligne. Plus de salle, plus de copies. | Tableau de bord ; icônes barrées |
+| 10 | 40,2 | narratrice | Le jour de l'épreuve, Grâce compose depuis chez elle, avec son code personnel. | Code d'accès, épreuve |
+| 11 | 45,2 | narratrice | La caméra vérifie son identité, puis compare son visage toutes les huit secondes. | Caméra, « Identité vérifiée », contrôle toutes les 8 s |
+| 12 | 50,5 | narratrice | Aucune copie à corriger : le résultat s'affiche dès la dernière page. | Résultat « Admis » |
+| 13 | 54,8 | Grâce | Admise ? Déjà ? | Bras levés, éclats |
+| 14 | 57,8 | narratrice | Le procès-verbal est scellé, et chacun peut le vérifier avec son code Q R. | Sceau, page de vérification |
+| 15 | 62,6 | narratrice | Les candidats n'appellent plus pour connaître leurs résultats. Et personne ne les conteste. | Téléphone barré, « 0 réclamation » |
+| 16 | 67,6 | narratrice | Pour la première fois, Clarisse respire. | Yeux fermés, lumière qui s'ouvre |
+| 17 | 71,8 | narratrice | Sélecta. Des concours en ligne aux résultats incontestables. | Marque, slogan, essai gratuit |
