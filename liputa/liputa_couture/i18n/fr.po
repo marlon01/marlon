@@ -368,3 +368,9 @@ msgstr "Autorisez les fenêtres pop-up pour imprimer le patron."
 #: code:addons/liputa_couture/static/src/backend/mannequin/mannequin.js:0
 msgid "A client photo with consent is required"
 msgstr "Une photo du client avec consentement est requise"
+
+#. module: liputa_couture
+#. odoo-python
+#: code:addons/liputa_couture/controllers/main.py:0
+msgid "Too many sign-ups from this network. Please try again later."
+msgstr "Trop d'inscriptions depuis ce réseau. Veuillez réessayer plus tard."
