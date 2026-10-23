@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="liputa_couture.AIAssistant">
+        <div class="o_liputa_ai">
+            <div class="o_liputa_ai_head">
+                <div class="o_liputa_ai_badge"><i class="fa fa-magic"/></div>
+                <div>
+                    <div class="fw-bold">AI stylist</div>
+                    <div class="text-muted small">
+                        <t t-if="eventName">Event: <strong t-esc="eventName"/></t>
+                        <t t-else="">Choose an event above for culturally relevant suggestions.</t>
+                    </div>
+                </div>
+            </div>
+            <div class="o_liputa_ai_form">
+                <textarea class="form-control" rows="2" maxlength="600" t-model="state.notes"
+                          placeholder="Wishes: e.g. bazin, modest, matching the family colours, mermaid cut..."/>
+                <div class="d-flex gap-2 align-items-center">
+                    <input type="number" min="0" class="form-control o_liputa_budget" t-model="state.budget" placeholder="Budget"/>
+                    <button class="btn btn-primary" t-on-click="suggest" t-att-disabled="state.loading">
+                        <i t-attf-class="fa #{state.loading ? 'fa-circle-o-notch fa-spin' : 'fa-lightbulb-o'} me-1"/>Suggest models
+                    </button>
+                </div>
+            </div>
+            <t t-if="state.result">
+                <div t-if="state.result.advice" class="o_liputa_ai_advice">
+                    <i class="fa fa-quote-left me-2"/><t t-esc="state.result.advice"/>
+                </div>
+                <div class="o_liputa_ai_grid">
+                    <div t-foreach="state.result.suggestions" t-as="s" t-key="s.id"
+                         t-attf-class="o_liputa_ai_card #{s.id === selectedModelId ? 'o_selected' : ''}">
+                        <img t-att-src="image(s)" alt=""/>
+                        <div class="p-2">
+                            <div class="d-flex justify-content-between">
+                                <strong t-esc="s.name"/>
+                                <span class="o_liputa_score"><t t-esc="s.score"/></span>
+                            </div>
+                            <div class="small text-muted" t-esc="s.category"/>
+                            <div class="small mt-1" t-esc="s.reason"/>
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <span t-if="s.is_library" class="badge text-bg-success">Library</span>
+                                <span t-else="" class="badge text-bg-secondary">My workshop</span>
+                                <button class="btn btn-sm btn-outline-primary" t-on-click="() => this.choose(s)"
+                                        t-att-disabled="props.readonly">Choose</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-muted small mt-1">
+                    Source: <t t-esc="sourceLabel"/>
+                </div>
+            </t>
+        </div>
+    </t>
+</templates>

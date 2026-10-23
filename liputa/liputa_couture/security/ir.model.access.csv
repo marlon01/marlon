@@ -1,0 +1,27 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_profile_tailor,profile tailor,model_liputa_measurement_profile,group_liputa_tailor,1,1,1,0
+access_profile_manager,profile manager,model_liputa_measurement_profile,group_liputa_manager,1,1,1,1
+access_category_user,category user,model_liputa_garment_category,base.group_user,1,0,0,0
+access_category_manager,category manager,model_liputa_garment_category,group_liputa_manager,1,1,1,1
+access_event_user,event user,model_liputa_event_type,base.group_user,1,0,0,0
+access_event_manager,event manager,model_liputa_event_type,group_liputa_manager,1,1,1,1
+access_garment_tailor,garment tailor,model_liputa_garment_model,group_liputa_tailor,1,0,0,0
+access_garment_manager,garment manager,model_liputa_garment_model,group_liputa_manager,1,1,1,1
+access_pricing_tailor,pricing tailor,model_liputa_pricing_rule,group_liputa_tailor,1,0,0,0
+access_pricing_manager,pricing manager,model_liputa_pricing_rule,group_liputa_manager,1,1,1,1
+access_tailor_tailor,tailor tailor,model_liputa_tailor,group_liputa_tailor,1,0,0,0
+access_tailor_manager,tailor manager,model_liputa_tailor,group_liputa_manager,1,1,1,1
+access_stage_user,stage user,model_liputa_order_stage,base.group_user,1,0,0,0
+access_stage_admin,stage admin,model_liputa_order_stage,group_liputa_saas_admin,1,1,1,1
+access_task_tailor,task tailor,model_liputa_order_task,group_liputa_tailor,1,1,0,0
+access_task_manager,task manager,model_liputa_order_task,group_liputa_manager,1,1,1,1
+access_option_tailor,option tailor,model_liputa_order_option,group_liputa_tailor,1,0,0,0
+access_option_manager,option manager,model_liputa_order_option,group_liputa_manager,1,1,1,1
+access_order_tailor,order tailor,model_liputa_order,group_liputa_tailor,1,1,0,0
+access_order_manager,order manager,model_liputa_order,group_liputa_manager,1,1,1,1
+access_plan_user,plan user,model_liputa_plan,base.group_user,1,0,0,0
+access_plan_admin,plan admin,model_liputa_plan,group_liputa_saas_admin,1,1,1,1
+access_sub_manager,subscription manager,model_liputa_subscription,group_liputa_manager,1,0,0,0
+access_sub_admin,subscription admin,model_liputa_subscription,group_liputa_saas_admin,1,1,1,1
+access_pay_manager,payment manager,model_liputa_subscription_payment,group_liputa_manager,1,0,1,0
+access_pay_admin,payment admin,model_liputa_subscription_payment,group_liputa_saas_admin,1,1,1,1

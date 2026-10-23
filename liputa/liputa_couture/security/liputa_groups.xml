@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="module_category_liputa" model="ir.module.category">
+        <field name="name">Tailoring (Liputa)</field>
+        <field name="sequence">20</field>
+    </record>
+
+    <record id="group_liputa_tailor" model="res.groups">
+        <field name="name">Tailor</field>
+        <field name="category_id" ref="module_category_liputa"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">Sees the workshop orders and updates production tasks.</field>
+    </record>
+
+    <record id="group_liputa_manager" model="res.groups">
+        <field name="name">Workshop manager</field>
+        <field name="category_id" ref="module_category_liputa"/>
+        <field name="implied_ids" eval="[(4, ref('group_liputa_tailor'))]"/>
+        <field name="comment">Head of workshop: catalogue, prices, orders, planning, invoicing.</field>
+    </record>
+
+    <record id="group_liputa_saas_admin" model="res.groups">
+        <field name="name">Platform administrator</field>
+        <field name="category_id" ref="module_category_liputa"/>
+        <field name="implied_ids" eval="[(4, ref('group_liputa_manager'))]"/>
+        <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
+        <field name="comment">Liputa operator: subscriptions, library moderation, AI settings.</field>
+    </record>
+</odoo>

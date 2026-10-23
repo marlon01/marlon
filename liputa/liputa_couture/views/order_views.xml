@@ -1,0 +1,388 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ======================= ORDER ======================= -->
+    <record id="view_liputa_order_list" model="ir.ui.view">
+        <field name="name">liputa.order.list</field>
+        <field name="model">liputa.order</field>
+        <field name="arch" type="xml">
+            <list decoration-danger="schedule_health == 'late'" decoration-warning="schedule_health == 'at_risk'"
+                  decoration-muted="stage_code in ('delivered', 'cancelled')">
+                <field name="priority" widget="priority" optional="show"/>
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="garment_model_id"/>
+                <field name="event_type_id" optional="show"/>
+                <field name="tailor_id" optional="show"/>
+                <field name="delivery_date_promised"/>
+                <field name="progress" widget="progressbar"/>
+                <field name="schedule_health" widget="badge"
+                       decoration-success="schedule_health == 'on_track'"
+                       decoration-warning="schedule_health == 'at_risk'"
+                       decoration-danger="schedule_health == 'late'"/>
+                <field name="stage_id"/>
+                <field name="stage_code" column_invisible="1"/>
+                <field name="amount_total" sum="Total"/>
+                <field name="payment_state" widget="badge" optional="hide"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_liputa_order_kanban" model="ir.ui.view">
+        <field name="name">liputa.order.kanban</field>
+        <field name="model">liputa.order</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="stage_id" class="o_liputa_kanban" sample="1">
+                <field name="schedule_health"/>
+                <field name="currency_id"/>
+                <field name="garment_model_id"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="d-flex align-items-start gap-2">
+                            <img t-att-src="'/web/image/liputa.garment.model/' + record.garment_model_id.raw_value + '/image_128'"
+                                 class="o_liputa_kanban_thumb rounded" alt="model"
+                                 t-if="record.garment_model_id.raw_value"/>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between">
+                                    <field name="name" class="fw-bold"/>
+                                    <field name="priority" widget="priority"/>
+                                </div>
+                                <field name="partner_id"/>
+                                <div class="text-muted small"><field name="garment_model_id"/></div>
+                                <div class="small" t-if="record.event_type_id.raw_value">
+                                    <i class="fa fa-calendar-o me-1"/><field name="event_type_id"/>
+                                </div>
+                            </div>
+                        </div>
+                        <field name="progress" widget="progressbar" class="mt-2"/>
+                        <footer class="mt-1">
+                            <span t-attf-class="badge o_liputa_health_#{record.schedule_health.raw_value}">
+                                <field name="delivery_date_promised"/>
+                            </span>
+                            <field name="tailor_id" class="ms-auto small text-muted"/>
+                        </footer>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_liputa_order_calendar" model="ir.ui.view">
+        <field name="name">liputa.order.calendar</field>
+        <field name="model">liputa.order</field>
+        <field name="arch" type="xml">
+            <calendar date_start="delivery_date_promised" color="tailor_id" mode="month" quick_create="0"
+                      event_open_popup="1">
+                <field name="partner_id"/>
+                <field name="garment_model_id"/>
+                <field name="schedule_health"/>
+            </calendar>
+        </field>
+    </record>
+
+    <record id="view_liputa_order_form" model="ir.ui.view">
+        <field name="name">liputa.order.form</field>
+        <field name="model">liputa.order</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_confirm" type="object" string="Confirm" class="btn-primary"
+                            invisible="stage_code not in (False, 'draft')" groups="liputa_couture.group_liputa_manager"/>
+                    <button name="action_estimate_delivery" type="object" string="Re-estimate delivery"
+                            invisible="stage_code in ('ready', 'delivered', 'cancelled')"/>
+                    <button name="action_mark_ready" type="object" string="Mark ready" class="btn-primary"
+                            invisible="stage_code not in ('confirmed', 'cutting', 'sewing', 'fitting', 'finishing')"/>
+                    <button name="action_deliver" type="object" string="Delivered" class="btn-primary"
+                            invisible="stage_code != 'ready'"/>
+                    <button name="action_create_invoice" type="object" string="Invoice client"
+                            invisible="invoice_id or stage_code in (False, 'draft', 'cancelled')"
+                            groups="liputa_couture.group_liputa_manager"/>
+                    <button name="action_share_tracking" type="object" string="Send tracking link"
+                            invisible="stage_code in (False, 'draft')"/>
+                    <button name="action_cancel" type="object" string="Cancel"
+                            invisible="stage_code in ('delivered', 'cancelled')"
+                            groups="liputa_couture.group_liputa_manager"/>
+                    <button name="action_reset_draft" type="object" string="Reset to draft"
+                            invisible="stage_code != 'cancelled'"/>
+                    <field name="stage_id" widget="statusbar" options="{'clickable': '1'}"
+                           domain="[('code', '!=', 'cancelled')]"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_tasks" type="object" class="oe_stat_button" icon="fa-tasks">
+                            <field name="progress" widget="statinfo" string="% done"/>
+                        </button>
+                        <button name="action_view_invoice" type="object" class="oe_stat_button" icon="fa-file-text-o"
+                                invisible="not invoice_id">
+                            <field name="payment_state" widget="statinfo" string="Invoice"/>
+                        </button>
+                        <button name="action_preview" type="object" class="oe_stat_button" icon="fa-globe"
+                                string="Client view" invisible="stage_code in (False, 'draft')"/>
+                    </div>
+                    <widget name="web_ribbon" title="Late" bg_color="text-bg-danger" invisible="schedule_health != 'late'"/>
+                    <widget name="web_ribbon" title="At risk" bg_color="text-bg-warning" invisible="schedule_health != 'at_risk'"/>
+                    <field name="client_photo" widget="image" class="oe_avatar" options="{'preview_image': 'client_photo'}"/>
+                    <div class="oe_title">
+                        <h1 class="d-flex gap-2"><field name="priority" widget="priority"/><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <group string="Client">
+                            <field name="partner_id" context="{'default_customer_rank': 1}"/>
+                            <field name="client_phone" widget="phone"/>
+                            <field name="measurement_profile_id" context="{'default_partner_id': partner_id}"/>
+                            <field name="gender"/>
+                            <field name="photo_consent"/>
+                        </group>
+                        <group string="Order">
+                            <field name="garment_model_id" options="{'no_quick_create': True}"/>
+                            <field name="category_id"/>
+                            <field name="event_type_id"/>
+                            <field name="event_date"/>
+                            <field name="is_urgent"/>
+                            <field name="tailor_id"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Delivery">
+                            <field name="date_order"/>
+                            <field name="delivery_date_estimated"/>
+                            <field name="estimation_confidence" widget="badge"/>
+                            <field name="delivery_date_promised"/>
+                            <field name="delivery_date_actual" invisible="not delivery_date_actual"/>
+                            <field name="schedule_health" widget="badge" invisible="stage_code in (False, 'draft')"/>
+                            <field name="stage_code" invisible="1"/>
+                        </group>
+                        <group string="Amounts">
+                            <field name="currency_id" invisible="1"/>
+                            <field name="amount_making"/>
+                            <field name="amount_fabric"/>
+                            <field name="amount_options"/>
+                            <field name="amount_urgency" invisible="not is_urgent"/>
+                            <field name="amount_total" class="fw-bold"/>
+                            <field name="deposit_amount"/>
+                            <field name="invoice_id" invisible="not invoice_id"/>
+                            <field name="amount_residual" invisible="not invoice_id"/>
+                        </group>
+                    </group>
+                    <div class="text-muted small" invisible="not estimation_note">
+                        <i class="fa fa-info-circle me-1"/><field name="estimation_note" nolabel="1"/>
+                    </div>
+                    <notebook>
+                        <page string="AI stylist" name="ai">
+                            <widget name="liputa_ai_assistant"/>
+                        </page>
+                        <page string="Measurements (cm)" name="measurements">
+                            <group>
+                                <group string="Upper body">
+                                    <field name="height"/><field name="neck"/><field name="shoulder_width"/>
+                                    <field name="bust"/><field name="under_bust"/><field name="waist"/>
+                                    <field name="back_waist_length"/><field name="front_waist_length"/>
+                                </group>
+                                <group string="Arms">
+                                    <field name="arm_length"/><field name="biceps"/><field name="wrist"/>
+                                </group>
+                                <group string="Lower body">
+                                    <field name="hip"/><field name="hip_depth"/><field name="thigh"/>
+                                    <field name="knee"/><field name="hem_width"/><field name="inseam"/>
+                                    <field name="outseam"/>
+                                </group>
+                                <group string="Lengths">
+                                    <field name="skirt_length"/><field name="dress_length"/>
+                                </group>
+                            </group>
+                            <p class="text-muted small">Missing measurements are completed from height and bust with
+                                anthropometric averages. Always measure what matters for the model.</p>
+                        </page>
+                        <page string="Fabric &amp; extras" name="fabric">
+                            <group>
+                                <group>
+                                    <field name="fabric_supplied_by" widget="radio" options="{'horizontal': true}"/>
+                                    <field name="fabric_description"/>
+                                    <field name="fabric_width"/>
+                                    <field name="fabric_metres"/>
+                                    <field name="fabric_yards"/>
+                                    <field name="garment_color" widget="color"/>
+                                </group>
+                                <group>
+                                    <field name="fabric_image" widget="image" options="{'size': [180, 180]}"/>
+                                </group>
+                            </group>
+                            <field name="option_ids">
+                                <list editable="bottom">
+                                    <field name="name"/>
+                                    <field name="is_embroidery"/>
+                                    <field name="extra_hours" widget="float_time"/>
+                                    <field name="price"/>
+                                    <field name="currency_id" column_invisible="1"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Virtual fitting" name="mannequin">
+                            <group>
+                                <field name="skin_tone" widget="radio" options="{'horizontal': true}"/>
+                            </group>
+                            <widget name="liputa_mannequin"/>
+                        </page>
+                        <page string="Cutting pattern" name="pattern">
+                            <widget name="liputa_pattern_viewer"/>
+                        </page>
+                        <page string="Production" name="production">
+                            <field name="task_ids">
+                                <list editable="bottom" decoration-success="state == 'done'"
+                                      decoration-info="state == 'in_progress'">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="step"/>
+                                    <field name="tailor_id"/>
+                                    <field name="planned_hours" widget="float_time"/>
+                                    <field name="date_start"/>
+                                    <field name="date_end"/>
+                                    <field name="state" widget="badge"/>
+                                    <button name="action_start" type="object" icon="fa-play" title="Start"
+                                            invisible="state != 'todo'"/>
+                                    <button name="action_done" type="object" icon="fa-check" title="Done"
+                                            invisible="state == 'done'"/>
+                                    <field name="name" column_invisible="1"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Notes" name="notes">
+                            <field name="notes" placeholder="Fitting remarks, client wishes..."/>
+                            <group>
+                                <field name="user_id"/>
+                                <field name="company_id" groups="base.group_multi_company"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_liputa_order_search" model="ir.ui.view">
+        <field name="name">liputa.order.search</field>
+        <field name="model">liputa.order</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="garment_model_id"/>
+                <field name="tailor_id"/>
+                <filter name="open" string="In progress"
+                        domain="[('stage_code', 'in', ('confirmed', 'cutting', 'sewing', 'fitting', 'finishing'))]"/>
+                <filter name="late" string="Late" domain="[('schedule_health', '=', 'late')]"/>
+                <filter name="at_risk" string="At risk" domain="[('schedule_health', '=', 'at_risk')]"/>
+                <filter name="ready" string="Ready for pick-up" domain="[('stage_code', '=', 'ready')]"/>
+                <filter name="week" string="Due within 7 days"
+                        domain="[('delivery_date_promised', '&lt;=', (context_today() + relativedelta(days=7)).strftime('%Y-%m-%d'))]"/>
+                <separator/>
+                <filter name="unpaid" string="Not paid" domain="[('payment_state', 'not in', ('paid', 'in_payment'))]"/>
+                <group expand="0" string="Group by">
+                    <filter name="g_stage" string="Stage" context="{'group_by': 'stage_id'}"/>
+                    <filter name="g_tailor" string="Tailor" context="{'group_by': 'tailor_id'}"/>
+                    <filter name="g_event" string="Event" context="{'group_by': 'event_type_id'}"/>
+                    <filter name="g_category" string="Category" context="{'group_by': 'category_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_liputa_order" model="ir.actions.act_window">
+        <field name="name">Orders</field>
+        <field name="res_model">liputa.order</field>
+        <field name="view_mode">kanban,list,form,calendar</field>
+        <field name="context">{'search_default_open': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Record your first tailoring order</p>
+            <p>Client, measurements, photo, model: Liputa estimates the delivery, drafts the pattern and plans the work.</p>
+        </field>
+    </record>
+
+    <!-- ======================= TASKS / PLANNING ======================= -->
+    <record id="view_liputa_task_list" model="ir.ui.view">
+        <field name="name">liputa.order.task.list</field>
+        <field name="model">liputa.order.task</field>
+        <field name="arch" type="xml">
+            <list editable="top" decoration-success="state == 'done'" decoration-info="state == 'in_progress'">
+                <field name="order_id"/>
+                <field name="partner_id"/>
+                <field name="step"/>
+                <field name="tailor_id"/>
+                <field name="planned_hours" widget="float_time" sum="Hours"/>
+                <field name="date_start"/>
+                <field name="date_end"/>
+                <field name="state" widget="badge"/>
+                <button name="action_start" type="object" icon="fa-play" title="Start" invisible="state != 'todo'"/>
+                <button name="action_done" type="object" icon="fa-check" title="Done" invisible="state == 'done'"/>
+                <field name="name" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_liputa_task_kanban" model="ir.ui.view">
+        <field name="name">liputa.order.task.kanban</field>
+        <field name="model">liputa.order.task</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="tailor_id" sample="1">
+                <field name="state"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="d-flex justify-content-between">
+                            <field name="step" class="fw-bold"/>
+                            <field name="state" widget="badge"/>
+                        </div>
+                        <field name="order_id"/>
+                        <field name="partner_id" class="text-muted small"/>
+                        <footer class="small">
+                            <field name="date_start"/> <i class="fa fa-long-arrow-right mx-1"/> <field name="date_end"/>
+                            <field name="planned_hours" widget="float_time" class="ms-auto"/>
+                        </footer>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_liputa_task_calendar" model="ir.ui.view">
+        <field name="name">liputa.order.task.calendar</field>
+        <field name="model">liputa.order.task</field>
+        <field name="arch" type="xml">
+            <calendar date_start="date_start" date_stop="date_end" color="tailor_id" mode="week" all_day="1"
+                      quick_create="0">
+                <field name="order_id"/>
+                <field name="step"/>
+                <field name="state"/>
+            </calendar>
+        </field>
+    </record>
+
+    <record id="view_liputa_task_search" model="ir.ui.view">
+        <field name="name">liputa.order.task.search</field>
+        <field name="model">liputa.order.task</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="order_id"/>
+                <field name="tailor_id"/>
+                <filter name="mine" string="My tasks" domain="[('tailor_id.user_id', '=', uid)]"/>
+                <filter name="not_done" string="Not done" domain="[('state', '!=', 'done')]"/>
+                <group expand="0" string="Group by">
+                    <filter name="g_tailor" string="Tailor" context="{'group_by': 'tailor_id'}"/>
+                    <filter name="g_step" string="Step" context="{'group_by': 'step'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_liputa_task" model="ir.actions.act_window">
+        <field name="name">Planning</field>
+        <field name="res_model">liputa.order.task</field>
+        <field name="view_mode">calendar,kanban,list</field>
+        <field name="context">{'search_default_not_done': 1}</field>
+    </record>
+
+    <record id="action_liputa_dashboard" model="ir.actions.client">
+        <field name="name">Workshop dashboard</field>
+        <field name="tag">liputa_dashboard</field>
+    </record>
+</odoo>

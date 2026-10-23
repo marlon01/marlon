@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="liputa_couture.Dashboard">
+        <div class="o_liputa_dashboard o_action">
+            <div t-if="!state.data" class="o_liputa_loading"><i class="fa fa-circle-o-notch fa-spin"/></div>
+            <div t-else="" class="o_liputa_dash_inner">
+                <t t-set="d" t-value="state.data"/>
+                <header class="o_liputa_hero">
+                    <div>
+                        <div class="o_liputa_brand">LIPUTA</div>
+                        <h1 t-esc="d.company"/>
+                        <div class="o_liputa_hero_sub">Workshop cockpit</div>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button class="btn btn-light" t-on-click="openPlanning"><i class="fa fa-calendar me-1"/>Planning</button>
+                        <button class="btn btn-warning" t-on-click="newOrder"><i class="fa fa-plus me-1"/>New order</button>
+                    </div>
+                </header>
+
+                <div t-if="d.subscription.state and d.subscription.state !== 'active'"
+                     t-attf-class="o_liputa_sub alert #{d.subscription.state === 'suspended' ? 'alert-danger' : 'alert-warning'}">
+                    <i class="fa fa-credit-card me-2"/>
+                    <t t-if="d.subscription.state === 'trial'">Free trial: <strong t-esc="d.subscription.days_left"/> day(s) left.</t>
+                    <t t-elif="d.subscription.state === 'grace'">Your subscription is due. Renew it to avoid suspension.</t>
+                    <t t-elif="d.subscription.state === 'suspended'">Subscription suspended: new orders are blocked.</t>
+                    <button class="btn btn-sm btn-dark ms-3" t-on-click="openSubscription">Renew (Mobile Money)</button>
+                </div>
+
+                <section class="o_liputa_kpis">
+                    <div class="o_liputa_kpi" t-on-click="() => this.openOrders([['stage_code', 'in', ['confirmed','cutting','sewing','fitting','finishing']]], 'In progress')">
+                        <span class="o_kpi_label">In progress</span><span class="o_kpi_value" t-esc="d.kpis.open"/>
+                    </div>
+                    <div class="o_liputa_kpi o_kpi_danger" t-on-click="openLate">
+                        <span class="o_kpi_label">Late / at risk</span>
+                        <span class="o_kpi_value"><t t-esc="d.kpis.late"/> <small>/ <t t-esc="d.kpis.at_risk"/></small></span>
+                    </div>
+                    <div class="o_liputa_kpi o_kpi_success" t-on-click="openReady">
+                        <span class="o_kpi_label">Ready for pick-up</span><span class="o_kpi_value" t-esc="d.kpis.ready"/>
+                    </div>
+                    <div class="o_liputa_kpi">
+                        <span class="o_kpi_label">This month</span>
+                        <span class="o_kpi_value o_kpi_money" t-esc="money(d.kpis.month_revenue)"/>
+                        <span class="o_kpi_hint"><t t-esc="d.kpis.month_orders"/> order(s)</span>
+                    </div>
+                </section>
+
+                <div class="o_liputa_grid">
+                    <section class="o_liputa_card">
+                        <h3>Workload</h3>
+                        <div class="o_liputa_gauge">
+                            <div t-attf-style="width: #{loadPct}%"
+                                 t-attf-class="o_liputa_gauge_bar #{loadPct > 85 ? 'o_hot' : loadPct > 60 ? 'o_warm' : ''}"/>
+                        </div>
+                        <div class="d-flex justify-content-between small mt-2">
+                            <span><strong t-esc="num(d.workload.backlog_hours)"/> h remaining</span>
+                            <span><strong t-esc="num(d.workload.daily_capacity)"/> h / day capacity</span>
+                        </div>
+                        <p class="o_liputa_muted mt-2">≈ <strong t-esc="num(d.workload.days_of_work)"/> working days of queue
+                            (gauge: 100% = two weeks).</p>
+                        <h3 class="mt-4">Pipeline</h3>
+                        <div class="o_liputa_bars">
+                            <div t-foreach="d.by_stage" t-as="s" t-key="s.id" class="o_liputa_bar_row" t-on-click="() => this.openStage(s)">
+                                <span class="o_bar_label" t-esc="s.name"/>
+                                <span class="o_bar_track"><span t-attf-class="o_bar_fill o_stage_#{s.code}"
+                                      t-attf-style="width: #{Math.round(100 * s.count / maxStage)}%"/></span>
+                                <span class="o_bar_count" t-esc="s.count"/>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="o_liputa_card">
+                        <h3>Alerts <span class="badge text-bg-danger" t-if="d.alerts.length" t-esc="d.alerts.length"/></h3>
+                        <div t-if="!d.alerts.length" class="o_liputa_muted"><i class="fa fa-check-circle text-success me-1"/>Every order is on track.</div>
+                        <t t-call="liputa_couture.DashboardRows"><t t-set="rows" t-value="d.alerts"/></t>
+                        <h3 class="mt-4">Deliveries within 7 days</h3>
+                        <div t-if="!d.upcoming.length" class="o_liputa_muted">Nothing due this week.</div>
+                        <t t-call="liputa_couture.DashboardRows"><t t-set="rows" t-value="d.upcoming"/></t>
+                    </section>
+                </div>
+                <footer class="o_liputa_muted small mt-3">
+                    Plan: <t t-esc="d.subscription.plan"/> · AI credits left: <t t-esc="d.subscription.ai_left"/>
+                </footer>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="liputa_couture.DashboardRows">
+        <div class="o_liputa_rows">
+            <div t-foreach="rows" t-as="r" t-key="r.id" class="o_liputa_row" t-on-click="() => this.openOrder(r.id)">
+                <span t-attf-class="o_dot o_health_#{r.health}"/>
+                <div class="flex-grow-1">
+                    <div><strong t-esc="r.name"/> · <t t-esc="r.client"/></div>
+                    <div class="small o_liputa_muted"><t t-esc="r.model"/><t t-if="r.event"> · <t t-esc="r.event"/></t></div>
+                </div>
+                <div class="text-end small">
+                    <div t-esc="date(r.promised)"/>
+                    <div class="o_mini_progress"><span t-attf-style="width: #{r.progress}%"/></div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

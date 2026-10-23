@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_liputa_root" name="Liputa" web_icon="liputa_couture,static/description/icon.png"
+              groups="group_liputa_tailor" sequence="5"/>
+
+    <menuitem id="menu_liputa_dashboard" name="Dashboard" parent="menu_liputa_root"
+              action="action_liputa_dashboard" sequence="1"/>
+
+    <menuitem id="menu_liputa_orders_root" name="Orders" parent="menu_liputa_root" sequence="10"/>
+    <menuitem id="menu_liputa_orders" name="Orders" parent="menu_liputa_orders_root"
+              action="action_liputa_order" sequence="1"/>
+    <menuitem id="menu_liputa_clients" name="Clients" parent="menu_liputa_orders_root"
+              action="action_clients" sequence="5"/>
+    <menuitem id="menu_liputa_measurements" name="Measurements" parent="menu_liputa_orders_root"
+              action="action_measurement_profile" sequence="10"/>
+
+    <menuitem id="menu_liputa_planning" name="Planning" parent="menu_liputa_root"
+              action="action_liputa_task" sequence="20"/>
+
+    <menuitem id="menu_liputa_catalog" name="Catalogue" parent="menu_liputa_root" sequence="30"/>
+    <menuitem id="menu_liputa_models" name="Models" parent="menu_liputa_catalog"
+              action="action_garment_model" sequence="1"/>
+    <menuitem id="menu_liputa_pricing" name="Price list" parent="menu_liputa_catalog"
+              action="action_pricing_rule" sequence="5" groups="group_liputa_manager"/>
+    <menuitem id="menu_liputa_categories" name="Categories" parent="menu_liputa_catalog"
+              action="action_garment_category" sequence="10" groups="group_liputa_manager"/>
+    <menuitem id="menu_liputa_events" name="Event types" parent="menu_liputa_catalog"
+              action="action_event_type" sequence="15" groups="group_liputa_manager"/>
+
+    <menuitem id="menu_liputa_config" name="Workshop" parent="menu_liputa_root" sequence="40"
+              groups="group_liputa_manager"/>
+    <menuitem id="menu_liputa_team" name="Team" parent="menu_liputa_config" action="action_tailor" sequence="1"/>
+    <menuitem id="menu_liputa_my_workshop" name="Settings" parent="menu_liputa_config"
+              action="action_my_workshop" sequence="5"/>
+    <menuitem id="menu_liputa_my_subscription" name="My subscription" parent="menu_liputa_config"
+              action="action_my_subscription" sequence="10"/>
+
+    <menuitem id="menu_liputa_saas" name="Platform" parent="menu_liputa_root" sequence="90"
+              groups="group_liputa_saas_admin"/>
+    <menuitem id="menu_liputa_subscriptions" name="Subscriptions" parent="menu_liputa_saas"
+              action="action_subscription" sequence="1"/>
+    <menuitem id="menu_liputa_plans" name="Plans" parent="menu_liputa_saas" action="action_plan" sequence="5"/>
+    <menuitem id="menu_liputa_moderation" name="Library moderation" parent="menu_liputa_saas"
+              action="action_garment_model_moderation" sequence="10"/>
+    <menuitem id="menu_liputa_integrations" name="Integrations" parent="menu_liputa_saas"
+              action="action_ai_settings" sequence="20"/>
+</odoo>

@@ -1,0 +1,137 @@
+// Liputa design tokens - inspired by wax print colours: indigo, terracotta, ochre, forest.
+$lpt-indigo: #1F2A44;
+$lpt-terracotta: #C4502A;
+$lpt-ochre: #D98E04;
+$lpt-forest: #1F7A4D;
+$lpt-sand: #F4EFE6;
+
+.o_liputa_empty, .o_liputa_loading {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 48px 16px; color: var(--bs-secondary-color); text-align: center;
+}
+.o_liputa_toolbar {
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px;
+    .btn { white-space: nowrap; }
+}
+.o_liputa_muted { color: var(--bs-secondary-color); }
+
+// ---------------------------------------------------------------- pattern
+.o_liputa_pattern {
+    .o_liputa_fabric { font-size: 0.95rem; }
+    .o_liputa_pieces { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px;
+        .badge { background: rgba($lpt-ochre, 0.15); color: var(--bs-body-color); font-weight: 500; } }
+    .o_liputa_canvas {
+        max-height: 70vh; overflow: auto; border-radius: 10px;
+        border: 1px solid var(--bs-border-color);
+        background: repeating-conic-gradient(rgba(0, 0, 0, 0.03) 0% 25%, transparent 0% 50%) 0 0 / 24px 24px;
+    }
+    .o_liputa_svg { svg { display: block; width: 100%; height: auto; background: #fff; } }
+}
+
+// ---------------------------------------------------------------- mannequin
+.o_liputa_mannequin {
+    .o_liputa_stage { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+    .o_liputa_figure_wrap {
+        flex: 0 1 360px; min-width: 240px; border-radius: 14px; padding: 12px;
+        background: radial-gradient(circle at 50% 20%, #fff 0%, $lpt-sand 70%);
+    }
+    .o_liputa_figure { width: 100%; height: auto; max-height: 72vh; }
+    .o_liputa_shadow { fill: #000; opacity: 0.15; }
+    .o_liputa_detail { fill: none; stroke: #fff; stroke-opacity: 0.6; stroke-width: 1.2; stroke-dasharray: 3 3; }
+    .o_liputa_dims {
+        line { stroke: $lpt-indigo; stroke-dasharray: 2 2; stroke-width: 0.8; }
+        text { font-size: 9px; fill: $lpt-indigo; font-weight: 600; }
+    }
+    .o_liputa_face_ctrl { display: flex; gap: 10px; flex-wrap: wrap; font-size: 0.8rem; margin-top: 6px;
+        input[type=range] { width: 80px; vertical-align: middle; } }
+    .o_liputa_render {
+        flex: 0 1 360px; border-radius: 14px; overflow: hidden; position: relative;
+        img { width: 100%; display: block; }
+        .o_liputa_render_label { position: absolute; top: 8px; left: 8px; background: rgba($lpt-indigo, 0.85);
+            color: #fff; border-radius: 20px; padding: 2px 10px; font-size: 0.8rem; }
+    }
+}
+
+// ---------------------------------------------------------------- AI stylist
+.o_liputa_ai {
+    .o_liputa_ai_head { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
+    .o_liputa_ai_badge {
+        width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; color: #fff;
+        background: linear-gradient(135deg, $lpt-terracotta, $lpt-ochre);
+    }
+    .o_liputa_ai_form { display: grid; gap: 8px; max-width: 720px; }
+    .o_liputa_budget { max-width: 160px; }
+    .o_liputa_ai_advice {
+        margin: 14px 0; padding: 12px 14px; border-left: 4px solid $lpt-ochre; border-radius: 8px;
+        background: rgba($lpt-ochre, 0.08); white-space: pre-line;
+    }
+    .o_liputa_ai_grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
+    .o_liputa_ai_card {
+        border: 1px solid var(--bs-border-color); border-radius: 12px; overflow: hidden;
+        background: var(--bs-body-bg); transition: transform .15s ease, box-shadow .15s ease;
+        img { width: 100%; height: 190px; object-fit: contain; background: $lpt-sand; }
+        &:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08); }
+        &.o_selected { border-color: $lpt-forest; box-shadow: 0 0 0 2px rgba($lpt-forest, 0.4); }
+    }
+    .o_liputa_score { background: $lpt-indigo; color: #fff; border-radius: 10px; padding: 0 8px; font-size: 0.8rem;
+        white-space: nowrap; align-self: flex-start; flex-shrink: 0; margin-left: 6px; }
+}
+
+// ---------------------------------------------------------------- kanban
+.o_liputa_kanban_thumb { width: 44px; height: 56px; object-fit: cover; }
+.o_liputa_health_on_track { background: rgba($lpt-forest, 0.15); color: $lpt-forest; }
+.o_liputa_health_at_risk { background: rgba($lpt-ochre, 0.2); color: darken($lpt-ochre, 12%); }
+.o_liputa_health_late { background: rgba($lpt-terracotta, 0.18); color: $lpt-terracotta; }
+.o_liputa_library .o_liputa_lib_img { width: 96px; height: 120px; overflow: hidden; border-radius: 8px; flex-shrink: 0; }
+
+// ---------------------------------------------------------------- dashboard
+.o_liputa_dashboard {
+    overflow: auto; background: var(--bs-tertiary-bg, $lpt-sand);
+    .o_liputa_dash_inner { max-width: 1280px; margin: 0 auto; padding: 20px 16px 32px; }
+    .o_liputa_hero {
+        display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap;
+        color: #fff; border-radius: 18px; padding: 24px; margin-bottom: 16px;
+        background:
+            radial-gradient(circle at 90% 10%, rgba($lpt-ochre, 0.55) 0 60px, transparent 61px),
+            radial-gradient(circle at 80% 90%, rgba($lpt-terracotta, 0.6) 0 90px, transparent 91px),
+            linear-gradient(120deg, $lpt-indigo, lighten($lpt-indigo, 10%));
+        h1 { color: #fff; margin: 0; font-size: 1.8rem; }
+        .o_liputa_hero_sub { opacity: 0.8; }
+    }
+    .o_liputa_brand { letter-spacing: 0.3em; font-size: 0.75rem; font-weight: 700; opacity: 0.85; }
+    .o_liputa_kpis { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 16px; }
+    .o_liputa_kpi {
+        display: flex; flex-direction: column; gap: 4px; padding: 16px; border-radius: 14px; cursor: pointer;
+        background: var(--bs-body-bg); border: 1px solid var(--bs-border-color); border-top: 4px solid $lpt-indigo;
+        .o_kpi_label { color: var(--bs-secondary-color); font-size: 0.85rem; }
+        .o_kpi_value { font-size: 2rem; font-weight: 700; line-height: 1; small { font-size: 1rem; } }
+        .o_kpi_money { font-size: 1.4rem; }
+        .o_kpi_hint { font-size: 0.8rem; color: var(--bs-secondary-color); }
+        &.o_kpi_danger { border-top-color: $lpt-terracotta; .o_kpi_value { color: $lpt-terracotta; } }
+        &.o_kpi_success { border-top-color: $lpt-forest; .o_kpi_value { color: $lpt-forest; } }
+        &:hover { box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06); }
+    }
+    .o_liputa_grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
+    .o_liputa_card {
+        background: var(--bs-body-bg); border: 1px solid var(--bs-border-color); border-radius: 14px; padding: 18px;
+        h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 12px; }
+    }
+    .o_liputa_gauge { height: 14px; border-radius: 10px; background: rgba($lpt-indigo, 0.1); overflow: hidden; }
+    .o_liputa_gauge_bar { height: 100%; background: $lpt-forest; border-radius: 10px; transition: width .4s ease;
+        &.o_warm { background: $lpt-ochre; } &.o_hot { background: $lpt-terracotta; } }
+    .o_liputa_bar_row { display: grid; grid-template-columns: 110px 1fr 32px; gap: 8px; align-items: center;
+        padding: 4px 0; cursor: pointer; font-size: 0.9rem; }
+    .o_bar_track { height: 10px; background: rgba($lpt-indigo, 0.08); border-radius: 6px; overflow: hidden; }
+    .o_bar_fill { display: block; height: 100%; background: $lpt-indigo; border-radius: 6px; }
+    .o_stage_ready { background: $lpt-forest; }
+    .o_stage_draft { background: #9aa3b2; }
+    .o_stage_fitting { background: $lpt-ochre; }
+    .o_bar_count { text-align: right; font-weight: 600; }
+    .o_liputa_row { display: flex; gap: 10px; align-items: center; padding: 10px 6px; border-bottom: 1px solid var(--bs-border-color);
+        cursor: pointer; &:hover { background: rgba($lpt-ochre, 0.06); } }
+    .o_dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; background: $lpt-forest; }
+    .o_health_at_risk { background: $lpt-ochre; }
+    .o_health_late { background: $lpt-terracotta; }
+    .o_mini_progress { width: 80px; height: 5px; background: rgba($lpt-indigo, 0.1); border-radius: 4px; margin-top: 4px;
+        span { display: block; height: 100%; background: $lpt-forest; border-radius: 4px; } }
+}

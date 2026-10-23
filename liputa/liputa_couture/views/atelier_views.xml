@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ======================= TAILORS ======================= -->
+    <record id="view_tailor_kanban" model="ir.ui.view">
+        <field name="name">liputa.tailor.kanban</field>
+        <field name="model">liputa.tailor</field>
+        <field name="arch" type="xml">
+            <kanban>
+                <templates>
+                    <t t-name="card" class="flex-row">
+                        <aside><field name="image_128" widget="image" class="o_liputa_avatar"/></aside>
+                        <main class="ms-2">
+                            <field name="name" class="fw-bold"/>
+                            <field name="phone" class="small text-muted"/>
+                            <div class="small">
+                                <i class="fa fa-clock-o me-1"/><field name="open_hours" widget="float_time"/> h assigned
+                            </div>
+                        </main>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+    <record id="view_tailor_form" model="ir.ui.view">
+        <field name="name">liputa.tailor.form</field>
+        <field name="model">liputa.tailor</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <field name="image_1920" widget="image" class="oe_avatar" options="{'preview_image': 'image_128'}"/>
+                    <h1><field name="name"/></h1>
+                    <group>
+                        <group>
+                            <field name="phone" widget="phone"/>
+                            <field name="user_id"/>
+                            <field name="daily_hours" widget="float_time"/>
+                            <field name="open_hours" widget="float_time"/>
+                        </group>
+                        <group string="Skills">
+                            <field name="can_cut"/><field name="can_sew"/>
+                            <field name="can_embroider"/><field name="can_finish"/>
+                        </group>
+                    </group>
+                    <field name="company_id" invisible="1"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="action_tailor" model="ir.actions.act_window">
+        <field name="name">Team</field>
+        <field name="res_model">liputa.tailor</field>
+        <field name="view_mode">kanban,form</field>
+    </record>
+
+    <!-- ======================= MEASUREMENT PROFILES ======================= -->
+    <record id="view_profile_list" model="ir.ui.view">
+        <field name="name">liputa.measurement.profile.list</field>
+        <field name="model">liputa.measurement.profile</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="partner_id"/>
+                <field name="date"/>
+                <field name="gender"/>
+                <field name="height"/><field name="bust"/><field name="waist"/><field name="hip"/>
+            </list>
+        </field>
+    </record>
+    <record id="view_profile_form" model="ir.ui.view">
+        <field name="name">liputa.measurement.profile.form</field>
+        <field name="model">liputa.measurement.profile</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <field name="photo" widget="image" class="oe_avatar"/>
+                    <div class="oe_title"><h1><field name="partner_id"/></h1></div>
+                    <group>
+                        <group><field name="date"/><field name="gender"/><field name="photo_consent"/></group>
+                        <group><field name="company_id" groups="base.group_multi_company"/></group>
+                    </group>
+                    <group>
+                        <group string="Upper body">
+                            <field name="height"/><field name="neck"/><field name="shoulder_width"/>
+                            <field name="bust"/><field name="under_bust"/><field name="waist"/>
+                            <field name="back_waist_length"/><field name="front_waist_length"/>
+                            <field name="arm_length"/><field name="biceps"/><field name="wrist"/>
+                        </group>
+                        <group string="Lower body">
+                            <field name="hip"/><field name="hip_depth"/><field name="thigh"/>
+                            <field name="knee"/><field name="hem_width"/><field name="inseam"/>
+                            <field name="outseam"/><field name="skirt_length"/><field name="dress_length"/>
+                        </group>
+                    </group>
+                    <field name="notes" placeholder="Posture, preferences (loose / fitted), particularities..."/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+    <record id="action_measurement_profile" model="ir.actions.act_window">
+        <field name="name">Measurements</field>
+        <field name="res_model">liputa.measurement.profile</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- ======================= CLIENTS ======================= -->
+    <record id="view_partner_form_liputa" model="ir.ui.view">
+        <field name="name">res.partner.form.liputa</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <div name="button_box" position="inside">
+                <button name="action_liputa_orders" type="object" class="oe_stat_button" icon="fa-scissors"
+                        groups="liputa_couture.group_liputa_tailor">
+                    <field name="liputa_order_count" widget="statinfo" string="Tailoring"/>
+                </button>
+            </div>
+            <notebook position="inside">
+                <page string="Measurements" name="liputa_measurements" groups="liputa_couture.group_liputa_tailor">
+                    <field name="liputa_measurement_ids" context="{'default_partner_id': id}">
+                        <list>
+                            <field name="date"/><field name="height"/><field name="bust"/>
+                            <field name="waist"/><field name="hip"/>
+                        </list>
+                    </field>
+                </page>
+            </notebook>
+        </field>
+    </record>
+    <record id="action_clients" model="ir.actions.act_window">
+        <field name="name">Clients</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[('liputa_order_ids', '!=', False)]</field>
+        <field name="context">{'default_is_company': False}</field>
+    </record>
+
+    <!-- ======================= WORKSHOP SETTINGS (company) ======================= -->
+    <record id="view_company_form_liputa" model="ir.ui.view">
+        <field name="name">res.company.form.liputa</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="base.view_company_form"/>
+        <field name="arch" type="xml">
+            <notebook position="inside">
+                <page string="Workshop" name="liputa">
+                    <group>
+                        <group string="Production">
+                            <field name="is_atelier"/>
+                            <field name="atelier_slogan"/>
+                            <field name="atelier_working_days"/>
+                            <field name="atelier_efficiency" widget="percentage"/>
+                            <field name="atelier_fitting_buffer"/>
+                            <field name="atelier_default_fabric_width"/>
+                        </group>
+                        <group string="Commercial">
+                            <field name="atelier_urgency_pct"/>
+                            <field name="atelier_deposit_pct"/>
+                            <field name="atelier_whatsapp" widget="phone"/>
+                            <field name="liputa_subscription_state" widget="badge"/>
+                        </group>
+                    </group>
+                </page>
+            </notebook>
+        </field>
+    </record>
+    <record id="action_my_workshop" model="ir.actions.server">
+        <field name="name">My workshop</field>
+        <field name="model_id" ref="base.model_res_company"/>
+        <field name="state">code</field>
+        <field name="code">action = {"type": "ir.actions.act_window", "res_model": "res.company", "res_id": env.company.id, "view_mode": "form", "target": "current"}</field>
+    </record>
+</odoo>

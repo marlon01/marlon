@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="liputa_couture.PatternViewer">
+        <div class="o_liputa_pattern">
+            <div t-if="!props.record.resId" class="o_liputa_empty">
+                <i class="fa fa-scissors fa-2x mb-2"/>
+                <div>Save the order to draft the cutting pattern.</div>
+            </div>
+            <t t-else="">
+                <div class="o_liputa_toolbar">
+                    <div class="btn-group">
+                        <button class="btn btn-light" t-on-click="() => this.zoom(-0.25)" title="Zoom out"><i class="fa fa-search-minus"/></button>
+                        <span class="btn btn-light disabled"><t t-esc="Math.round(state.zoom * 100)"/>%</span>
+                        <button class="btn btn-light" t-on-click="() => this.zoom(0.25)" title="Zoom in"><i class="fa fa-search-plus"/></button>
+                    </div>
+                    <button class="btn btn-light" t-on-click="refresh"><i class="fa fa-refresh me-1"/>Redraw</button>
+                    <a class="btn btn-light" t-att-href="downloadUrl"><i class="fa fa-download me-1"/>SVG 1:1</a>
+                    <button class="btn btn-light" t-on-click="print" t-att-disabled="!state.svg"><i class="fa fa-print me-1"/>Print</button>
+                    <div t-if="state.fabric" class="o_liputa_fabric ms-auto">
+                        <i class="fa fa-th-large me-1"/>
+                        <strong><t t-esc="state.fabric.metres"/> m</strong>
+                        <span class="text-muted"> · <t t-esc="state.fabric.yards"/> yd · width <t t-esc="state.fabric.fabric_width_cm"/> cm</span>
+                    </div>
+                </div>
+                <div t-if="state.pieces.length" class="o_liputa_pieces">
+                    <span t-foreach="state.pieces" t-as="p" t-key="p_index" class="badge">
+                        <t t-esc="p.label or p.key"/> ×<t t-esc="p.cut"/><t t-if="p.on_fold"> ⟂</t>
+                    </span>
+                </div>
+                <div t-if="state.error" class="alert alert-warning" t-esc="state.error"/>
+                <div t-if="state.loading" class="o_liputa_loading"><i class="fa fa-circle-o-notch fa-spin"/></div>
+                <div class="o_liputa_canvas" t-if="state.svg">
+                    <div class="o_liputa_svg" t-attf-style="width: {{state.zoom * 100}}%">
+                        <t t-out="state.svg"/>
+                    </div>
+                </div>
+            </t>
+        </div>
+    </t>
+</templates>

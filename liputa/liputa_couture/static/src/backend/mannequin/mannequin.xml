@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="liputa_couture.Mannequin">
+        <div class="o_liputa_mannequin">
+            <div t-if="!props.record.resId" class="o_liputa_empty">
+                <i class="fa fa-female fa-2x mb-2"/>
+                <div>Save the order to generate the client's mannequin.</div>
+            </div>
+            <t t-elif="state.geo">
+                <t t-set="geo" t-value="state.geo"/>
+                <div class="o_liputa_toolbar">
+                    <button class="btn btn-light" t-on-click="refresh"><i class="fa fa-refresh me-1"/>Update</button>
+                    <label class="btn btn-light mb-0">
+                        <input type="checkbox" class="form-check-input me-1" t-model="state.showDims"/>Measurements
+                    </label>
+                    <label class="btn btn-light mb-0" t-if="state.data.has_photo">
+                        <input type="checkbox" class="form-check-input me-1" t-model="state.showFace"/>Client face
+                    </label>
+                    <button class="btn btn-light" t-on-click="downloadSvg"><i class="fa fa-download me-1"/>Export</button>
+                    <button class="btn btn-primary ms-auto" t-on-click="aiRender" t-att-disabled="state.rendering or !state.data.has_photo"
+                            t-att-title="renderTitle">
+                        <i t-attf-class="fa #{state.rendering ? 'fa-circle-o-notch fa-spin' : 'fa-magic'} me-1"/>Photoreal AI render
+                    </button>
+                </div>
+                <div class="o_liputa_stage">
+                    <div class="o_liputa_figure_wrap">
+                        <svg class="o_liputa_figure" xmlns="http://www.w3.org/2000/svg" t-att-viewBox="geo.viewBox"
+                             preserveAspectRatio="xMidYMin meet" role="img" aria-label="Virtual mannequin">
+                            <defs>
+                                <pattern t-if="state.data.has_fabric" t-att-id="uid + '_fab'" patternUnits="userSpaceOnUse" width="70" height="70">
+                                    <image t-att-href="fabricUrl" width="70" height="70" preserveAspectRatio="xMidYMid slice"/>
+                                </pattern>
+                                <linearGradient t-att-id="uid + '_shade'" x1="0" x2="1" y1="0" y2="0">
+                                    <stop offset="0" stop-color="#000" stop-opacity="0.28"/>
+                                    <stop offset="0.35" stop-color="#fff" stop-opacity="0.12"/>
+                                    <stop offset="0.6" stop-color="#fff" stop-opacity="0"/>
+                                    <stop offset="1" stop-color="#000" stop-opacity="0.32"/>
+                                </linearGradient>
+                                <radialGradient t-att-id="uid + '_skin'" cx="0.4" cy="0.3" r="0.8">
+                                    <stop offset="0" stop-color="#fff" stop-opacity="0.18"/>
+                                    <stop offset="1" stop-color="#000" stop-opacity="0.12"/>
+                                </radialGradient>
+                                <clipPath t-att-id="uid + '_face'">
+                                    <ellipse t-att-cx="geo.head.cx" t-att-cy="geo.head.cy" t-att-rx="geo.head.rx" t-att-ry="geo.head.ry"/>
+                                </clipPath>
+                            </defs>
+                            <ellipse class="o_liputa_shadow" t-att-cx="geo.shadow.cx" t-att-cy="geo.shadow.cy"
+                                     t-att-rx="geo.shadow.rx" t-att-ry="geo.shadow.ry"/>
+                            <!-- body -->
+                            <g t-att-fill="skin">
+                                <t t-foreach="geo.arms" t-as="a" t-key="a_index">
+                                    <path t-att-d="a" fill="none" t-att-stroke="skin" t-att-stroke-width="geo.armWidth" stroke-linecap="round" stroke-linejoin="round"/>
+                                </t>
+                                <circle t-foreach="geo.hands" t-as="h" t-key="h_index" t-att-cx="h.cx" t-att-cy="h.cy" t-att-r="h.r"/>
+                                <rect t-att-x="geo.neck.x" t-att-y="geo.neck.y" t-att-width="geo.neck.w" t-att-height="geo.neck.h" rx="4"/>
+                                <path t-att-d="geo.body"/>
+                                <path t-att-d="geo.body" t-attf-fill="url(##{uid}_skin)"/>
+                                <ellipse t-att-cx="geo.head.cx" t-att-cy="geo.head.cy" t-att-rx="geo.head.rx" t-att-ry="geo.head.ry"/>
+                            </g>
+                            <image t-if="state.data.has_photo and state.showFace" t-att-href="photoUrl"
+                                   t-att-x="face.x" t-att-y="face.y" t-att-width="face.w" t-att-height="face.h"
+                                   preserveAspectRatio="xMidYMin slice" t-attf-clip-path="url(##{uid}_face)"/>
+                            <!-- garment -->
+                            <g class="o_liputa_garment">
+                                <t t-if="geo.garment.second">
+                                    <path t-att-d="geo.garment.second" t-att-fill="secondFill"/>
+                                    <path t-att-d="geo.garment.second" t-attf-fill="url(##{uid}_shade)"/>
+                                    <path t-att-d="geo.garment.second" fill="#000" fill-opacity="0.18"/>
+                                </t>
+                                <path t-att-d="geo.garment.main" t-att-fill="garmentFill"/>
+                                <path t-att-d="geo.garment.main" t-attf-fill="url(##{uid}_shade)"/>
+                                <path t-foreach="geo.garment.sleeves" t-as="sl" t-key="sl_index" t-att-d="sl" fill="none"
+                                      t-att-stroke="garmentFill" t-att-stroke-width="geo.garment.sleeveWidth" stroke-linecap="round"/>
+                                <path t-foreach="geo.garment.details" t-as="dt" t-key="dt_index" t-att-d="dt"
+                                      class="o_liputa_detail"/>
+                                <path t-if="geo.garment.headwrap" t-att-d="geo.garment.headwrap" t-att-fill="garmentFill"/>
+                            </g>
+                            <!-- dimension lines -->
+                            <g t-if="state.showDims" class="o_liputa_dims">
+                                <t t-foreach="geo.dims" t-as="d" t-key="d_index">
+                                    <line t-att-x1="d.x1" t-att-x2="d.x2" t-att-y1="d.y" t-att-y2="d.y"/>
+                                    <text t-att-x="d.x2 + 4" t-att-y="d.y + 3"><t t-esc="d.label"/></text>
+                                </t>
+                                <line t-att-x1="geo.height.x" t-att-x2="geo.height.x" t-att-y1="geo.height.y1" t-att-y2="geo.height.y2"/>
+                                <text t-att-x="geo.height.x - 4" t-att-y="(geo.height.y1 + geo.height.y2) / 2" text-anchor="end"><t t-esc="geo.height.label"/></text>
+                            </g>
+                        </svg>
+                        <div t-if="state.data.has_photo and state.showFace" class="o_liputa_face_ctrl">
+                            <label>Face <input type="range" min="0.8" max="3" step="0.05" t-model.number="state.faceZoom"/></label>
+                            <label>↔ <input type="range" min="-40" max="40" step="1" t-model.number="state.faceX"/></label>
+                            <label>↕ <input type="range" min="-40" max="60" step="1" t-model.number="state.faceY"/></label>
+                        </div>
+                    </div>
+                    <div class="o_liputa_render" t-if="state.data.has_ai_render">
+                        <div class="o_liputa_render_label"><i class="fa fa-magic me-1"/>AI render</div>
+                        <img t-att-src="renderUrl" alt="AI render"/>
+                    </div>
+                </div>
+                <p class="text-muted small mt-2">
+                    Silhouette built from the recorded measurements (missing values completed with averages).
+                    Add a fabric photo to dress the mannequin with the real print.
+                </p>
+            </t>
+            <div t-elif="state.loading" class="o_liputa_loading"><i class="fa fa-circle-o-notch fa-spin"/></div>
+        </div>
+    </t>
+</templates>

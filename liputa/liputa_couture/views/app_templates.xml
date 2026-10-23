@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Shared <head> for every Liputa page: no Odoo asset, title or favicon. -->
+    <template id="app_head" name="Liputa head">
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+        <meta name="theme-color" content="#16213E"/>
+        <meta name="apple-mobile-web-app-capable" content="yes"/>
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+        <meta name="apple-mobile-web-app-title" content="Liputa"/>
+        <meta name="robots" content="noindex"/>
+        <link rel="icon" type="image/svg+xml" href="/liputa_couture/static/description/icon.svg"/>
+        <link rel="apple-touch-icon" href="/liputa_couture/static/src/app/img/icon-512.png"/>
+        <link rel="manifest" href="/app/manifest.webmanifest"/>
+        <title t-esc="title or 'Liputa'"/>
+    </template>
+
+    <!-- The mobile app (standalone OWL application). -->
+    <template id="app_shell" name="Liputa app">&lt;!DOCTYPE html&gt;
+        <html t-att-lang="lang">
+            <head>
+                <t t-call="liputa_couture.app_head"/>
+                <t t-call-assets="liputa_couture.assets_app"/>
+            </head>
+            <body class="lp-body">
+                <div id="lp-boot" class="lp-boot" aria-hidden="true">
+                    <img src="/liputa_couture/static/description/icon.svg" alt="" width="64" height="64"/>
+                </div>
+            </body>
+        </html>
+    </template>
+
+    <!-- Public pages (tracking, sign-up, login) use the Liputa styles only. -->
+    <template id="public_layout" name="Liputa public layout">&lt;!DOCTYPE html&gt;
+        <html t-att-lang="(request.env.lang or 'fr_FR').split('_')[0]">
+            <head>
+                <t t-call="liputa_couture.app_head"/>
+                <t t-call-assets="liputa_couture.assets_app" t-js="false"/>
+            </head>
+            <body t-attf-class="lp-body lp-public #{body_class or ''}">
+                <t t-out="0"/>
+            </body>
+        </html>
+    </template>
+
+    <template id="app_login" name="Liputa login">
+        <t t-call="liputa_couture.public_layout">
+            <t t-set="title">Liputa - Connexion</t>
+            <t t-set="body_class" t-value="'lp-auth'"/>
+            <main class="lp-auth-wrap">
+                <header class="lp-auth-hero">
+                    <img src="/liputa_couture/static/description/icon.svg" alt="" width="52" height="52"/>
+                    <h1 class="lp-auth-title">Bon retour à l'atelier</h1>
+                    <p class="lp-auth-sub">Vos commandes, vos mesures et vos délais vous attendent.</p>
+                    <div class="lp-tape lp-tape-deco" aria-hidden="true"/>
+                </header>
+                <form method="post" action="/app/login" class="lp-sheet lp-auth-form" novalidate="1">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    <p t-if="error" class="lp-alert lp-alert-danger" role="alert" t-esc="error"/>
+                    <label class="lp-field">
+                        <span class="lp-label">E-mail</span>
+                        <input class="lp-input" type="email" name="login" autocomplete="username" inputmode="email"
+                               required="1" autofocus="1" t-att-value="login"/>
+                    </label>
+                    <label class="lp-field">
+                        <span class="lp-label">Mot de passe</span>
+                        <input class="lp-input" type="password" name="password" autocomplete="current-password" required="1"/>
+                    </label>
+                    <button type="submit" class="lp-btn lp-btn-primary lp-btn-block">Se connecter</button>
+                    <a class="lp-link lp-center" href="/web/reset_password">Mot de passe oublié</a>
+                    <hr class="lp-hr"/>
+                    <a class="lp-btn lp-btn-ghost lp-btn-block" href="/liputa/signup">Créer mon atelier</a>
+                </form>
+            </main>
+        </t>
+    </template>
+
+    <!-- ============ White-label: remove every "Powered by Odoo" ============ -->
+    <template id="brand_promotion_message_liputa" inherit_id="web.brand_promotion_message" priority="99">
+        <xpath expr="//t[@t-out]" position="replace"/>
+    </template>
+
+    <template id="mail_layout_liputa" inherit_id="mail.mail_notification_layout" priority="99">
+        <xpath expr="//div[@t-if='show_footer'][.//span[@id='mail_unfollow']]" position="replace">
+            <div t-if="show_footer" style="color: #6B7280; font-size: 11px;">
+                <t t-out="company.name"/> - Liputa
+            </div>
+        </xpath>
+    </template>
+
+    <template id="mail_light_liputa" inherit_id="mail.mail_notification_light" priority="99">
+        <xpath expr="//span[@id='mail_unfollow']/.." position="replace">
+            <td align="center" style="min-width: 590px; color: #6B7280; font-size: 11px;">
+                <t t-out="company.name"/> - Liputa
+            </td>
+        </xpath>
+    </template>
+</odoo>

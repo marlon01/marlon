@@ -1,0 +1,25 @@
+$lpt-indigo: #1F2A44;
+$lpt-terracotta: #C4502A;
+$lpt-forest: #1F7A4D;
+
+.o_liputa_track {
+    .o_liputa_track_card {
+        max-width: 640px; background: #fff; border-radius: 18px; padding: 24px;
+        box-shadow: 0 10px 40px rgba(31, 42, 68, 0.12); border-top: 6px solid $lpt-terracotta;
+    }
+    .o_liputa_brand { letter-spacing: 0.3em; font-size: 0.7rem; font-weight: 700; color: $lpt-terracotta; }
+    .o_liputa_bar { background: linear-gradient(90deg, $lpt-terracotta, $lpt-forest); }
+    .o_liputa_timeline { margin: 0; padding: 0; }
+    .o_liputa_step {
+        position: relative; display: flex; align-items: center; gap: 12px; padding: 8px 0 8px 4px; color: #8a90a0;
+        &:not(:last-child)::after {
+            content: ""; position: absolute; left: 10px; top: 28px; width: 2px; height: calc(100% - 20px); background: #e3e5ea;
+        }
+        .o_liputa_dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #c8ccd6; background: #fff; z-index: 1; }
+    }
+    .o_liputa_step_done { color: $lpt-indigo;
+        .o_liputa_dot { background: $lpt-forest; border-color: $lpt-forest; }
+        &::after { background: $lpt-forest !important; } }
+    .o_liputa_step_current { color: $lpt-indigo; font-weight: 700;
+        .o_liputa_dot { border-color: $lpt-terracotta; box-shadow: 0 0 0 4px rgba($lpt-terracotta, 0.2); } }
+}

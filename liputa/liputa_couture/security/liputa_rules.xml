@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- Tenant isolation: every workshop only sees its own data. -->
+    <record id="rule_order_company" model="ir.rule">
+        <field name="name">Orders: own workshop</field>
+        <field name="model_id" ref="model_liputa_order"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_task_company" model="ir.rule">
+        <field name="name">Tasks: own workshop</field>
+        <field name="model_id" ref="model_liputa_order_task"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_task_tailor_write" model="ir.rule">
+        <field name="name">Tasks: tailors update their own tasks</field>
+        <field name="model_id" ref="model_liputa_order_task"/>
+        <field name="groups" eval="[(4, ref('group_liputa_tailor'))]"/>
+        <field name="domain_force">['|', ('tailor_id.user_id', '=', user.id), ('tailor_id', '=', False)]</field>
+        <field name="perm_read" eval="False"/>
+        <field name="perm_create" eval="False"/>
+    </record>
+    <record id="rule_task_manager_write" model="ir.rule">
+        <field name="name">Tasks: managers update all</field>
+        <field name="model_id" ref="model_liputa_order_task"/>
+        <field name="groups" eval="[(4, ref('group_liputa_manager'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="False"/>
+    </record>
+    <record id="rule_profile_company" model="ir.rule">
+        <field name="name">Measurements: own workshop</field>
+        <field name="model_id" ref="model_liputa_measurement_profile"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_tailor_company" model="ir.rule">
+        <field name="name">Tailors: own workshop</field>
+        <field name="model_id" ref="model_liputa_tailor"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_pricing_company" model="ir.rule">
+        <field name="name">Pricing: own workshop</field>
+        <field name="model_id" ref="model_liputa_pricing_rule"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+
+    <!-- Shared library: read public + own; write only own (admins: everything). -->
+    <record id="rule_garment_read" model="ir.rule">
+        <field name="name">Models: library + own workshop</field>
+        <field name="model_id" ref="model_liputa_garment_model"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+    <record id="rule_garment_write_manager" model="ir.rule">
+        <field name="name">Models: managers edit own workshop models</field>
+        <field name="model_id" ref="model_liputa_garment_model"/>
+        <field name="groups" eval="[(4, ref('group_liputa_manager'))]"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        <field name="perm_read" eval="False"/>
+    </record>
+    <record id="rule_garment_write_admin" model="ir.rule">
+        <field name="name">Models: platform admins edit the library</field>
+        <field name="model_id" ref="model_liputa_garment_model"/>
+        <field name="groups" eval="[(4, ref('group_liputa_saas_admin'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="False"/>
+    </record>
+    <record id="rule_category_read" model="ir.rule">
+        <field name="name">Categories: shared + own</field>
+        <field name="model_id" ref="model_liputa_garment_category"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_event_read" model="ir.rule">
+        <field name="name">Events: shared + own</field>
+        <field name="model_id" ref="model_liputa_event_type"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+    </record>
+
+    <!-- SaaS records -->
+    <record id="rule_sub_manager" model="ir.rule">
+        <field name="name">Subscription: own workshop</field>
+        <field name="model_id" ref="model_liputa_subscription"/>
+        <field name="groups" eval="[(4, ref('group_liputa_manager'))]"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_sub_admin" model="ir.rule">
+        <field name="name">Subscription: platform admins</field>
+        <field name="model_id" ref="model_liputa_subscription"/>
+        <field name="groups" eval="[(4, ref('group_liputa_saas_admin'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+    <record id="rule_pay_manager" model="ir.rule">
+        <field name="name">Payments: own workshop</field>
+        <field name="model_id" ref="model_liputa_subscription_payment"/>
+        <field name="groups" eval="[(4, ref('group_liputa_manager'))]"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_pay_admin" model="ir.rule">
+        <field name="name">Payments: platform admins</field>
+        <field name="model_id" ref="model_liputa_subscription_payment"/>
+        <field name="groups" eval="[(4, ref('group_liputa_saas_admin'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+</odoo>

@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- ============ Categories (shared) ============ -->
+    <record id="cat_women" model="liputa.garment.category">
+        <field name="name">Women</field><field name="gender">women</field><field name="silhouette">dress</field>
+        <field name="sequence">1</field><field name="company_id" eval="False"/>
+    </record>
+    <record id="cat_men" model="liputa.garment.category">
+        <field name="name">Men</field><field name="gender">men</field><field name="silhouette">tunic_trousers</field>
+        <field name="sequence">2</field><field name="company_id" eval="False"/>
+    </record>
+    <record id="cat_children" model="liputa.garment.category">
+        <field name="name">Children</field><field name="gender">child</field><field name="silhouette">dress</field>
+        <field name="sequence">3</field><field name="company_id" eval="False"/>
+    </record>
+    <record id="cat_dress" model="liputa.garment.category">
+        <field name="name">Dresses</field><field name="parent_id" ref="cat_women"/>
+        <field name="gender">women</field><field name="silhouette">dress</field><field name="company_id" eval="False"/>
+    </record>
+    <record id="cat_kaba" model="liputa.garment.category">
+        <field name="name">Kaba &amp; long dresses</field><field name="parent_id" ref="cat_women"/>
+        <field name="gender">women</field><field name="silhouette">dress</field><field name="company_id" eval="False"/>
+    </record>
+    <record id="cat_wrap" model="liputa.garment.category">
+        <field name="name">Pagne ensembles (liputa)</field><field name="parent_id" ref="cat_women"/>
+        <field name="gender">women</field><field name="silhouette">wrap</field><field name="company_id" eval="False"/>
+    </record>
+    <record id="cat_skirt" model="liputa.garment.category">
+        <field name="name">Skirts &amp; tops</field><field name="parent_id" ref="cat_women"/>
+        <field name="gender">women</field><field name="silhouette">top_skirt</field><field name="company_id" eval="False"/>
+    </record>
+    <record id="cat_boubou" model="liputa.garment.category">
+        <field name="name">Boubou, agbada &amp; kaftan</field>
+        <field name="gender">unisex</field><field name="silhouette">boubou</field><field name="company_id" eval="False"/>
+    </record>
+    <record id="cat_men_ensemble" model="liputa.garment.category">
+        <field name="name">Men's ensembles</field><field name="parent_id" ref="cat_men"/>
+        <field name="gender">men</field><field name="silhouette">tunic_trousers</field><field name="company_id" eval="False"/>
+    </record>
+    <record id="cat_men_shirt" model="liputa.garment.category">
+        <field name="name">Shirts</field><field name="parent_id" ref="cat_men"/>
+        <field name="gender">men</field><field name="silhouette">shirt_trousers</field><field name="company_id" eval="False"/>
+    </record>
+    <record id="cat_suit" model="liputa.garment.category">
+        <field name="name">Suits &amp; abacost</field><field name="parent_id" ref="cat_men"/>
+        <field name="gender">men</field><field name="silhouette">suit</field><field name="company_id" eval="False"/>
+    </record>
+
+    <!-- ============ Event types (shared) ============ -->
+    <record id="ev_customary_wedding" model="liputa.event.type">
+        <field name="name">Customary wedding / dowry</field><field name="sequence">1</field>
+        <field name="dress_code">Coordinated family wax or bazin outfits (uniform "assorti"), rich head wraps, often matching colours for each family.</field>
+        <field name="keywords">wedding,dowry,dot,family,uniform,wax,bazin,headwrap</field>
+        <field name="regions">CD,CG,CM,CI,SN,NG,GH,BJ,TG,GA</field><field name="typical_lead_days">21</field>
+        <field name="company_id" eval="False"/>
+    </record>
+    <record id="ev_civil_wedding" model="liputa.event.type">
+        <field name="name">Civil / religious wedding</field><field name="sequence">2</field>
+        <field name="dress_code">Elegant lace, satin or embroidered bazin; bride in white or ivory, guests in chic evening wear.</field>
+        <field name="keywords">wedding,church,mosque,lace,satin,elegant,white</field>
+        <field name="company_id" eval="False"/><field name="typical_lead_days">30</field>
+    </record>
+    <record id="ev_baptism" model="liputa.event.type">
+        <field name="name">Baptism / naming ceremony</field><field name="sequence">3</field>
+        <field name="dress_code">Light, joyful colours, white or pastel; comfortable outfits for the mother.</field>
+        <field name="keywords">baptism,naming,white,pastel,family</field><field name="company_id" eval="False"/>
+    </record>
+    <record id="ev_mourning" model="liputa.event.type">
+        <field name="name">Mourning / funeral (matanga)</field><field name="sequence">4</field>
+        <field name="dress_code">Sober colours (black, white, dark blue or the family's chosen colour); often a uniform fabric chosen by the family; modest cuts.</field>
+        <field name="keywords">funeral,mourning,matanga,black,white,sober,uniform</field>
+        <field name="typical_lead_days">5</field><field name="company_id" eval="False"/>
+    </record>
+    <record id="ev_tabaski" model="liputa.event.type">
+        <field name="name">Tabaski / Eid</field><field name="sequence">5</field>
+        <field name="dress_code">Grand boubou, embroidered bazin, kaftan; long, modest and festive.</field>
+        <field name="keywords">eid,tabaski,korite,boubou,bazin,embroidery,kaftan</field>
+        <field name="regions">SN,ML,NE,GN,CI,BF,NG,CM,TD</field><field name="company_id" eval="False"/>
+    </record>
+    <record id="ev_christmas" model="liputa.event.type">
+        <field name="name">Christmas &amp; New Year</field><field name="sequence">6</field>
+        <field name="dress_code">Festive and bright: sequins, lace, bold wax prints; family coordinated looks.</field>
+        <field name="keywords">christmas,new year,festive,sequins,lace,wax,family</field><field name="company_id" eval="False"/>
+    </record>
+    <record id="ev_independence" model="liputa.event.type">
+        <field name="name">National day / Independence (30 June...)</field><field name="sequence">7</field>
+        <field name="dress_code">National colours, commemorative wax prints.</field>
+        <field name="keywords">national,independence,flag,commemorative,wax</field><field name="company_id" eval="False"/>
+    </record>
+    <record id="ev_women_day" model="liputa.event.type">
+        <field name="name">International Women's Day (8 March)</field><field name="sequence">8</field>
+        <field name="dress_code">The official yearly 8 March fabric, sewn into personalised models.</field>
+        <field name="keywords">8 march,women,official fabric,wax</field><field name="company_id" eval="False"/>
+    </record>
+    <record id="ev_graduation" model="liputa.event.type">
+        <field name="name">Graduation</field><field name="sequence">9</field>
+        <field name="keywords">graduation,elegant,modern,suit,dress</field><field name="company_id" eval="False"/>
+    </record>
+    <record id="ev_church" model="liputa.event.type">
+        <field name="name">Sunday service / church event</field><field name="sequence">10</field>
+        <field name="dress_code">Modest cuts, sleeves, below-knee length; choir uniforms.</field>
+        <field name="keywords">church,sunday,modest,choir,uniform</field><field name="company_id" eval="False"/>
+    </record>
+    <record id="ev_office" model="liputa.event.type">
+        <field name="name">Office &amp; business</field><field name="sequence">11</field>
+        <field name="keywords">office,business,pencil skirt,shirt,suit,abacost</field><field name="company_id" eval="False"/>
+    </record>
+    <record id="ev_party" model="liputa.event.type">
+        <field name="name">Party / anniversary / gala</field><field name="sequence">12</field>
+        <field name="keywords">party,gala,mermaid,sequins,lace,glamour</field><field name="company_id" eval="False"/>
+    </record>
+    <record id="ev_school" model="liputa.event.type">
+        <field name="name">School uniforms</field><field name="sequence">13</field>
+        <field name="keywords">school,uniform,children,shirt,skirt,trousers</field><field name="company_id" eval="False"/>
+    </record>
+
+    <!-- ============ Starter public library ============ -->
+    <record id="lib_mermaid_wax" model="liputa.garment.model">
+        <field name="name">Mermaid wax gown</field><field name="code">LIB-W-001</field>
+        <field name="category_id" ref="cat_dress"/><field name="gender">women</field>
+        <field name="pattern_template">dress</field><field name="length_type">floor</field>
+        <field name="sleeve_type">short</field><field name="flare">0.55</field>
+        <field name="complexity">3</field><field name="base_hours">10</field>
+        <field name="tags">wax,mermaid,fitted,ruffles,glamour</field><field name="default_color">#B83A2B</field>
+        <field name="event_type_ids" eval="[(6, 0, [ref('ev_civil_wedding'), ref('ev_party'), ref('ev_customary_wedding')])]"/>
+        <field name="description">Fitted bodice and hips, flared hem with ruffles. A Kinshasa and Abidjan classic for ceremonies.</field>
+        <field name="company_id" eval="False"/><field name="library_state">published</field><field name="is_featured" eval="True"/>
+    </record>
+    <record id="lib_kaba_ngondo" model="liputa.garment.model">
+        <field name="name">Kaba ngondo</field><field name="code">LIB-W-002</field>
+        <field name="category_id" ref="cat_kaba"/><field name="gender">women</field>
+        <field name="pattern_template">kaba</field><field name="length_type">floor</field>
+        <field name="sleeve_type">three_quarter</field><field name="flare">0.7</field>
+        <field name="complexity">2</field><field name="base_hours">6</field>
+        <field name="tags">kaba,loose,comfort,wax,cameroon</field><field name="default_color">#1F7A4D</field>
+        <field name="event_type_ids" eval="[(6, 0, [ref('ev_baptism'), ref('ev_church'), ref('ev_customary_wedding')])]"/>
+        <field name="description">Wide, flowing Cameroonian kaba with gathered yoke - comfortable and elegant.</field>
+        <field name="company_id" eval="False"/><field name="library_state">published</field>
+    </record>
+    <record id="lib_liputa_trio" model="liputa.garment.model">
+        <field name="name">Liputa trio (top, wrap, headwrap)</field><field name="code">LIB-W-003</field>
+        <field name="category_id" ref="cat_wrap"/><field name="gender">women</field>
+        <field name="pattern_template">wrap_skirt</field><field name="length_type">ankle</field>
+        <field name="sleeve_type">short</field><field name="complexity">2</field><field name="base_hours">5</field>
+        <field name="tags">pagne,liputa,wrap,headwrap,6 yards,wax,uniform</field><field name="default_color">#D98E04</field>
+        <field name="event_type_ids" eval="[(6, 0, [ref('ev_customary_wedding'), ref('ev_mourning'), ref('ev_women_day')])]"/>
+        <field name="description">Traditional Congolese 6-yard ensemble: fitted top, wrap skirt and matching headwrap.</field>
+        <field name="company_id" eval="False"/><field name="library_state">published</field><field name="is_featured" eval="True"/>
+    </record>
+    <record id="lib_pencil_set" model="liputa.garment.model">
+        <field name="name">Peplum top &amp; pencil skirt</field><field name="code">LIB-W-004</field>
+        <field name="category_id" ref="cat_skirt"/><field name="gender">women</field>
+        <field name="pattern_template">top</field><field name="sleeve_type">cap</field>
+        <field name="complexity">2</field><field name="base_hours">7</field>
+        <field name="tags">office,peplum,pencil skirt,wax</field><field name="default_color">#2C4A7A</field>
+        <field name="event_type_ids" eval="[(6, 0, [ref('ev_office'), ref('ev_church'), ref('ev_graduation')])]"/>
+        <field name="company_id" eval="False"/><field name="library_state">published</field>
+    </record>
+    <record id="lib_grand_boubou" model="liputa.garment.model">
+        <field name="name">Embroidered grand boubou (bazin riche)</field><field name="code">LIB-U-001</field>
+        <field name="category_id" ref="cat_boubou"/><field name="gender">men</field>
+        <field name="pattern_template">boubou</field><field name="length_type">ankle</field>
+        <field name="neck_type">round</field><field name="complexity">4</field><field name="base_hours">12</field>
+        <field name="tags">boubou,bazin,embroidery,agbada,senegal,mali</field><field name="default_color">#E9E2D0</field>
+        <field name="event_type_ids" eval="[(6, 0, [ref('ev_tabaski'), ref('ev_customary_wedding'), ref('ev_baptism')])]"/>
+        <field name="description">Majestic three-piece grand boubou with rich neckline embroidery.</field>
+        <field name="company_id" eval="False"/><field name="library_state">published</field><field name="is_featured" eval="True"/>
+    </record>
+    <record id="lib_kaftan_women" model="liputa.garment.model">
+        <field name="name">Women's kaftan / bubu</field><field name="code">LIB-U-002</field>
+        <field name="category_id" ref="cat_boubou"/><field name="gender">women</field>
+        <field name="pattern_template">kaftan</field><field name="length_type">floor</field>
+        <field name="neck_type">v</field><field name="flare">0.2</field><field name="complexity">2</field><field name="base_hours">5</field>
+        <field name="tags">kaftan,bubu,loose,silk,bazin</field><field name="default_color">#6B3FA0</field>
+        <field name="event_type_ids" eval="[(6, 0, [ref('ev_tabaski'), ref('ev_party'), ref('ev_christmas')])]"/>
+        <field name="company_id" eval="False"/><field name="library_state">published</field>
+    </record>
+    <record id="lib_dashiki_set" model="liputa.garment.model">
+        <field name="name">Dashiki ensemble</field><field name="code">LIB-M-001</field>
+        <field name="category_id" ref="cat_men_ensemble"/><field name="gender">men</field>
+        <field name="pattern_template">ensemble</field><field name="sleeve_type">short</field>
+        <field name="neck_type">v</field><field name="complexity">2</field><field name="base_hours">7</field>
+        <field name="tags">dashiki,ensemble,wax,embroidery,casual</field><field name="default_color">#C4502A</field>
+        <field name="event_type_ids" eval="[(6, 0, [ref('ev_customary_wedding'), ref('ev_christmas'), ref('ev_independence')])]"/>
+        <field name="company_id" eval="False"/><field name="library_state">published</field>
+    </record>
+    <record id="lib_senator" model="liputa.garment.model">
+        <field name="name">Senator long tunic &amp; trousers</field><field name="code">LIB-M-002</field>
+        <field name="category_id" ref="cat_men_ensemble"/><field name="gender">men</field>
+        <field name="pattern_template">ensemble</field><field name="sleeve_type">long</field>
+        <field name="neck_type">round</field><field name="complexity">3</field><field name="base_hours">9</field>
+        <field name="tags">senator,nigeria,tunic,elegant,cashmere</field><field name="default_color">#22303F</field>
+        <field name="event_type_ids" eval="[(6, 0, [ref('ev_civil_wedding'), ref('ev_church'), ref('ev_party')])]"/>
+        <field name="company_id" eval="False"/><field name="library_state">published</field>
+    </record>
+    <record id="lib_abacost" model="liputa.garment.model">
+        <field name="name">Abacost</field><field name="code">LIB-M-003</field>
+        <field name="category_id" ref="cat_suit"/><field name="gender">men</field>
+        <field name="pattern_template">suit</field><field name="complexity">4</field><field name="base_hours">14</field>
+        <field name="tags">abacost,congo,suit,collarless,official</field><field name="default_color">#3B3F46</field>
+        <field name="event_type_ids" eval="[(6, 0, [ref('ev_office'), ref('ev_independence'), ref('ev_mourning')])]"/>
+        <field name="description">The iconic Congolese collarless suit jacket with matching trousers.</field>
+        <field name="company_id" eval="False"/><field name="library_state">published</field>
+    </record>
+    <record id="lib_wax_shirt" model="liputa.garment.model">
+        <field name="name">Wax print shirt</field><field name="code">LIB-M-004</field>
+        <field name="category_id" ref="cat_men_shirt"/><field name="gender">men</field>
+        <field name="pattern_template">shirt</field><field name="sleeve_type">long</field>
+        <field name="complexity">2</field><field name="base_hours">5</field>
+        <field name="tags">shirt,wax,office,friday wear</field><field name="default_color">#0F6E8C</field>
+        <field name="event_type_ids" eval="[(6, 0, [ref('ev_office'), ref('ev_party'), ref('ev_christmas')])]"/>
+        <field name="company_id" eval="False"/><field name="library_state">published</field>
+    </record>
+    <record id="lib_mourning_dress" model="liputa.garment.model">
+        <field name="name">Modest mourning dress</field><field name="code">LIB-W-005</field>
+        <field name="category_id" ref="cat_dress"/><field name="gender">women</field>
+        <field name="pattern_template">dress</field><field name="length_type">ankle</field>
+        <field name="sleeve_type">three_quarter</field><field name="flare">0.25</field>
+        <field name="complexity">1</field><field name="base_hours">4</field>
+        <field name="tags">mourning,sober,uniform,quick</field><field name="default_color">#1A1A1A</field>
+        <field name="event_type_ids" eval="[(6, 0, [ref('ev_mourning'), ref('ev_church')])]"/>
+        <field name="company_id" eval="False"/><field name="library_state">published</field>
+    </record>
+    <record id="lib_girl_dress" model="liputa.garment.model">
+        <field name="name">Girl's party dress</field><field name="code">LIB-C-001</field>
+        <field name="category_id" ref="cat_children"/><field name="gender">child</field>
+        <field name="pattern_template">dress</field><field name="length_type">knee</field>
+        <field name="sleeve_type">cap</field><field name="flare">0.5</field>
+        <field name="complexity">2</field><field name="base_hours">4</field>
+        <field name="tags">children,party,wax,ruffles</field><field name="default_color">#E0567A</field>
+        <field name="event_type_ids" eval="[(6, 0, [ref('ev_baptism'), ref('ev_christmas'), ref('ev_party')])]"/>
+        <field name="company_id" eval="False"/><field name="library_state">published</field>
+    </record>
+</odoo>

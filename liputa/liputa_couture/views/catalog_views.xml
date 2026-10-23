@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ======================= GARMENT MODELS ======================= -->
+    <record id="view_garment_model_kanban" model="ir.ui.view">
+        <field name="name">liputa.garment.model.kanban</field>
+        <field name="model">liputa.garment.model</field>
+        <field name="arch" type="xml">
+            <kanban class="o_liputa_library" sample="1">
+                <field name="id"/>
+                <field name="is_library"/>
+                <field name="library_state"/>
+                <field name="is_featured"/>
+                <templates>
+                    <t t-name="card" class="flex-row">
+                        <aside class="o_liputa_lib_img">
+                            <field name="image_256" widget="image" options="{'img_class': 'object-fit-cover w-100 h-100'}"/>
+                        </aside>
+                        <main class="ms-2">
+                            <div class="d-flex justify-content-between">
+                                <field name="name" class="fw-bold"/>
+                                <i class="fa fa-star text-warning" t-if="record.is_featured.raw_value" title="Featured"/>
+                            </div>
+                            <field name="category_id" class="text-muted small"/>
+                            <field name="event_type_ids" widget="many2many_tags" class="small"/>
+                            <footer class="small">
+                                <span t-if="record.is_library.raw_value" class="badge text-bg-success">Library</span>
+                                <span t-else="" class="badge text-bg-secondary">My workshop</span>
+                                <span t-if="record.library_state.raw_value == 'submitted'" class="badge text-bg-warning ms-1">Submitted</span>
+                                <span class="ms-auto text-muted"><i class="fa fa-scissors"/> <field name="usage_count"/></span>
+                            </footer>
+                        </main>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_garment_model_list" model="ir.ui.view">
+        <field name="name">liputa.garment.model.list</field>
+        <field name="model">liputa.garment.model</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="code" optional="show"/>
+                <field name="name"/>
+                <field name="category_id"/>
+                <field name="gender"/>
+                <field name="pattern_template"/>
+                <field name="complexity"/>
+                <field name="base_hours"/>
+                <field name="library_state" widget="badge"/>
+                <field name="company_id" optional="show" string="Owner"/>
+                <field name="usage_count"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_garment_model_form" model="ir.ui.view">
+        <field name="name">liputa.garment.model.form</field>
+        <field name="model">liputa.garment.model</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_adopt" type="object" string="Copy to my workshop" class="btn-primary"
+                            invisible="company_id" groups="liputa_couture.group_liputa_manager"/>
+                    <button name="action_ai_enrich" type="object" string="AI: describe &amp; translate"
+                            icon="fa-magic" invisible="not image_1920" groups="liputa_couture.group_liputa_manager"/>
+                    <button name="action_submit_to_library" type="object" string="Share with the library"
+                            invisible="not company_id or library_state in ('submitted', 'published')"
+                            groups="liputa_couture.group_liputa_manager"/>
+                    <button name="action_publish_to_library" type="object" string="Publish" class="btn-success"
+                            invisible="library_state != 'submitted'" groups="liputa_couture.group_liputa_saas_admin"/>
+                    <button name="action_reject_from_library" type="object" string="Reject"
+                            invisible="library_state != 'submitted'" groups="liputa_couture.group_liputa_saas_admin"/>
+                    <field name="library_state" widget="statusbar" statusbar_visible="private,submitted,published"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Library" bg_color="text-bg-success" invisible="company_id"/>
+                    <field name="image_1920" widget="image" class="oe_avatar" options="{'preview_image': 'image_256'}"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="e.g. Mermaid wax gown"/></h1>
+                        <field name="tags" placeholder="wax, bazin, lace, embroidery..."/>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="code"/>
+                            <field name="category_id"/>
+                            <field name="gender"/>
+                            <field name="event_type_ids" widget="many2many_tags"/>
+                            <field name="origin_country_id"/>
+                        </group>
+                        <group>
+                            <field name="complexity"/>
+                            <field name="base_hours" widget="float_time"/>
+                            <field name="default_color" widget="color"/>
+                            <field name="is_featured" groups="liputa_couture.group_liputa_saas_admin"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="author_company_id" invisible="not author_company_id"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Description" name="description">
+                            <field name="description" placeholder="Describe the cut, the finishing, the inspiration..."/>
+                        </page>
+                        <page string="Pattern drafting" name="drafting">
+                            <group>
+                                <group>
+                                    <field name="pattern_template"/>
+                                    <field name="length_type"/>
+                                    <field name="sleeve_type"/>
+                                    <field name="neck_type"/>
+                                    <field name="leg" invisible="pattern_template not in ('trousers', 'ensemble', 'suit')"/>
+                                </group>
+                                <group>
+                                    <field name="flare" widget="percentage"/>
+                                    <field name="ease_bust"/>
+                                    <field name="ease_waist"/>
+                                    <field name="ease_hip"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Gallery" name="gallery">
+                            <field name="gallery_ids" widget="many2many_binary"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_garment_model_search" model="ir.ui.view">
+        <field name="name">liputa.garment.model.search</field>
+        <field name="model">liputa.garment.model</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="tags"/>
+                <field name="category_id"/>
+                <field name="event_type_ids"/>
+                <filter name="library" string="Liputa library" domain="[('company_id', '=', False)]"/>
+                <filter name="mine" string="My workshop" domain="[('company_id', '!=', False)]"/>
+                <filter name="submitted" string="Awaiting moderation" domain="[('library_state', '=', 'submitted')]"/>
+                <separator/>
+                <filter name="women" string="Women" domain="[('gender', '=', 'women')]"/>
+                <filter name="men" string="Men" domain="[('gender', '=', 'men')]"/>
+                <filter name="children" string="Children" domain="[('gender', '=', 'child')]"/>
+                <group expand="0" string="Group by">
+                    <filter name="g_cat" string="Category" context="{'group_by': 'category_id'}"/>
+                    <filter name="g_template" string="Pattern" context="{'group_by': 'pattern_template'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_garment_model" model="ir.actions.act_window">
+        <field name="name">Models</field>
+        <field name="res_model">liputa.garment.model</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Build your catalogue</p>
+            <p>Browse the shared Liputa library, copy models into your workshop or create your own and share them.</p>
+        </field>
+    </record>
+    <record id="action_garment_model_moderation" model="ir.actions.act_window">
+        <field name="name">Library moderation</field>
+        <field name="res_model">liputa.garment.model</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="context">{'search_default_submitted': 1}</field>
+    </record>
+
+    <!-- ======================= CATEGORIES & EVENTS ======================= -->
+    <record id="view_garment_category_list" model="ir.ui.view">
+        <field name="name">liputa.garment.category.list</field>
+        <field name="model">liputa.garment.category</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="parent_id"/>
+                <field name="gender"/>
+                <field name="silhouette"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_garment_category" model="ir.actions.act_window">
+        <field name="name">Categories</field>
+        <field name="res_model">liputa.garment.category</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <record id="view_event_type_list" model="ir.ui.view">
+        <field name="name">liputa.event.type.list</field>
+        <field name="model">liputa.event.type</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="typical_lead_days"/>
+                <field name="regions"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+            </list>
+        </field>
+    </record>
+    <record id="view_event_type_form" model="ir.ui.view">
+        <field name="name">liputa.event.type.form</field>
+        <field name="model">liputa.event.type</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <h1><field name="name"/></h1>
+                    <group>
+                        <group><field name="typical_lead_days"/><field name="regions"/><field name="keywords"/></group>
+                        <group><field name="company_id" groups="base.group_multi_company"/><field name="color" widget="color_picker"/></group>
+                    </group>
+                    <label for="dress_code"/>
+                    <field name="dress_code" placeholder="Cultural dress code, used by the AI stylist"/>
+                    <label for="description"/>
+                    <field name="description"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="action_event_type" model="ir.actions.act_window">
+        <field name="name">Event types</field>
+        <field name="res_model">liputa.event.type</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- ======================= PRICING ======================= -->
+    <record id="view_pricing_rule_list" model="ir.ui.view">
+        <field name="name">liputa.pricing.rule.list</field>
+        <field name="model">liputa.pricing.rule</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="category_id"/>
+                <field name="garment_model_id"/>
+                <field name="event_type_id"/>
+                <field name="gender"/>
+                <field name="price"/>
+                <field name="fabric_price_per_metre"/>
+                <field name="complexity_multiplier"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="company_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_pricing_rule" model="ir.actions.act_window">
+        <field name="name">Price list</field>
+        <field name="res_model">liputa.pricing.rule</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Define your prices</p>
+            <p>The most specific rule wins: model &gt; event &gt; category &gt; gender.</p>
+        </field>
+    </record>
+</odoo>
