@@ -186,11 +186,15 @@ class TestCodesSend(SaasCommon):
 
     def test_free_text_in_the_message_is_sanitised(self):
         concours, issued = self._issued()
-        concours.write({'exam_venue': "Salle A\nhttps://evil.example/login www.phish.cd evil.cd/login " + "x" * 200})
+        concours.write({'exam_venue': "Salle A, 12 av. du Commerce\nhttps://evil.example/login www.phish.cd evil.cd/login "
+                                      "bad\uff0ecd/x paie\u3002cd a@b.cd " + "x" * 200})
         cand = self.env['selecta.candidate'].browse(issued['id'])
         text = self.env['selecta.messaging'].code_message(cand, issued['code'])
         self.assertNotIn('evil.example', text)
         self.assertNotIn('phish', text)
         self.assertNotIn('evil.cd', text, "un domaine sans http n'est plus lisible comme lien")
+        for bad in ('bad.cd', 'paie.cd', '/', '@', '\uff0e', '\u3002'):
+            self.assertNotIn(bad, text)
+        self.assertIn("Salle A, 12 av. du Commerce", text)
         self.assertNotIn('\n', text)
         self.assertLess(len(text), 420)

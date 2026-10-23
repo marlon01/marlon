@@ -16,6 +16,7 @@ Fournisseurs (paramètres système, jamais dans le code) :
 """
 import logging
 import re
+import unicodedata
 from datetime import timedelta
 
 import requests
@@ -25,6 +26,7 @@ from odoo import _, api, fields, models
 _logger = logging.getLogger(__name__)
 TIMEOUT = 10
 DAILY_LIMIT = 300  # messages envoyés par structure sur 24 h (paramètre selecta.msg.daily_limit)
+ALLOWED_PUNCT = " ,;:'’()-–—·.&°#"
 URL_RE = re.compile(r'(\w+:/+|www\.)\S*', re.I)
 PARAMS = ('provider', 'username', 'account_sid', 'api_key', 'sms_from', 'whatsapp_from')
 
@@ -49,10 +51,14 @@ def clean_text(text, limit):
 
     Le compte d'envoi est celui de la plateforme : il ne doit pas pouvoir relayer un lien d'hameçonnage.
     """
-    text = URL_RE.sub('', text or '')
-    # « evil.cd/login » sans http serait quand même rendu cliquable par le téléphone : un point
-    # entre deux caractères de mot est suivi d'une espace (« evil. cd »), plus aucun domaine n'est lisible.
-    text = re.sub(r'(?<=\w)\.(?=\w)', '. ', text)
+    # NFKC ramène les points « pleine chasse » ou idéographiques au point ordinaire.
+    text = unicodedata.normalize('NFKC', text or '')
+    text = URL_RE.sub('', text)
+    # Liste blanche : lettres, chiffres, espaces et ponctuation simple. Ni « / » ni « @ » ni symbole :
+    # aucun chemin, aucune adresse ne survit.
+    text = ''.join(ch if ch.isalnum() or ch in ALLOWED_PUNCT else ' ' for ch in text)
+    # Un point suivi d'un caractère reçoit une espace (« evil. cd ») : plus aucun domaine n'est lisible.
+    text = re.sub(r'\.(?=\S)', '. ', text)
     text = re.sub(r'\s+', ' ', text).strip()
     return text[:limit].rstrip()
 
