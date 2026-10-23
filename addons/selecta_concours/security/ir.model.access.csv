@@ -17,3 +17,4 @@ access_answer_jury,answer jury,model_selecta_attempt_answer,group_selecta_jury,1
 access_event_surveillant,event surveillant,model_selecta_proctor_event,group_selecta_surveillant,1,0,0,0
 access_audit_jury,audit jury,model_selecta_audit_log,group_selecta_jury,1,0,0,0
 access_throttle_system,throttle system,model_selecta_login_throttle,base.group_system,1,0,0,0
+access_message_log_system,message log system,model_selecta_message_log,base.group_system,1,0,0,0

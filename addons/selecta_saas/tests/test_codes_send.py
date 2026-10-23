@@ -166,6 +166,14 @@ class TestCodesSend(SaasCommon):
             res = self.bo(self.user_a).codes_send(c.id, [{'id': x['id'], 'code': x['code']} for x in codes], 'sms')
         self.assertEqual(res['sent'], 1)
         self.assertIn('plafond', [r for r in res['results'] if not r['ok']][0]['error'])
+        # Régénérer puis renvoyer ne contourne pas le plafond : il se compte sur le registre des envois.
+        sent_one = [r for r in res['results'] if r['ok']][0]['id']
+        new = self.bo(self.user_a).generate_codes(c.id, [sent_one], False)['codes'][0]
+        with patch('odoo.addons.selecta_concours.models.selecta_messaging.requests.post',
+                   return_value=FakeResp(201, {'sid': 'SM1'})) as post:
+            res = self.bo(self.user_a).codes_send(c.id, [{'id': new['id'], 'code': new['code']}], 'sms')
+            post.assert_not_called()
+        self.assertEqual(res['sent'], 0)
 
     def test_closed_contest_or_blocked_account_cannot_send(self):
         self._setup('twilio')
@@ -178,10 +186,11 @@ class TestCodesSend(SaasCommon):
 
     def test_free_text_in_the_message_is_sanitised(self):
         concours, issued = self._issued()
-        concours.write({'exam_venue': "Salle A\nhttps://evil.example/login www.phish.cd " + "x" * 200})
+        concours.write({'exam_venue': "Salle A\nhttps://evil.example/login www.phish.cd evil.cd/login " + "x" * 200})
         cand = self.env['selecta.candidate'].browse(issued['id'])
         text = self.env['selecta.messaging'].code_message(cand, issued['code'])
         self.assertNotIn('evil.example', text)
         self.assertNotIn('phish', text)
+        self.assertNotIn('evil.cd', text, "un domaine sans http n'est plus lisible comme lien")
         self.assertNotIn('\n', text)
         self.assertLess(len(text), 420)

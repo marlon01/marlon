@@ -445,8 +445,8 @@ class SelectaBackoffice(models.AbstractModel):
         daily_limit = int(icp.get_param('selecta.msg.daily_limit') or DAILY_LIMIT)
         Msg = self.env['selecta.messaging']
         Cand = self.env['selecta.candidate']
-        already = Cand.sudo().search_count([('company_id', '=', concours.company_id.id),
-                                            ('code_sent_at', '>=', fields.Datetime.now() - timedelta(days=1))])
+        Log = self.env['selecta.message.log'].sudo()
+        already = Log._sent_last_24h(concours.company_id)
         results, sent = [], 0
         for item in (items or [])[:500]:
             cand = Cand.browse(int(item.get('id') or 0)).exists()
@@ -470,6 +470,7 @@ class SelectaBackoffice(models.AbstractModel):
             ok, error = Msg.send(channel, phone, Msg.code_message(cand, code))
             if ok:
                 cand.sudo().write({'code_sent_at': fields.Datetime.now(), 'code_sent_via': channel})
+                Log.create({'company_id': concours.company_id.id, 'channel': channel})
                 sent += 1
             results.append({'id': cand.id, 'ok': ok, 'error': error})
         self.env['selecta.audit.log']._log(

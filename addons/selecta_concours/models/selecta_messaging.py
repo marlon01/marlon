@@ -16,6 +16,7 @@ Fournisseurs (paramètres système, jamais dans le code) :
 """
 import logging
 import re
+from datetime import timedelta
 
 import requests
 
@@ -24,7 +25,7 @@ from odoo import _, api, fields, models
 _logger = logging.getLogger(__name__)
 TIMEOUT = 10
 DAILY_LIMIT = 300  # messages envoyés par structure sur 24 h (paramètre selecta.msg.daily_limit)
-URL_RE = re.compile(r'(https?://|www\.)\S*', re.I)
+URL_RE = re.compile(r'(\w+:/+|www\.)\S*', re.I)
 PARAMS = ('provider', 'username', 'account_sid', 'api_key', 'sms_from', 'whatsapp_from')
 
 
@@ -49,8 +50,33 @@ def clean_text(text, limit):
     Le compte d'envoi est celui de la plateforme : il ne doit pas pouvoir relayer un lien d'hameçonnage.
     """
     text = URL_RE.sub('', text or '')
+    # « evil.cd/login » sans http serait quand même rendu cliquable par le téléphone : un point
+    # entre deux caractères de mot est suivi d'une espace (« evil. cd »), plus aucun domaine n'est lisible.
+    text = re.sub(r'(?<=\w)\.(?=\w)', '. ', text)
     text = re.sub(r'\s+', ' ', text).strip()
     return text[:limit].rstrip()
+
+
+class SelectaMessageLog(models.Model):
+    """Registre des messages envoyés par le compte de la plateforme (ajout seul, sans le texte).
+
+    Il sert au plafond quotidien par structure : il ne dépend d'aucun champ du candidat, qu'une
+    régénération du code remettrait à zéro.
+    """
+    _name = 'selecta.message.log'
+    _description = "Message SMS / WhatsApp envoyé"
+    _order = 'id desc'
+
+    company_id = fields.Many2one('res.company', required=True, index=True, ondelete='cascade')
+    channel = fields.Selection([('sms', 'SMS'), ('whatsapp', 'WhatsApp')], required=True)
+    create_date = fields.Datetime(index=True)
+
+    @api.model
+    def _sent_last_24h(self, company):
+        # Verrou sur la structure : deux envois simultanés ne peuvent pas dépasser le plafond ensemble.
+        self.env.cr.execute("SELECT id FROM res_company WHERE id = %s FOR UPDATE", (company.id,))
+        return self.sudo().search_count([('company_id', '=', company.id),
+                                         ('create_date', '>=', fields.Datetime.now() - timedelta(days=1))])
 
 
 class SelectaMessaging(models.AbstractModel):
