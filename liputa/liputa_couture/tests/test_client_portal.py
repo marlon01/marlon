@@ -243,3 +243,51 @@ class TestClientPortalHttp(HttpCase):
     def test_login_redirect_is_local_only(self):
         page = self.url_open("/c/connexion?redirect=https://evil.example/")
         self.assertNotIn("evil.example", page.text)
+
+
+@tagged("post_install", "-at_install", "liputa")
+class TestLiputaLanding(HttpCase):
+    """https://liputa.naxoris.com : tout le monde arrive sur l'annuaire, chacun se connecte au même
+    endroit et arrive dans son espace (administration, son atelier, ses commandes)."""
+
+    def _login(self, login, password):
+        page = self.url_open("/c/connexion")
+        token = page.text.split('name="csrf_token" value="')[1].split('"')[0]
+        return self.url_open("/c/connexion", data={"csrf_token": token, "login": login, "password": password,
+                                                   "redirect": "/c"}, allow_redirects=False)
+
+    def _location(self, resp):
+        return resp.headers.get("Location", "").replace(self.base_url(), "")
+
+    def test_root_lands_on_the_directory(self):
+        resp = self.url_open("/", allow_redirects=False)
+        self.assertEqual(self._location(resp), "/c")
+        page = self.url_open("/")
+        self.assertIn("Trouvez votre atelier", page.text)
+        self.assertIn("Créer un compte", page.text)
+
+    def test_one_login_each_account_to_its_space(self):
+        Company = self.env["res.company"]
+        Company._liputa_create_workshop(
+            {"atelier": "Atelier Espace", "name": "Maman Espace", "email": "espace@test.cd",
+             "phone": "+243810000021", "password": "Motdepasse123"}, self.env.ref("base.cd"), "10.0.0.21")
+        _client(self.env, "cliente.espace@test.cd")
+        admin = self.env["res.users"].with_context(no_reset_password=True).create({
+            "name": "Opérateur Liputa", "login": "ops@liputa.test", "password": "Motdepasse123",
+            "groups_id": [(6, 0, [self.env.ref("base.group_user").id,
+                                  self.env.ref("liputa_couture.group_liputa_saas_admin").id])]})
+        self.assertTrue(admin)
+        cases = [("espace@test.cd", "/app"), ("cliente.espace@test.cd", "/c/commandes"), ("ops@liputa.test", "/odoo")]
+        for login, expected in cases:
+            self.url_open("/c/deconnexion")
+            resp = self._login(login, "Motdepasse123")
+            self.assertEqual(self._location(resp), expected, login)
+            page = self.url_open("/c")
+            label = {"/app": "Mon atelier", "/c/commandes": "Mes commandes", "/odoo": "Administration"}[expected]
+            self.assertIn(label, page.text, login)
+
+    def test_old_login_pages_lead_to_the_single_login(self):
+        self.assertEqual(self._location(self.url_open("/app", allow_redirects=False)), "/c/connexion?redirect=/app")
+        self.assertEqual(self._location(self.url_open("/app/login", allow_redirects=False)), "/c/connexion?redirect=/app")
+        self.assertTrue(self._location(self.url_open("/web/login", allow_redirects=False)).startswith("/c/connexion"))
+        self.assertEqual(self.url_open("/web/login?operator=1").status_code, 200)

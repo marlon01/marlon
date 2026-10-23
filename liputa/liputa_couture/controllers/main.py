@@ -99,7 +99,7 @@ class LiputaController(http.Controller):
 
         country = env["res.country"].sudo().browse(int(values["country_id"] or 0)).exists()
         env["res.company"].sudo()._liputa_create_workshop(values, country, ip, lang=request.env.lang)
-        return request.redirect("/app/login", 303)
+        return request.redirect("/c/connexion?redirect=/app", 303)
 
     # ------------------------------------------------------------ FlexPay callback
     @http.route("/liputa/payment/flexpay/callback", type="http", auth="public", methods=["POST"], csrf=False)

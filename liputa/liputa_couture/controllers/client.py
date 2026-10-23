@@ -12,6 +12,7 @@ from odoo.http import request
 from odoo.tools import consteq, file_open
 
 from ..models.push import is_push_endpoint
+from .app import liputa_home_url
 from .main import EMAIL_RE
 
 _logger = logging.getLogger(__name__)
@@ -43,7 +44,13 @@ class LiputaClientPortal(http.Controller):
 
     def _render(self, template, values=None, **kw):
         values = dict(values or {})
-        values.setdefault("client_user", self._client_user())
+        user = self._client_user()
+        values.setdefault("client_user", user)
+        home = liputa_home_url(request.env, user.id if user else None)
+        labels = {"/odoo": "Administration", "/app": "Mon atelier", "/c/commandes": "Mes commandes"}
+        # L'espace du compte connecté : administration, application atelier ou commandes du client.
+        values["space"] = {"url": home, "label": labels.get(home, "Mes commandes"),
+                           "kind": {"/odoo": "admin", "/app": "atelier"}.get(home, "client")}
         values.update(client_nav=True, stars=_stars, manifest_url="/c/manifest.webmanifest")
         return request.render(template, values, **kw)
 
@@ -164,9 +171,8 @@ class LiputaClientPortal(http.Controller):
                           "password": post.get("password") or "", "type": "password"}
             try:
                 request.session.authenticate(request.db, credential)
-                user = request.env["res.users"].sudo().browse(request.session.uid)
-                if not user.share and redirect == "/c":
-                    redirect = "/app"
+                if redirect == "/c":  # sans destination précise : l'espace de ce compte
+                    redirect = liputa_home_url(request.env, request.session.uid)
                 return request.redirect(redirect, 303)
             except AccessDenied:
                 values["error"] = _("Wrong email or password.")

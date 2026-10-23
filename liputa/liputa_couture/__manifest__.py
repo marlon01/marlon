@@ -20,7 +20,7 @@ Liputa turns every tailoring workshop (atelier de couture) into a digital busine
   followed orders, installable on the phone, web push for clients, workshops and administrators
 """,
     "author": "Liputa",
-    "website": "https://liputa.app",
+    "website": "https://liputa.naxoris.com",
     "license": "LGPL-3",
     "depends": ["base", "web", "mail", "portal", "account", "contacts"],
     "external_dependencies": {"python": ["requests"]},

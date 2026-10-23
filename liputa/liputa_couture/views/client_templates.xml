@@ -9,9 +9,11 @@
                 <svg class="lp-ico" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10l9-6 9 6v10H3z"/><path d="M9 20v-6h6v6"/></svg>
                 <span>Ateliers</span>
             </a>
-            <a t-attf-class="lp-tab #{'lp-on' if client_tab == 'commandes' else ''}" href="/c/commandes">
-                <svg class="lp-ico" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12l2 5H4z"/><path d="M4 8h16v13H4z"/><path d="M9 12h6"/></svg>
-                <span>Mes commandes</span>
+            <a t-attf-class="lp-tab #{'lp-on' if client_tab == 'commandes' else ''}" t-att-href="space['url'] if client_user else '/c/commandes'">
+                <svg t-if="space['kind'] == 'client'" class="lp-ico" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12l2 5H4z"/><path d="M4 8h16v13H4z"/><path d="M9 12h6"/></svg>
+                <svg t-elif="space['kind'] == 'atelier'" class="lp-ico" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.1 15.9M14.5 14.5L20 20M8.1 8.1L12 12"/></svg>
+                <svg t-else="" class="lp-ico" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg>
+                <span t-out="space['label'] if client_user else 'Mes commandes'"/>
             </a>
             <a t-attf-class="lp-tab #{'lp-on' if client_tab == 'compte' else ''}" t-att-href="'/c/deconnexion' if client_user else '/c/connexion'">
                 <svg class="lp-ico" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>
@@ -28,7 +30,7 @@
             <div><b>Installez Liputa</b><br/><span class="lp-small" id="lp-install-text">Vos ateliers et vos commandes, sur l'écran d'accueil.</span></div>
             <button type="button" class="lp-btn lp-btn-primary lp-btn-sm" id="lp-install-btn">Installer</button>
         </div>
-        <div id="lp-push" class="lp-banner lp-banner-push" hidden="1" t-if="client_user">
+        <div id="lp-push" class="lp-banner lp-banner-push" hidden="1" t-if="client_user and client_user.share">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>
             <div><b>Soyez prévenu</b><br/><span class="lp-small">Une notification à chaque étape de votre commande, même téléphone verrouillé.</span></div>
             <button type="button" class="lp-btn lp-btn-tape lp-btn-sm" id="lp-push-btn">Activer</button>
@@ -52,7 +54,18 @@
             <t t-set="client_tab" t-value="'ateliers'"/>
             <main class="lp-public-wrap lp-client-wrap">
                 <header class="lp-client-hero">
-                    <img src="/liputa_couture/static/description/icon.svg" alt="" width="40" height="40"/>
+                    <div class="lp-client-top">
+                        <img src="/liputa_couture/static/description/icon.svg" alt="Liputa" width="40" height="40"/>
+                        <nav class="lp-client-account" aria-label="Compte">
+                            <t t-if="client_user">
+                                <a class="lp-btn lp-btn-primary lp-btn-sm" t-att-href="space['url']" t-out="space['label']"/>
+                            </t>
+                            <t t-else="">
+                                <a class="lp-btn lp-btn-line lp-btn-sm" href="/c/connexion">Se connecter</a>
+                                <a class="lp-btn lp-btn-primary lp-btn-sm" href="/c/inscription">Créer un compte</a>
+                            </t>
+                        </nav>
+                    </div>
                     <h1 class="lp-title">Trouvez votre atelier de couture</h1>
                     <p class="lp-muted">Les ateliers les mieux notés par leurs clients, en premier.</p>
                 </header>
@@ -196,8 +209,8 @@
             <main class="lp-auth-wrap">
                 <header class="lp-auth-hero">
                     <img src="/liputa_couture/static/description/icon.svg" alt="" width="52" height="52"/>
-                    <h1 class="lp-auth-title">Vos commandes, en un coup d'œil</h1>
-                    <p class="lp-auth-sub">Suivez vos tenues dans tous vos ateliers, sans appeler.</p>
+                    <h1 class="lp-auth-title">Bienvenue sur Liputa</h1>
+                    <p class="lp-auth-sub">Clients, ateliers, équipe Liputa : une seule connexion, chacun arrive dans son espace.</p>
                     <div class="lp-tape lp-tape-deco" aria-hidden="true"/>
                 </header>
                 <form method="post" action="/c/connexion" class="lp-sheet lp-auth-form" novalidate="1">
@@ -211,7 +224,8 @@
                     <button type="submit" class="lp-btn lp-btn-primary lp-btn-block">Se connecter</button>
                     <a class="lp-link lp-center" href="/web/reset_password">Mot de passe oublié</a>
                     <hr class="lp-hr"/>
-                    <a class="lp-btn lp-btn-ghost lp-btn-block" t-attf-href="/c/inscription?redirect=#{redirect}">Créer mon compte client</a>
+                    <a class="lp-btn lp-btn-ghost lp-btn-block" t-attf-href="/c/inscription?redirect=#{redirect}">Créer un compte client</a>
+                    <a class="lp-btn lp-btn-line lp-btn-block" href="/liputa/signup">Créer mon atelier</a>
                 </form>
             </main>
         </t>
@@ -228,6 +242,10 @@
                     <p class="lp-auth-sub">Gratuit. Notez vos ateliers et recevez une notification à chaque étape de vos commandes.</p>
                     <div class="lp-tape lp-tape-deco" aria-hidden="true"/>
                 </header>
+                <nav class="lp-seg lp-account-type" aria-label="Type de compte">
+                    <span class="lp-on" aria-current="page">Je suis client</span>
+                    <a href="/liputa/signup">J'ai un atelier</a>
+                </nav>
                 <form method="post" action="/c/inscription" class="lp-sheet lp-auth-form">
                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                     <input type="hidden" name="redirect" t-att-value="redirect"/>

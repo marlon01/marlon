@@ -65,8 +65,32 @@ liputa/
 | `liputa.cinetpay.site_id`, `liputa.cinetpay.api_key` | identifiants CinetPay (Mobile Money et cartes, Afrique francophone) |
 | `liputa.payment.secret.<fournisseur>` | secret HMAC du webhook générique `/liputa/payment/webhook/<fournisseur>` (autres agrégateurs) |
 
-5. Inscription publique d'un atelier : `https://votre-domaine/liputa/signup`.
-6. Adresse publique : fixer `web.base.url` à `https://votre-domaine` et `web.base.url.freeze` = `True` (FlexPay rappelle `https://votre-domaine/liputa/payment/flexpay/callback`).
+5. Inscription publique d'un atelier : `https://liputa.naxoris.com/liputa/signup` (ou depuis « Créer un compte » › « J'ai un atelier »).
+6. Adresse publique : fixer `web.base.url` à `https://liputa.naxoris.com` et `web.base.url.freeze` = `True` (liens de suivi, e-mails, notifications ; FlexPay rappelle `https://liputa.naxoris.com/liputa/payment/flexpay/callback`).
+
+## Mise en ligne sur https://liputa.naxoris.com
+
+Une seule adresse pour tout le monde :
+
+| Adresse | Qui | Contenu |
+|---|---|---|
+| `/` → `/c` | tout le monde | annuaire des ateliers (classés par note), WhatsApp, installation de l'application |
+| `/c/connexion` | tout le monde | connexion unique ; chacun arrive dans son espace |
+| `/c/inscription` | clients | compte client gratuit ; « J'ai un atelier » mène à `/liputa/signup` |
+| `/c/commandes` | clients | mes commandes, par atelier |
+| `/app` | ateliers | mon atelier (application Liputa) |
+| `/odoo` | administrateurs plateforme | administration |
+
+Après connexion : administrateur plateforme → `/odoo`, utilisateur d'un atelier → `/app`, client → `/c/commandes`. Les anciennes adresses (`/app/login`, `/web/login`) mènent à `/c/connexion` ; `/web/login?operator=1` reste la porte de secours des opérateurs.
+
+Configuration du serveur :
+
+- **HTTPS obligatoire** (certificat Let's Encrypt sur le proxy) : installation de l'application et notifications push n'existent qu'en HTTPS.
+- `odoo.conf` : `proxy_mode = True`, `list_db = False`, `dbfilter = ^liputa$` (une base), `workers` ≥ 2 et le cron actif (`max_cron_threads` ≥ 1 : il envoie les notifications push).
+- Proxy (nginx) : `liputa.naxoris.com` vers Odoo (port 8069), `/websocket` vers le port 8072, en-têtes `X-Forwarded-Host`, `X-Forwarded-Proto`, `X-Forwarded-For`.
+- Paramètres système : `web.base.url = https://liputa.naxoris.com`, `web.base.url.freeze = True`.
+- Notifications push : rien à configurer, les clés VAPID sont créées à la première inscription d'un téléphone. Pour l'administration, autoriser les notifications du navigateur dans Odoo.
+
 
 ### Choix automatique de l'agrégateur selon le pays
 | Pays de l'atelier | Agrégateur | Parcours dans l'application |

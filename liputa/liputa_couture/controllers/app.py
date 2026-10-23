@@ -8,6 +8,7 @@ import base64
 import binascii
 import logging
 from datetime import timedelta
+from urllib.parse import quote
 
 from odoo import _, fields, http
 from odoo.exceptions import AccessDenied, UserError, ValidationError
@@ -26,6 +27,19 @@ MAX_IMAGE_B64 = 8 * 1024 * 1024  # ~6 MB binary
 
 def _is_platform_admin(env, uid):
     return env["res.users"].sudo().browse(uid).has_group("liputa_couture.group_liputa_saas_admin")
+
+
+def liputa_home_url(env, uid):
+    """Where an account lands after login: the platform administration, its workshop
+    app, or its orders (clients). Anonymous visitors land on the workshop directory."""
+    user = env["res.users"].sudo().browse(uid) if uid else None
+    if not user or user._is_public():
+        return "/c"
+    if user.share:
+        return "/c/commandes"
+    if user.has_group("liputa_couture.group_liputa_saas_admin"):
+        return "/odoo"
+    return "/app"
 
 
 def _clean_image(value):
@@ -49,11 +63,14 @@ class LiputaHome(Home):
     """Route workshop users to the Liputa app instead of the Odoo web client."""
 
     def _login_redirect(self, uid, redirect=None):
-        if not redirect and request.env["res.users"].sudo().browse(uid).share:
-            return "/c"  # clients : le portail des ateliers
-        if not redirect and not _is_platform_admin(request.env, uid):
-            return "/app"
+        if not redirect:
+            return liputa_home_url(request.env, uid)
         return super()._login_redirect(uid, redirect=redirect)
+
+    @http.route()
+    def index(self, s_action=None, db=None, **kw):
+        # Tout le monde arrive sur l'annuaire des ateliers (https://liputa.naxoris.com/).
+        return request.redirect("/c", 303)
 
     @http.route()
     def web_client(self, s_action=None, **kw):
@@ -66,9 +83,9 @@ class LiputaHome(Home):
 
     @http.route()
     def web_login(self, redirect=None, **kw):
-        # The branded login lives at /app/login; /web/login stays for operators (?operator=1).
+        # Une seule page de connexion pour tous (/c/connexion) ; /web/login reste aux opérateurs (?operator=1).
         if request.httprequest.method == "GET" and not kw.get("operator") and not request.session.uid:
-            return request.redirect("/app/login", 303)
+            return request.redirect("/c/connexion" + ("?redirect=%s" % quote(redirect) if redirect else ""), 303)
         return super().web_login(redirect=redirect, **kw)
 
 
@@ -80,7 +97,7 @@ class LiputaApp(http.Controller):
         if subpath in ("login", "manifest.webmanifest", "sw.js"):
             return request.not_found()
         if not request.session.uid or request.env.user._is_public():
-            return request.redirect("/app/login", 303)
+            return request.redirect("/c/connexion?redirect=/app", 303)
         if request.env.user.share:
             return request.redirect("/c", 303)  # un client n'a rien à faire dans l'application atelier
         return request.render("liputa_couture.app_shell", {
@@ -89,6 +106,8 @@ class LiputaApp(http.Controller):
 
     @http.route("/app/login", type="http", auth="public", methods=["GET", "POST"], csrf=True, sitemap=False)
     def app_login(self, **post):
+        if request.httprequest.method == "GET":
+            return request.redirect("/c/connexion?redirect=/app", 303)  # page de connexion unique
         values = {"login": post.get("login", ""), "error": None}
         if request.httprequest.method == "POST":
             credential = {"login": (post.get("login") or "").strip().lower(),
@@ -103,7 +122,7 @@ class LiputaApp(http.Controller):
     @http.route("/app/logout", type="http", auth="user", sitemap=False)
     def app_logout(self, **kw):
         request.session.logout(keep_db=True)
-        return request.redirect("/app/login", 303)
+        return request.redirect("/c", 303)
 
     @http.route("/app/manifest.webmanifest", type="http", auth="public", sitemap=False)
     def manifest(self, **kw):

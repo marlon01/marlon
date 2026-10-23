@@ -23,14 +23,14 @@ export async function call(route, params = {}) {
         throw new ApiError(t("Something went wrong. Check your connection and try again."));
     }
     if (res.status === 401 || res.redirected) {
-        window.location.assign("/app/login");
+        window.location.assign("/c/connexion?redirect=/app");
         return new Promise(() => {});
     }
     const data = await res.json().catch(() => ({}));
     if (data.error) {
         const name = data.error.data?.name || "";
         if (name.includes("SessionExpired")) {
-            window.location.assign("/app/login");
+            window.location.assign("/c/connexion?redirect=/app");
             return new Promise(() => {});
         }
         const userFacing = /UserError|ValidationError|AccessError|MissingError/.test(name);

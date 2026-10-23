@@ -473,3 +473,9 @@ img { max-width: 100%; display: block; }
 .lp-review-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .lp-wa-round { width: 48px; height: 48px; min-height: 48px; padding: 0; border-radius: 50%; flex-shrink: 0; }
 .lp-rating .lp-muted { white-space: nowrap; }
+/* Bandeau de compte du portail et choix client / atelier à l'inscription. */
+.lp-client-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.lp-client-account { display: flex; gap: 8px; }
+.lp-account-type { display: grid; grid-template-columns: 1fr 1fr; margin: 14px 16px; }
+.lp-account-type > * { display: grid; place-items: center; min-height: 44px; border-radius: 11px; text-decoration: none; font-weight: 600; font-size: 15px; color: var(--ink-soft); }
+.lp-account-type > .lp-on { background: var(--sheet); color: var(--ink); box-shadow: 0 1px 3px rgba(22, 33, 62, 0.12); }

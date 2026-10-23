@@ -104,6 +104,10 @@
                     <p class="lp-auth-sub">14 jours gratuits, puis 5 000 FC par mois. Paiement par Mobile Money.</p>
                     <div class="lp-tape lp-tape-deco" aria-hidden="true"/>
                 </header>
+                <nav class="lp-seg lp-account-type" aria-label="Type de compte">
+                    <a href="/c/inscription">Je suis client</a>
+                    <span class="lp-on" aria-current="page">J'ai un atelier</span>
+                </nav>
                 <form method="post" action="/liputa/signup" class="lp-sheet lp-auth-form">
                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                     <p t-if="error" class="lp-alert lp-alert-danger" role="alert" t-out="error"/>
@@ -124,7 +128,7 @@
                     <label class="lp-field"><span class="lp-label">Mot de passe (10 caractères minimum)</span>
                         <input class="lp-input" name="password" type="password" required="1" minlength="10" autocomplete="new-password"/></label>
                     <button class="lp-btn lp-btn-tape lp-btn-block" type="submit">Créer mon atelier</button>
-                    <a class="lp-link lp-center" href="/app/login">J'ai déjà un compte</a>
+                    <a class="lp-link lp-center" href="/c/connexion?redirect=/app">J'ai déjà un compte</a>
                 </form>
             </main>
         </t>
