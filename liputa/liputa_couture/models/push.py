@@ -83,9 +83,11 @@ class LiputaPushMessage(models.Model):
 
     @api.model
     def _vapid_keys(self):
+        # Lecture seule : get_web_push_vapid_public_key() crée les clés s'il n'y en a pas et
+        # efface alors tous les appareils. Les clés naissent à la première inscription d'un téléphone.
         params = self.env["ir.config_parameter"].sudo()
-        public = self.env["mail.push.device"].sudo().get_web_push_vapid_public_key()
-        return params.get_param("mail.web_push_vapid_private_key"), public
+        return (params.get_param("mail.web_push_vapid_private_key"),
+                params.get_param("mail.web_push_vapid_public_key"))
 
     def _post(self, session, device, payload, private_key, public_key):
         endpoint = device.endpoint
@@ -112,6 +114,9 @@ class LiputaPushMessage(models.Model):
         if not queue:
             return
         private_key, public_key = self._vapid_keys()
+        if not private_key or not public_key:
+            queue.unlink()  # aucun téléphone n'a pu s'abonner sans clés : rien à envoyer
+            return
         session = Session()
         gone = set()
         for msg in queue:

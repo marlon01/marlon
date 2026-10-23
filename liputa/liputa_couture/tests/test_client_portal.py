@@ -34,6 +34,7 @@ class TestClientPortal(LiputaCommon):
         cls.client_1 = _client(cls.env, "awa@client.cd", "Awa Mbuyi")
         cls.client_2 = _client(cls.env, "ruth@client.cd", "Ruth Kanku")
         cls.client_3 = _client(cls.env, "esther@client.cd", "Esther Ilunga")
+        cls.env["mail.push.device"].get_web_push_vapid_public_key()  # clés VAPID, comme après une inscription
 
     def test_directory_ranks_by_rating_and_needs_reviews_to_climb(self):
         Review = self.env["liputa.review"]
@@ -213,7 +214,10 @@ class TestClientPortalHttp(HttpCase):
         ok = self.url_open("/c/commande/%s/suivre" % order.id, data={
             "csrf_token": self._csrf(tracking.text), "access_token": order.access_token}, allow_redirects=False)
         self.assertIn(ok.status_code, (302, 303))
-        self.assertIn(user.partner_id, order.client_partner_ids)
+        self.assertTrue(ok.headers["Location"].endswith("/c/commande/%s" % order.id), ok.headers["Location"])
+        order.invalidate_recordset()
+        # Lu en administrateur : le chef d'atelier ne voit pas le contact du client (cloisonnement).
+        self.assertIn(user.partner_id, order.sudo().client_partner_ids)
         mine = self.url_open("/c/commandes")
         self.assertIn("Atelier Wax Royal", mine.text)
         self.assertEqual(self.url_open("/c/commande/%s" % order.id).status_code, 200)
