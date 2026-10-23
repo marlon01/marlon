@@ -94,4 +94,5 @@ else:
     env.cr.commit()
     print("Atelier créé :", company.name, "| connexion :", LOGIN, "/", PASSWORD)
     for o in Order.search([]):
-        print(" ", o.name, o.partner_id.name, "|", o.stage_id.name, "| livraison", o.delivery_date_promised)
+        print(" ", o.name, o.partner_id.name, "|", o.stage_id.name, "| livraison", o.delivery_date_promised,
+              "| suivi", o.sudo()._liputa_tracking_url())
