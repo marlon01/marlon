@@ -63,7 +63,7 @@ NORMA est un **SFE** (système de facturation d'entreprise) relié à l'**e-MCF*
 ```bash
 odoo-bin -d <base> -i norma_facture --test-tags /norma_facture --stop-after-init
 ```
-50 tests : moteur fiscal (arrondis SFE, taxe spécifique, groupe N, montant en lettres), normalisation, numérotation, immuabilité, avoirs, cloisonnement, rôles, devises, exportation, types de client, écart de calcul, coupure réseau, confirmation incertaine, intégrité, hôtel, restaurant, pages HTTP (impression, vérification, export, connexion), régressions de sécurité.
+52 tests : moteur fiscal (arrondis SFE, taxe spécifique, groupe N, montant en lettres), normalisation, numérotation, immuabilité, avoirs, cloisonnement, rôles, devises, exportation, types de client, écart de calcul, coupure réseau, confirmation incertaine, intégrité, hôtel, restaurant, pages HTTP (impression, vérification, export, connexion), régressions de sécurité.
 
 ## Avant l'homologation : ce qui reste à faire avec la DGI
 

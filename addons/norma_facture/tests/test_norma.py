@@ -432,6 +432,31 @@ class TestNormaSecurity(TestNorma):
         self.assertEqual(inv['state'], 'failed')
         self.assertTrue(inv['emcf_blocked'])
 
+    def test_identity_change_revokes_verification(self):
+        self._production_site()
+        self.call(self.admin, 'company_save', name=self.shop.name, nif='A1234567B', rccm='CD/KNG/RCCM/26-B-99999')
+        self.assertFalse(self.shop.norma_verified)
+        self.assertEqual(self.site.emcf_mode, 'simulation')
+
+    def test_new_token_requires_positive_nif_check(self):
+        self.shop.norma_verified = True
+        self.call(self.admin, 'site_save', id=self.site.id, name='Siège', code='KIN-01', emcf_mode='test',
+                  emcf_url='https://developper.dgirdc.cd/edef', emcf_token='nouveau', emcf_isf='ABC-DEF-01')
+        self.assertTrue(self.site.emcf_nif_mismatch)
+        inv = self.sell()
+        self.assertEqual(inv['state'], 'failed')
+        self.assertIn('Tester la connexion', inv['emcf_error'])
+
+        def status(method, url, json=None, timeout=None, headers=None, **kw):
+            resp = requests.Response()
+            resp.status_code = 200
+            resp._content = b'{"status": true, "version": "1.3", "nim": "CD01000001"}'  # pas de NIF
+            return resp
+        with patch('odoo.addons.norma_facture.models.emcf.requests.request', side_effect=status):
+            self.env['norma.emcf']._status(self.site)
+        self.assertTrue(self.site.emcf_nif_mismatch)
+        self.assertEqual(self.site.emcf_status, 'error')
+
     def test_checkout_is_idempotent(self):
         p = self.product(self.shop, 'Eau minérale 1,5 L')
         params = dict(site_id=self.site.id, lines=[{'product_id': p.id, 'quantity': 1}],

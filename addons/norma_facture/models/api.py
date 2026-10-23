@@ -738,10 +738,17 @@ class NormaApi(models.AbstractModel):
         if company.norma_nif and data['norma_nif'] != company.norma_nif and self.env['norma.invoice'].sudo().search_count(
                 [('company_id', '=', company.id), ('state', '=', 'normalized')]):
             raise UserError(_("Le NIF ne se modifie plus après la première facture normalisée."))
+        identity_changed = any((data[f] or False) != (company[f] or False) for f in ('norma_nif', 'norma_rccm', 'norma_idnat'))
         try:
             company.write(data)
         except ValidationError as exc:
             raise UserError(exc.args[0])
+        if identity_changed and company.norma_verified:
+            # L'identité fiscale vérifiée par la plateforme a changé : nouvelle vérification obligatoire.
+            company.norma_verified = False
+            company.norma_site_ids.write({'emcf_mode': 'simulation', 'emcf_status': 'unknown', 'emcf_nif_mismatch': True})
+            self._audit('company.unverified', _("Identité fiscale modifiée : vérification de la plateforme à refaire, "
+                                                "établissements repassés en simulation"), {})
         if vals.get('logo'):
             raw = base64.b64decode(str(vals['logo']).split(',')[-1], validate=False)
             if len(raw) > 1024 * 1024:
@@ -794,8 +801,11 @@ class NormaApi(models.AbstractModel):
                 raise AccessError(_("Établissement introuvable."))
             if site.code != data['code'] and self.env['norma.invoice'].sudo().search_count([('site_id', '=', site.id)]):
                 raise UserError(_("Le code d'un établissement qui a déjà facturé ne se modifie plus."))
-            if data.get('emcf_mode', site.emcf_mode) != site.emcf_mode or 'emcf_token' in data:
-                data.update(emcf_status='unknown', emcf_status_message=False, emcf_nim=False)
+            if (data.get('emcf_mode', site.emcf_mode) != site.emcf_mode or 'emcf_token' in data
+                    or data.get('emcf_url', site.emcf_url) != site.emcf_url):
+                # Nouveau jeton, nouvelle adresse ou nouveau mode : aucune transmission avant un test de connexion
+                # réussi qui confirme le NIF du jeton.
+                data.update(emcf_status='unknown', emcf_status_message=False, emcf_nim=False, emcf_nif_mismatch=True)
         if data.get('emcf_mode') in ('test', 'production') and not company.norma_verified:
             raise UserError(_("Votre entreprise doit d'abord être vérifiée par l'administration NORMA (NIF, RCCM, "
                               "mandat) avant de relier l'e-MCF de la DGI. Contactez le support."))
@@ -806,7 +816,7 @@ class NormaApi(models.AbstractModel):
             if id:
                 site.write(data)
             else:
-                site = Site.create(dict(data, company_id=company.id))
+                site = Site.create(dict(data, company_id=company.id, emcf_nif_mismatch=data.get('emcf_mode', 'simulation') != 'simulation'))
         except ValidationError as exc:
             raise UserError(exc.args[0])
         self._audit('site.save', _("Établissement %s (%s) — mode %s") % (site.name, site.code, site.emcf_mode),

@@ -335,16 +335,22 @@ class NormaInvoice(models.Model):
         self.ensure_one()
         inv = self.with_context(norma_engine=True).sudo()
         # Une seule transmission à la fois par facture (tâche planifiée et reprise manuelle simultanées).
-        try:
-            with self.env.cr.savepoint(flush=False):
-                self.env.cr.execute('SELECT id FROM norma_invoice WHERE id = %s FOR UPDATE NOWAIT', (inv.id,))
-        except Exception:
+        # Verrou de session PostgreSQL : il survit aux validations intermédiaires et se libère dans le finally.
+        self.env.cr.execute('SELECT pg_try_advisory_lock(%s, %s)', (7072, inv.id))
+        if not self.env.cr.fetchone()[0]:
             raise UserError(_("Cette facture est déjà en cours de transmission. Réessayez dans un instant."))
-        inv.invalidate_recordset()
-        if inv.state not in ('failed', 'uncertain'):
-            return inv
-        if inv.emcf_blocked and not manual:
-            return inv
+        try:
+            inv.invalidate_recordset()
+            if inv.state not in ('failed', 'uncertain'):
+                return inv
+            if inv.emcf_blocked and not manual:
+                return inv
+            return inv._transmit_locked()
+        finally:
+            self.env.cr.execute('SELECT pg_advisory_unlock(%s, %s)', (7072, inv.id))
+
+    def _transmit_locked(self):
+        inv = self
         Emcf = self.env['norma.emcf']
         inv.write({'emcf_attempts': inv.emcf_attempts + 1})
         self._commit()

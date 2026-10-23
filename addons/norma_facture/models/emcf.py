@@ -164,12 +164,14 @@ class NormaEmcf(models.AbstractModel):
         ok = bool(data.get('status')) and data.get('tokenValid', True) is not False
         nif = (data.get('nif') or '').strip()
         msg = _("DEF opérationnel — version %s") % (data.get('version') or '?')
-        if nif and site.company_id.norma_nif and nif != site.company_id.norma_nif:
-            ok, msg = False, _("Le jeton appartient au NIF %s, différent du NIF de l'entreprise.") % nif
+        mismatch = not nif or nif != (site.company_id.norma_nif or '')
+        if mismatch:
+            ok, msg = False, (_("Le jeton appartient au NIF %s, différent du NIF de l'entreprise.") % nif if nif
+                              else _("La DGI n'a pas indiqué le NIF du jeton : transmission refusée."))
         if data.get('tokenValid') is False:
             msg = _("Jeton e-MCF expiré.")
         site.write({'emcf_status': 'ok' if ok else 'error', 'emcf_status_message': msg[:200],
-                    'emcf_nif_mismatch': bool(nif and nif != site.company_id.norma_nif),
+                    'emcf_nif_mismatch': mismatch,
                     'emcf_nim': data.get('nim') or site.emcf_nim, 'emcf_checked_at': fields.Datetime.now()})
         return site
 
@@ -254,7 +256,8 @@ class NormaEmcf(models.AbstractModel):
                 raise EmcfError(_("Entreprise non encore vérifiée par la plateforme : transmission à la DGI impossible."),
                                 blocking=True)
             if site.emcf_nif_mismatch:
-                raise EmcfError(_("Le jeton e-MCF appartient à un autre NIF que celui de l'entreprise."), blocking=True)
+                raise EmcfError(_("Dispositif fiscal non confirmé : lancez « Tester la connexion » dans Paramètres > "
+                                  "Établissements (le NIF du jeton doit être celui de l'entreprise)."), blocking=True)
         if inv.state == 'uncertain':
             # Seule une demande encore en attente peut être confirmée à nouveau sans risque de doublon.
             if not inv.emcf_uid:
