@@ -18,12 +18,12 @@ mal compris).
 | 8 | 28,7 | Didier | Passe à Sélecta. Notre dernier concours a été corrigé en une minute. | Message de Didier ; espoir |
 | 9 | 33,8 | narratrice | Le lendemain, Clarisse crée son concours en ligne. Plus aucune copie à imprimer. | Tableau de bord ; copies barrées |
 | 10 | 39,0 | narratrice | Elle choisit : l'épreuve se passera dans ses locaux. Ou à distance, si besoin. | Vraie console : « En présentiel, dans vos locaux » choisi, « À distance » en pointillé |
-| 11 | 44,2 | narratrice | Les candidats déposent leur dossier sur place. Chacun reçoit sa convocation et son code personnel. | Accueil : Grâce dépose son dossier, tampon « Dossier reçu », convocation avec code et salle |
-| 12 | 50,6 | narratrice | Le jour de l'épreuve, Grâce compose en ligne, dans la salle d'examen de l'entreprise. | Salle A : postes, candidats, surveillante ; code d'accès, épreuve |
-| 13 | 56,0 | narratrice | La caméra vérifie son identité, puis compare son visage toutes les huit secondes. | Caméra, « Identité vérifiée », contrôle toutes les 8 s |
-| 14 | 61,3 | narratrice | Aucune copie à corriger : le résultat s'affiche dès la dernière page. | Résultat « Admis » |
-| 15 | 65,6 | Grâce | Admise ? Déjà ? | Bras levés, éclats |
-| 16 | 67,8 | narratrice | Le procès-verbal est scellé, et chacun peut le vérifier avec son code Q R. | Sceau, page de vérification |
-| 17 | 72,6 | narratrice | Les candidats n'appellent plus pour connaître leurs résultats. Et personne ne les conteste. | Téléphone barré, « 0 réclamation » |
-| 18 | 77,6 | narratrice | Pour la première fois, Clarisse respire. | Yeux fermés, lumière qui s'ouvre |
-| 19 | 81,8 | narratrice | Sélecta. Des concours en ligne aux résultats incontestables. | Marque, slogan, essai gratuit, contacts, selecta.naxoris.com · By Naxoris |
+| 11 | 44,2 | narratrice | Les candidats déposent leur dossier sur place. Chacun reçoit ensuite son code personnel, par SMS ou WhatsApp. | Accueil : Grâce dépose son dossier, tampon « Dossier reçu » ; le code arrive sur son téléphone (SMS, WhatsApp) avec la salle |
+| 12 | 51,6 | narratrice | Le jour de l'épreuve, Grâce compose en ligne, dans la salle d'examen de l'entreprise. | Salle A : postes, candidats, surveillante ; code d'accès, épreuve |
+| 13 | 57,0 | narratrice | La caméra vérifie son identité, puis compare son visage toutes les huit secondes. | Caméra, « Identité vérifiée », contrôle toutes les 8 s |
+| 14 | 62,3 | narratrice | Aucune copie à corriger : le résultat s'affiche dès la dernière page. | Résultat « Admis » |
+| 15 | 66,6 | Grâce | Admise ? Déjà ? | Bras levés, éclats |
+| 16 | 68,8 | narratrice | Le procès-verbal est scellé, et chacun peut le vérifier avec son code Q R. | Sceau, page de vérification |
+| 17 | 73,6 | narratrice | Les candidats n'appellent plus pour connaître leurs résultats. Et personne ne les conteste. | Téléphone barré, « 0 réclamation » |
+| 18 | 78,6 | narratrice | Pour la première fois, Clarisse respire. | Yeux fermés, lumière qui s'ouvre |
+| 19 | 82,8 | narratrice | Sélecta. Des concours en ligne aux résultats incontestables. | Marque, slogan, essai gratuit, contacts, selecta.naxoris.com · By Naxoris |

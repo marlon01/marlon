@@ -16,14 +16,20 @@
     #dp-dossier i { position: absolute; left: 24px; right: 24px; height: 10px; border-radius: 5px; background: rgba(20, 33, 61, 0.25); }
     #dp-tampon { position: absolute; left: 790px; top: 560px; padding: 10px 22px; border: 6px solid #138a5e; border-radius: 12px; color: #138a5e; background: rgba(251,252,254,.85);
       font-family: "Inter"; font-weight: 800; font-size: 34px; transform: rotate(-8deg); white-space: nowrap; }
-    #dp-convoc { position: absolute; left: 600px; top: 290px; width: 720px; padding: 30px 36px; border-radius: 16px; background: #fbfcfe; box-shadow: 0 24px 50px rgba(20,33,61,.25);
-      font-family: "Inter"; color: #14213d; border-top: 12px solid #0b5fff; }
-    #dp-convoc small { display: block; font-size: 28px; color: #4a587a; }
-    #dp-convoc b { display: block; font-size: 40px; margin: 6px 0 14px; }
-    #dp-code { font-family: "Inter"; font-weight: 800; font-size: 44px; white-space: nowrap; letter-spacing: 0.08em; color: #0b5fff; padding: 10px 18px; border: 3px dashed #0b5fff; border-radius: 12px; display: inline-block; }
-    #dp-lieu { display: block; font-size: 28px; margin-top: 16px; color: #14213d; }
+    /* Le code arrive sur le téléphone de Grâce, par SMS ou WhatsApp. */
+    #dp-tel { position: absolute; left: 700px; top: 150px; width: 520px; height: 900px; border-radius: 60px; background: #0f1a30; padding: 20px; box-shadow: 0 30px 60px rgba(20,33,61,.35); }
+    #dp-ecran { position: relative; width: 480px; height: 860px; border-radius: 44px; overflow: hidden; background: #ece5dd; }
+    #dp-tete { height: 140px; background: #075e54; display: flex; align-items: center; gap: 16px; padding: 46px 24px 0; font-family: "Inter"; color: #fbfcfe; }
+    #dp-tete i { width: 64px; height: 64px; border-radius: 50%; background: #fbfcfe; color: #14213d; display: grid; place-items: center; font-style: normal; font-weight: 800; font-size: 32px; flex: none; }
+    #dp-tete b { display: block; font-size: 30px; }
+    #dp-tete small { display: block; font-size: 24px; color: #c9e7dc; }
+    #dp-bulle { position: absolute; left: 22px; right: 46px; top: 190px; padding: 22px 24px; border-radius: 6px 22px 22px 22px; background: #fbfcfe; font-family: "Inter";
+      font-size: 29px; line-height: 1.35; color: #14213d; box-shadow: 0 2px 0 rgba(0,0,0,.06); }
+    #dp-code { display: inline-block; margin: 6px 0; padding: 6px 12px; border: 3px dashed #0b5fff; border-radius: 10px; font-weight: 800; font-size: 31px; letter-spacing: 0.04em; color: #0b5fff; white-space: nowrap; }
+    #dp-canaux { position: absolute; left: 0; right: 0; bottom: 34px; display: flex; justify-content: center; gap: 14px; }
+    #dp-canaux span { padding: 10px 22px; border-radius: 30px; background: #fbfcfe; font-family: "Inter"; font-weight: 700; font-size: 28px; color: #14213d; box-shadow: 0 6px 14px rgba(20,33,61,.12); }
     /* États de départ cachés, posés en CSS pour l'image 0. */
-    #dp-tampon, #dp-convoc { opacity: 0; }
+    #dp-tampon, #dp-tel, #dp-bulle, #dp-canaux span { opacity: 0; }
   </style>
 
   <div id="root" data-composition-id="depot" data-width="1920" data-height="1080">
@@ -34,12 +40,11 @@
     <div id="dp-comptoir"></div>
     <div id="dp-dossier"><i style="top: 50px"></i><i style="top: 80px"></i><i style="top: 110px; right: 90px"></i></div>
     <div id="dp-tampon">DOSSIER REÇU · 14 OCT.</div>
-    <div id="dp-convoc">
-      <small>Convocation · Groupe Mayombe</small>
-      <b>Grâce Ngalula Kasongo</b>
-      <div id="dp-code">K7QP-M4XR-9TBA</div>
-      <span id="dp-lieu">Épreuve en présentiel : siège du Groupe Mayombe, salle A</span>
-    </div>
+    <div id="dp-tel"><div id="dp-ecran">
+      <div id="dp-tete"><i>S</i><div><b>SELECTA · Groupe Mayombe</b><small>maintenant</small></div></div>
+      <div id="dp-bulle">Votre code d'accès SELECTA :<br/><span id="dp-code">K7QP-M4XR-9TBA</span><br/>En présentiel : siège du Groupe Mayombe, salle A. Présentez une pièce d'identité.</div>
+      <div id="dp-canaux"><span>SMS</span><span>WhatsApp</span></div>
+    </div></div>
   </div>
 
   <script>
@@ -52,8 +57,8 @@
 
     R.mood(tl, "dc", "sourire", 0.05);
     R.mood(tl, "dg", "espoir", 0.05);
-    R.breathe(tl, "dc", 0, 6.8);
-    R.breathe(tl, "dg", 0.6, 6.8);
+    R.breathe(tl, "dc", 0, 7.8);
+    R.breathe(tl, "dg", 0.6, 7.8);
     R.blinks(tl, "dc", [1.9, 4.6]);
     R.blinks(tl, "dg", [2.7, 5.6]);
 
@@ -69,11 +74,14 @@
     tl.to("#dp-dossier", { keyframes: [{ y: 26, duration: 0.05 }, { y: 20, duration: 0.1 }] }, 2.67);
 
     tl.to("#dp-tampon", { opacity: 0, duration: 0.25, ease: "power2.in" }, 3.2);
-    // 3,4 s : la convocation et le code personnel.
-    tl.fromTo("#dp-convoc", { opacity: 0, y: 160, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "back.out(1.5)", immediateRender: false }, 3.4);
-    tl.fromTo("#dp-code", { scale: 1 }, { keyframes: [{ scale: 1.08, duration: 0.2 }, { scale: 1, duration: 0.25 }] }, 4.5);
-    R.mood(tl, "dg", "joie", 4.6);
+    // 3,5 s : « Chacun reçoit son code personnel, par SMS ou WhatsApp. »
+    tl.fromTo("#dp-tel", { opacity: 0, y: 700 }, { opacity: 1, y: 0, duration: 0.6, ease: "expo.out", immediateRender: false }, 3.4);
+    tl.fromTo("#dp-bulle", { opacity: 0, y: 30, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.35, ease: "back.out(1.6)", immediateRender: false }, 4.2);
+    tl.to("#dp-tel", { keyframes: [{ rotation: -1.5, duration: 0.05 }, { rotation: 1.5, duration: 0.05 }, { rotation: -1, duration: 0.05 }, { rotation: 0, duration: 0.05 }] }, 4.2);
+    tl.fromTo("#dp-code", { scale: 1 }, { keyframes: [{ scale: 1.08, duration: 0.2 }, { scale: 1, duration: 0.25 }] }, 5.0);
+    tl.fromTo("#dp-canaux span", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.3, stagger: 0.25, ease: "back.out(1.8)", immediateRender: false }, 5.4);
     R.look(tl, "dg", -10, -6, 4.0);
+    R.mood(tl, "dg", "joie", 4.9);
     window.__timelines["depot"] = tl;
   </script>
 </template>

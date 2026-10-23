@@ -10,7 +10,7 @@ GOAL:    un DRH se reconnaît dans Clarisse (coût, piles de copies, attente, co
 ARC:     difficulté → conseil d'un collègue (Didier) → concours créé en ligne, mode de passage choisi
          (présentiel par défaut, ou à distance) → dossiers déposés sur place, convocation et code
          → l'épreuve de Grâce dans la salle d'examen, résultat immédiat → résultats scellés, plus d'appels ni de réclamations → Clarisse respire.
-OUTPUT:  HyperFrames, 1920 x 1080, 30 fps, 90 s, voix off française.
+OUTPUT:  HyperFrames, 1920 x 1080, 30 fps, 91 s, voix off française.
 PERSOS:  dessin vectoriel animé (assets/rig.js, même mécanique que le film Liputa) :
          Clarisse, DRH, tailleur bleu nuit, lunettes, badge ; Grâce, candidate, tresses, haut violet ;
          Didier, DRH ami, présent par son message (avatar « D »).
@@ -26,7 +26,7 @@ LOOK:    bureau gris-bleu #EEF1F6, nuit #1B2440 sous la lampe, accueil et salle 
 |---|---|---|
 | `bureau` | 0–25 s | Titre « Kinshasa » ; Clarisse et l'affiche « 40 agents » ; factures (salles, surveillants, copies : 6 900 $) ; piles de copies et semaines de correction ; Grâce appelle pour ses résultats ; réclamation « CONTESTÉ », copies identiques ; la nuit. |
 | `message` | 24,6–44 s | La nuit, Didier écrit : « Passe à SELECTA… corrigé en une minute » ; l'espoir. L'aube : tableau de bord ; copies barrées ; vraie console « Mode de passage » : en présentiel (choisi) ou à distance. |
-| `depot` | 43,6–50,4 s | Accueil de l'entreprise : Grâce dépose son dossier, Clarisse le tamponne, convocation avec code personnel et salle. |
-| `epreuve` | 50–68,2 s | Salle A de l'entreprise (postes, candidats, surveillante) : code d'accès, épreuve, caméra (identité vérifiée, visage toutes les 8 s), résultat « Admis » ; « Admise ? Déjà ? ». |
-| `confiance` | 67–81,2 s | Procès-verbal scellé (sceau), vérification par code QR sur téléphone ; téléphone barré, « 0 réclamation » ; Clarisse respire. |
-| `fin` | 80,8–90 s | Clarisse et Grâce saluent ; sceau, SELECTA, slogan, essai gratuit de 14 jours ; contacts, selecta.naxoris.com · By Naxoris. |
+| `depot` | 43,6–51,4 s | Accueil de l'entreprise : Grâce dépose son dossier, Clarisse le tamponne ; le code personnel arrive sur son téléphone par SMS ou WhatsApp, avec la salle. |
+| `epreuve` | 51–69,2 s | Salle A de l'entreprise (postes, candidats, surveillante) : code d'accès, épreuve, caméra (identité vérifiée, visage toutes les 8 s), résultat « Admis » ; « Admise ? Déjà ? ». |
+| `confiance` | 68–82,2 s | Procès-verbal scellé (sceau), vérification par code QR sur téléphone ; téléphone barré, « 0 réclamation » ; Clarisse respire. |
+| `fin` | 81,8–91 s | Clarisse et Grâce saluent ; sceau, SELECTA, slogan, essai gratuit de 14 jours ; contacts, selecta.naxoris.com · By Naxoris. |
