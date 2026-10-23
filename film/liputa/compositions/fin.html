@@ -16,6 +16,9 @@
     /* États de départ cachés, posés en CSS pour l'image 0. */
     #fi-slogan, #fi-appel, #fi-essai, #fc-haut { opacity: 0; }
     #fc-robe { opacity: 1; }
+    #fi-contact { position: absolute; left: 0; right: 0; top: 860px; text-align: center; font-family: "Bricolage Grotesque"; font-weight: 600; font-size: 36px; color: #16213e; }
+    #fi-by { position: absolute; left: 0; right: 0; top: 920px; text-align: center; font-family: "Bricolage Grotesque"; font-weight: 700; font-size: 30px; letter-spacing: 0.08em; color: #4a5372; }
+    #fi-contact, #fi-by { opacity: 0; }
   </style>
 
   <div id="root" data-composition-id="fin" data-width="1920" data-height="1080">
@@ -29,6 +32,8 @@
     <div id="fi-appel">Trouvez votre atelier, ou créez le vôtre</div>
     <div id="fi-essai">Gratuit pour les clients · Ateliers : 14 jours d'essai</div>
     <div id="fi-ruban"></div>
+    <div id="fi-contact">Pour plus d'informations : +243 831 509 420 · +243 828 317 540</div>
+    <div id="fi-by">liputa.naxoris.com · By Naxoris</div>
   </div>
 
   <script>
@@ -60,6 +65,9 @@
     tl.fromTo("#fi-appel", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.3, ease: "power3.out", immediateRender: false }, 3.6);
     tl.fromTo("#fi-essai", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power2.out", immediateRender: false }, 4.6);
     tl.fromTo("#fi-ruban", { scaleX: 0 }, { scaleX: 1, duration: 0.6, ease: "expo.out" }, 4.7);
+    // Contact et éditeur, pendant que la voix termine.
+    tl.fromTo("#fi-contact", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out", immediateRender: false }, 5.6);
+    tl.fromTo("#fi-by", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out", immediateRender: false }, 6.0);
     window.__timelines["fin"] = tl;
   </script>
 </template>

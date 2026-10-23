@@ -39,6 +39,11 @@
             </head>
             <body t-attf-class="lp-body lp-public #{body_class or ''} #{'lp-client' if client_nav else ''}">
                 <t t-out="0"/>
+                <footer class="lp-footer">
+                    <p>Pour plus d'informations, contactez
+                        <a href="tel:+243831509420">+243 831 509 420</a> ou <a href="tel:+243828317540">+243 828 317 540</a></p>
+                    <p class="lp-footer-by">By Naxoris</p>
+                </footer>
                 <t t-if="client_nav" t-call="liputa_couture.client_tabbar"/>
             </body>
         </html>

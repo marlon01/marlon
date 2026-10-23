@@ -265,6 +265,8 @@ class TestLiputaLanding(HttpCase):
         page = self.url_open("/")
         self.assertIn("Trouvez votre atelier", page.text)
         self.assertIn("Créer un compte", page.text)
+        self.assertIn("tel:+243831509420", page.text)
+        self.assertIn("By Naxoris", page.text)
 
     def test_one_login_each_account_to_its_space(self):
         Company = self.env["res.company"]

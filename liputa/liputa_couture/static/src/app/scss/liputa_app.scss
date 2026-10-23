@@ -479,3 +479,12 @@ img { max-width: 100%; display: block; }
 .lp-account-type { display: grid; grid-template-columns: 1fr 1fr; margin: 14px 16px; }
 .lp-account-type > * { display: grid; place-items: center; min-height: 44px; border-radius: 11px; text-decoration: none; font-weight: 600; font-size: 15px; color: var(--ink-soft); }
 .lp-account-type > .lp-on { background: var(--sheet); color: var(--ink); box-shadow: 0 1px 3px rgba(22, 33, 62, 0.12); }
+/* Pied de page des pages publiques : contact et éditeur. */
+.lp-footer { max-width: 520px; margin: 0 auto; padding: 8px 16px calc(24px + var(--safe-bottom)); text-align: center; font-size: 14px; color: var(--muted); }
+.lp-footer p { margin: 0 0 4px; }
+.lp-footer a { color: var(--ink); font-weight: 650; white-space: nowrap; text-decoration: none; }
+.lp-footer-by { font-weight: 700; letter-spacing: 0.04em; color: var(--ink-soft); }
+.lp-client .lp-client-wrap { padding-bottom: 12px; }
+.lp-client .lp-footer { padding-bottom: calc(var(--tabbar-h) + var(--safe-bottom) + 20px); }
+.lp-auth .lp-footer { color: #B7C2DC; }
+.lp-auth .lp-footer a, .lp-auth .lp-footer-by { color: #FFFFFF; }

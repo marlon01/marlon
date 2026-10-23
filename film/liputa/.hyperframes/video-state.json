@@ -1,7 +1,7 @@
 {
   "version": 1,
   "historyId": "e6b09929-5229-4b12-aab2-295a990c108b",
-  "currentRevision": "e5f5d3ba-8ce6-4285-aca5-9518cb17fc88",
+  "currentRevision": "b97fa3f0-eabf-496a-929f-c903870bed6f",
   "pendingChanges": false,
   "files": {
     "AGENTS.md": {
@@ -185,8 +185,8 @@
       "content": "/root/.cache/hyperframes/history/e6b09929-5229-4b12-aab2-295a990c108b/blobs/c1/c174bfce53a729418d57a8ad8625e7247c793a22fef8e2851e3cfa3de9cd8280"
     },
     "compositions/fin.html": {
-      "hash": "904aea29107a3940f9f73d2473795ac4e0a6d90a9c71efa1fbbef557bfdf156f",
-      "content": "/root/.cache/hyperframes/history/e6b09929-5229-4b12-aab2-295a990c108b/blobs/90/904aea29107a3940f9f73d2473795ac4e0a6d90a9c71efa1fbbef557bfdf156f"
+      "hash": "f813cf4d43eff4da9acbd53303685e25a3c06e128e9472cd420e5d45ddc230ad",
+      "content": "/root/.cache/hyperframes/history/e6b09929-5229-4b12-aab2-295a990c108b/blobs/f8/f813cf4d43eff4da9acbd53303685e25a3c06e128e9472cd420e5d45ddc230ad"
     },
     "hyperframes.json": {
       "hash": "35a6d4ea79ebe911f0d81705f7aace5d8ff0316b745b0311d56af50c9c237cb7",
@@ -297,8 +297,8 @@
       "content": "/root/.cache/hyperframes/history/e6b09929-5229-4b12-aab2-295a990c108b/blobs/2e/2e59bd7a8e4c80e7e88dcaf0d72b1d008abab2f83803acbd198b9025ad14fa20"
     },
     "REVIEW.md": {
-      "hash": "280429025bcb6eb124431c6a677858f23fdc8e2d9343494669ef1b6492a3eb4b",
-      "content": "/root/.cache/hyperframes/history/e6b09929-5229-4b12-aab2-295a990c108b/blobs/28/280429025bcb6eb124431c6a677858f23fdc8e2d9343494669ef1b6492a3eb4b"
+      "hash": "d58c08c13a4e97f50a924d86c790f0e4bda8e479c0187b4e52cad8c3a178b5fc",
+      "content": "/root/.cache/hyperframes/history/e6b09929-5229-4b12-aab2-295a990c108b/blobs/d5/d58c08c13a4e97f50a924d86c790f0e4bda8e479c0187b4e52cad8c3a178b5fc"
     },
     "assets/audio/phrases/18.wav": {
       "hash": "de845438b0af1d39dc8e6b36c03a88f6e8d3cc00ece21de00f520575d1cd97a6",
@@ -878,12 +878,31 @@
           "after": "/root/.cache/hyperframes/history/e6b09929-5229-4b12-aab2-295a990c108b/blobs/de/deb3efdc0d67292a32a3694171ebf14251716195d262f64bf1665d9bc0fbc15e"
         }
       }
+    },
+    "b97fa3f0-eabf-496a-929f-c903870bed6f": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1792751807929,
+      "endedAt": 1792751807934,
+      "files": {
+        "compositions/fin.html": {
+          "before": "/root/.cache/hyperframes/history/e6b09929-5229-4b12-aab2-295a990c108b/blobs/90/904aea29107a3940f9f73d2473795ac4e0a6d90a9c71efa1fbbef557bfdf156f",
+          "after": "/root/.cache/hyperframes/history/e6b09929-5229-4b12-aab2-295a990c108b/blobs/f8/f813cf4d43eff4da9acbd53303685e25a3c06e128e9472cd420e5d45ddc230ad"
+        },
+        "REVIEW.md": {
+          "before": "/root/.cache/hyperframes/history/e6b09929-5229-4b12-aab2-295a990c108b/blobs/28/280429025bcb6eb124431c6a677858f23fdc8e2d9343494669ef1b6492a3eb4b",
+          "after": "/root/.cache/hyperframes/history/e6b09929-5229-4b12-aab2-295a990c108b/blobs/d5/d58c08c13a4e97f50a924d86c790f0e4bda8e479c0187b4e52cad8c3a178b5fc"
+        }
+      }
     }
   },
   "checks": {
     "latest": {
-      "revision": "e5f5d3ba-8ce6-4285-aca5-9518cb17fc88",
-      "id": "98dd2e09-a034-4ffe-9ef0-9803bf7d4efa"
+      "revision": "b97fa3f0-eabf-496a-929f-c903870bed6f",
+      "id": "d73b777b-0d73-4d4b-96c6-844023d30352"
     },
     "revisions": {
       "c00e585e-f53d-46dd-b327-737f0067c602": [
@@ -1239,6 +1258,35 @@
           "inputScope": "local-project-files",
           "attribution": "recorded-revision"
         }
+      ],
+      "b97fa3f0-eabf-496a-929f-c903870bed6f": [
+        {
+          "id": "d73b777b-0d73-4d4b-96c6-844023d30352",
+          "scope": "project",
+          "report": "/home/user/marlon/film/liputa/.hyperframes/artifacts/checks/d73b777b-0d73-4d4b-96c6-844023d30352.json",
+          "metadata": {
+            "ok": true,
+            "browserSkipped": false,
+            "options": {
+              "samples": 9,
+              "atTransitions": false,
+              "maxIssues": 80,
+              "collapseStatic": true,
+              "tolerance": 2,
+              "timeout": 3000,
+              "contrast": true,
+              "strict": false,
+              "snapshots": false,
+              "browserGpuMode": "auto"
+            }
+          },
+          "createdAt": 1792751842875,
+          "contentHash": "cec904877411d683754d1c1b6b8ccd74c92e7891d37484dc89233835839d5c6f",
+          "revision": "b97fa3f0-eabf-496a-929f-c903870bed6f",
+          "inputFingerprint": "7fc5d1bba57abe856d154c86f00aa7dd56588f7d339031c51227708b6d3a8651",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        }
       ]
     },
     "unversioned": [
@@ -1273,8 +1321,8 @@
   },
   "snapshots": {
     "latest": {
-      "revision": "e5f5d3ba-8ce6-4285-aca5-9518cb17fc88",
-      "id": "06d4494f-549a-45a6-bdae-7cd63e7c7637-3"
+      "revision": "b97fa3f0-eabf-496a-929f-c903870bed6f",
+      "id": "ff3359fb-7bc9-4d28-8fa2-f298f00c1b70-0"
     },
     "revisions": {
       "613d70f1-b0f1-40da-b7e7-7ee7a8cd8c0b": [
@@ -3296,6 +3344,28 @@
           "contentHash": "36cef88ff8b826654c4bedd765b67ad6b7b39a6be4c46f75f7346682ad8525fa",
           "revision": "e5f5d3ba-8ce6-4285-aca5-9518cb17fc88",
           "inputFingerprint": "6774dc7e0937e09b42be8931ba6934013e770e3503cd80f62c1017628dd78d4f",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        }
+      ],
+      "b97fa3f0-eabf-496a-929f-c903870bed6f": [
+        {
+          "scope": "full",
+          "id": "ff3359fb-7bc9-4d28-8fa2-f298f00c1b70-0",
+          "image": "/tmp/claude-0/-home-user-marlon/ba9b8476-a770-59b3-8436-6822198ec8d7/scratchpad/fe/frame-00-at-88s.png",
+          "time": 88,
+          "metadata": {
+            "width": 1920,
+            "height": 1080,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1792751847847,
+          "contentHash": "0d0d8a8a6f140d239e27e3757d9f76aba0bf7c00f477d7c27973742316844806",
+          "revision": "b97fa3f0-eabf-496a-929f-c903870bed6f",
+          "inputFingerprint": "7fc5d1bba57abe856d154c86f00aa7dd56588f7d339031c51227708b6d3a8651",
           "inputScope": "local-project-files",
           "attribution": "recorded-revision"
         }
