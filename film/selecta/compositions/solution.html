@@ -1,0 +1,94 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; background: #eef1f7; }
+    /* Un cadre = un vrai écran SELECTA (captures de la base de démonstration, en français). */
+    .so-cadre { position: absolute; overflow: hidden; border-radius: 20px; background: #fbfcfe; box-shadow: 0 20px 48px rgba(20, 33, 61, 0.16); }
+    .so-image { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+    .so-image img { display: block; width: 100%; }
+    .so-repere { position: absolute; border: 6px solid #0b5fff; border-radius: 18px; }
+    .so-repere.so-rond { border-radius: 50%; }
+    .so-repere.so-ok { border-color: #0e8a5f; }
+    .so-repere.so-alerte { border-color: #c2352b; border-width: 4px; border-radius: 12px; }
+  </style>
+
+  <div id="root" data-composition-id="solution" data-width="1920" data-height="1080">
+    <!-- L'épreuve en ligne : page de questions et chronomètre. -->
+    <div id="so-epreuve" class="so-cadre clip" data-start="0.4" data-duration="4.9" style="left: 160px; top: 220px; width: 1600px; height: 640px">
+      <div class="so-image" id="so-epreuve-img" style="width: 1600px">
+        <img src="assets/shots/epreuve.png" alt="Page d'épreuve" />
+        <div class="so-repere so-rond" id="so-epreuve-rep" style="left: 1297px; top: 48px; width: 242px; height: 238px"></div>
+      </div>
+    </div>
+
+    <!-- Le code personnel, valable une seule fois. -->
+    <div id="so-code" class="so-cadre clip" data-start="5.3" data-duration="4.3" style="left: 160px; top: 60px; width: 1600px; height: 960px">
+      <div class="so-image" id="so-code-img" style="width: 1600px"><img src="assets/shots/code.png" alt="Saisie du code d'accès" /></div>
+    </div>
+
+    <!-- Surveillance en direct : identité, incidents, disqualification. -->
+    <div id="so-surv" class="so-cadre clip" data-start="9.4" data-duration="5.7" style="left: 160px; top: 60px; width: 1600px; height: 960px">
+      <div class="so-image" id="so-surv-img" style="width: 1600px">
+        <img src="assets/shots/surveillance.png" alt="Surveillance en direct" />
+        <div class="so-repere so-alerte" id="so-surv-rep" style="left: 1158px; top: 392px; width: 392px; height: 142px"></div>
+      </div>
+    </div>
+
+    <!-- Le résultat du candidat, dès la dernière page. -->
+    <div id="so-resultat" class="so-cadre clip" data-start="15.1" data-duration="4.1" style="left: 210px; top: 303px; width: 1500px; height: 474px">
+      <div class="so-image" id="so-resultat-img" style="width: 1500px">
+        <img src="assets/shots/resultat.png" alt="Résultat du candidat" />
+        <div class="so-repere so-ok" id="so-resultat-rep" style="left: 480px; top: 108px; width: 318px; height: 108px"></div>
+      </div>
+    </div>
+
+    <!-- Le procès-verbal scellé : empreinte SHA-256 et QR code. -->
+    <div id="so-pv" class="so-cadre clip" data-start="19.2" data-duration="2.9" style="left: 160px; top: 430px; width: 1600px; height: 220px">
+      <div class="so-image" style="width: 1600px"><img src="assets/shots/pv.png" alt="Procès-verbal scellé" /></div>
+      <div class="so-repere so-ok" id="so-pv-rep" style="left: 650px; top: 20px; width: 138px; height: 138px"></div>
+    </div>
+
+    <!-- La page publique de vérification : document authentique. -->
+    <div id="so-verif" class="so-cadre clip" data-start="22.0" data-duration="3.4" style="left: 502px; top: 70px; width: 916px; height: 940px">
+      <div class="so-image" style="width: 916px"><img src="assets/shots/verification.png" alt="Vérification publique du procès-verbal" /></div>
+    </div>
+  </div>
+
+  <script>
+    const tl = gsap.timeline({ paused: true });
+
+    // Épreuve : la copie contestée laisse place à l'écran (il arrive grand et se pose).
+    tl.fromTo("#so-epreuve", { scale: 1.18, opacity: 0, filter: "blur(12px)" }, { scale: 1, opacity: 1, filter: "blur(0px)", duration: 0.6, ease: "expo.out" }, 0.4);
+    tl.fromTo("#so-epreuve-rep", { opacity: 0, scale: 1.2 }, { opacity: 1, scale: 1, duration: 0.3, ease: "expo.out" }, 2.2);
+    // Poussée sur la question : on lit l'épreuve comme le candidat.
+    tl.fromTo("#so-epreuve-img", { scale: 1, x: 0, y: 0 }, { scale: 1.3, x: 10, y: -180, duration: 0.6, ease: "power2.inOut" }, 3.3);
+    tl.to("#so-epreuve", { x: -260, opacity: 0, filter: "blur(10px)", duration: 0.22, ease: "power3.in" }, 5.08);
+
+    // Code : arrive dans le prolongement, puis poussée sur le champ du code.
+    tl.fromTo("#so-code", { x: 260, opacity: 0, filter: "blur(10px)" }, { x: 0, opacity: 1, filter: "blur(0px)", duration: 0.35, ease: "expo.out" }, 5.3);
+    tl.fromTo("#so-code-img", { scale: 1, x: 0, y: 0 }, { scale: 2, x: -1600, y: -500, duration: 0.6, ease: "power2.inOut" }, 6.0);
+    tl.to("#so-code", { opacity: 0, filter: "blur(8px)", duration: 0.2, ease: "power2.in" }, 9.4);
+
+    // Surveillance : vue d'ensemble, compteurs, puis l'incident qui disqualifie.
+    tl.fromTo("#so-surv", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power3.out" }, 9.4);
+    tl.fromTo("#so-surv-img", { scale: 1, x: 0, y: 0 }, { scale: 1.25, x: -386, y: 0, duration: 0.55, ease: "power2.inOut" }, 10.3);
+    tl.to("#so-surv-img", { scale: 1.7, x: -1120, y: -305, duration: 0.6, ease: "power2.inOut" }, 12.3);
+    tl.fromTo("#so-surv-rep", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "power2.out" }, 12.9);
+    tl.to("#so-surv", { y: -180, opacity: 0, filter: "blur(10px)", duration: 0.22, ease: "power3.in" }, 14.88);
+
+    // Résultat : arrive par le bas, net.
+    tl.fromTo("#so-resultat", { y: 200, opacity: 0, filter: "blur(10px)" }, { y: 0, opacity: 1, filter: "blur(0px)", duration: 0.4, ease: "expo.out" }, 15.1);
+    // Poussée sur la décision au moment où la voix dit « le résultat s'affiche ».
+    tl.fromTo("#so-resultat-img", { scale: 1, x: 0, y: 0 }, { scale: 1.22, x: -40, y: -40, duration: 0.7, ease: "power2.inOut" }, 16.7);
+    tl.fromTo("#so-resultat-rep", { opacity: 0, scale: 1.15 }, { opacity: 1, scale: 1, duration: 0.3, ease: "expo.out" }, 17.5);
+    tl.to("#so-resultat", { opacity: 0, filter: "blur(8px)", duration: 0.2, ease: "power2.in" }, 19.0);
+
+    // Procès-verbal : le QR code est repéré, puis il ouvre la page de vérification.
+    tl.fromTo("#so-pv", { opacity: 0, scale: 0.94, filter: "blur(8px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.3, ease: "power3.out" }, 19.2);
+    tl.fromTo("#so-pv-rep", { opacity: 0, scale: 1.25 }, { opacity: 1, scale: 1, duration: 0.3, ease: "expo.out" }, 20.0);
+    tl.to("#so-pv", { scale: 1.6, opacity: 0, transformOrigin: "45% 40%", duration: 0.35, ease: "power3.in" }, 21.8);
+    tl.fromTo("#so-verif", { opacity: 0, scale: 0.7, filter: "blur(10px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.45, ease: "expo.out" }, 22.0);
+    tl.to("#so-verif", { opacity: 0, filter: "blur(8px)", duration: 0.25, ease: "power2.in" }, 25.0);
+
+    window.__timelines["solution"] = tl;
+  </script>
+</template>

@@ -1,0 +1,47 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; background: #fbfcfe; }
+    /* Le sceau de SELECTA (repris de la page de présentation), frappé une fois. */
+    #fi-sceau { position: absolute; left: 800px; top: 90px; width: 320px; height: 320px; color: #0b5fff; }
+    #fi-marque { position: absolute; left: 0; right: 0; top: 470px; display: flex; justify-content: center; align-items: center; gap: 28px; }
+    #fi-pastille {
+      width: 112px; height: 112px; border-radius: 50%; display: grid; place-items: center; background: #14213d; color: #fff;
+      font-family: "Inter"; font-weight: 700; font-size: 60px; box-shadow: 0 0 0 7px #fbfcfe, 0 0 0 11px #0b5fff;
+    }
+    #fi-mot { font-family: "Inter"; font-weight: 700; font-size: 124px; letter-spacing: 0.16em; color: #14213d; line-height: 1; }
+    #fi-mot span { display: inline-block; }
+    #fi-slogan { position: absolute; left: 0; right: 0; top: 660px; text-align: center; font-family: "Inter"; font-weight: 600; font-size: 56px; letter-spacing: -0.01em; color: #14213d; }
+    #fi-essai { position: absolute; left: 0; right: 0; top: 765px; text-align: center; font-family: "Inter"; font-size: 40px; color: #4a587a; }
+    #fi-filet { position: absolute; left: 760px; width: 400px; top: 835px; height: 5px; border-radius: 3px; background: #0b5fff; transform-origin: 50% 50%; }
+  </style>
+
+  <div id="root" data-composition-id="fin" data-width="1920" data-height="1080">
+    <svg id="fi-sceau" viewBox="0 0 120 120" aria-hidden="true">
+      <defs><path id="fi-arc" d="M60 60m-44 0a44 44 0 1 1 88 0a44 44 0 1 1-88 0" /></defs>
+      <circle cx="60" cy="60" r="56" fill="none" stroke="currentColor" stroke-width="2.5" />
+      <circle cx="60" cy="60" r="34" fill="none" stroke="currentColor" stroke-width="1.5" />
+      <text font-family="Inter" font-size="10.5" font-weight="700" fill="currentColor"><textPath href="#fi-arc" textLength="272" lengthAdjust="spacing">SCELLÉ · SELECTA · VÉRIFIABLE ·</textPath></text>
+      <path d="M47 61l9 9 18-19" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+    <div id="fi-marque">
+      <div id="fi-pastille">S</div>
+      <div id="fi-mot"><span>S</span><span>E</span><span>L</span><span>E</span><span>C</span><span>T</span><span>A</span></div>
+    </div>
+    <div id="fi-slogan">Des concours en ligne aux résultats incontestables</div>
+    <div id="fi-essai">Essai gratuit de 14 jours</div>
+    <div id="fi-filet"></div>
+  </div>
+
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    // Le sceau est frappé comme un tampon officiel.
+    tl.fromTo("#fi-sceau", { scale: 1.8, rotation: -24, opacity: 0 }, { scale: 1, rotation: 0, opacity: 1, duration: 0.32, ease: "power4.in" }, 0.25);
+    tl.fromTo("#fi-pastille", { scale: 0.5, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.45, ease: "back.out(1.5)" }, 0.6);
+    tl.fromTo("#fi-mot span", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.16, stagger: 0.07, ease: "power3.out" }, 0.8);
+    // Le slogan arrive sur la voix, puis l'offre d'essai.
+    tl.fromTo("#fi-slogan", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 1.75);
+    tl.fromTo("#fi-essai", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "power2.out" }, 3.2);
+    tl.fromTo("#fi-filet", { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: "expo.out" }, 3.3);
+    window.__timelines["fin"] = tl;
+  </script>
+</template>

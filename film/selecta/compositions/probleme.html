@@ -1,0 +1,156 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; }
+    /* Le bureau du jury : gris administratif, papier partout. Illustration assumée. */
+    #pb-fond {
+      position: absolute; inset: 0; background-color: #d5dae3;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' seed='3'/><feColorMatrix values='0 0 0 0 .1  0 0 0 0 .13  0 0 0 0 .2  0 0 0 .07 0'/></filter><rect width='240' height='240' filter='url(%23n)'/></svg>");
+    }
+    #pb-sur { position: absolute; left: 120px; top: 92px; font-family: "Inter"; font-weight: 600; font-size: 34px; color: #4a587a; letter-spacing: 0.01em; }
+
+    /* Piles de copies. */
+    .pb-pile { position: absolute; bottom: 120px; width: 300px; transform-origin: 50% 100%; }
+    .pb-feuille {
+      position: absolute; left: 0; width: 300px; height: 22px; background: #fbfcfe; border: 1px solid #c3ccde; border-radius: 3px;
+      box-shadow: 0 2px 0 rgba(20, 33, 61, 0.06);
+    }
+    .pb-dessus {
+      position: absolute; left: 0; width: 300px; height: 210px; background: #fbfcfe; border: 1px solid #c3ccde; border-radius: 4px;
+      padding: 22px 24px; font-family: "Inter";
+    }
+    .pb-dessus b { display: block; font-size: 34px; letter-spacing: 0.12em; color: #14213d; margin-bottom: 18px; }
+    .pb-dessus i { display: block; height: 9px; border-radius: 5px; background: #dce2ee; margin-bottom: 14px; }
+
+    /* Ce que coûte un concours sur papier. */
+    .pb-etiquette {
+      position: absolute; display: flex; align-items: center; gap: 18px; background: #fbfcfe; border-radius: 18px;
+      padding: 20px 28px; box-shadow: 0 16px 34px rgba(20, 33, 61, 0.16); font-family: "Inter"; color: #14213d;
+    }
+    .pb-etiquette .pb-ico { width: 64px; height: 64px; border-radius: 16px; background: #14213d; display: grid; place-items: center; flex: none; }
+    .pb-etiquette .pb-ico svg { width: 36px; height: 36px; stroke: #fbfcfe; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .pb-etiquette b { display: block; font-size: 36px; font-weight: 700; }
+    .pb-etiquette small { display: block; font-size: 28px; color: #4a587a; }
+    #pb-semaine { display: inline-block; min-width: 36px; }
+
+    /* Le téléphone du candidat : aucune nouvelle. */
+    #pb-tel {
+      position: absolute; left: 1360px; top: 170px; width: 380px; height: 740px; border-radius: 56px; background: #14213d;
+      padding: 18px; box-shadow: 0 30px 60px rgba(20, 33, 61, 0.3);
+    }
+    #pb-ecran { width: 100%; height: 100%; border-radius: 40px; background: linear-gradient(180deg, #2b3a5c, #14213d); padding: 70px 26px; font-family: "Inter"; color: #fbfcfe; text-align: center; }
+    #pb-ecran .pb-heure { font-size: 96px; font-weight: 300; letter-spacing: -0.02em; }
+    #pb-ecran .pb-date { font-size: 28px; opacity: 0.85; margin-bottom: 60px; }
+    #pb-notif { background: rgba(251, 252, 254, 0.16); border-radius: 22px; padding: 22px; text-align: left; }
+    #pb-notif b { display: block; font-size: 28px; margin-bottom: 6px; }
+    #pb-notif span { font-size: 28px; opacity: 0.9; }
+
+    /* La copie contestée. */
+    #pb-copie {
+      position: absolute; left: 660px; top: 150px; width: 600px; height: 800px; background: #fbfcfe; border-radius: 8px;
+      box-shadow: 0 30px 70px rgba(20, 33, 61, 0.28); padding: 56px 60px; font-family: "Inter"; color: #14213d;
+    }
+    #pb-copie h3 { font-size: 30px; letter-spacing: 0.14em; margin-bottom: 10px; }
+    #pb-copie p { font-size: 28px; color: #4a587a; margin-bottom: 46px; }
+    #pb-copie i { display: block; height: 12px; border-radius: 6px; background: #dce2ee; margin-bottom: 30px; }
+    #pb-tampon {
+      position: absolute; left: 90px; top: 340px; padding: 18px 30px; border: 7px solid #c2352b; border-radius: 12px; color: #c2352b;
+      font-family: "Inter"; font-weight: 800; font-size: 54px; letter-spacing: 0.08em; transform: rotate(-12deg); white-space: nowrap;
+    }
+    #pb-question { position: absolute; right: 70px; bottom: 70px; font-family: "Inter"; font-weight: 800; font-size: 220px; line-height: 1; color: #c2352b; }
+  </style>
+
+  <div id="root" data-composition-id="probleme" data-width="1920" data-height="1080">
+    <div id="pb-fond">
+      <div id="pb-sur">Un concours de recrutement, sur papier</div>
+
+      <div id="pb-piles" style="position: absolute; inset: 0">
+        <div class="pb-pile" id="pb-pile-1" style="left: 420px; height: 520px"></div>
+        <div class="pb-pile" id="pb-pile-2" style="left: 810px; height: 620px"></div>
+        <div class="pb-pile" id="pb-pile-3" style="left: 1200px; height: 440px"></div>
+      </div>
+
+      <div class="pb-etiquette" id="pb-salle" style="left: 150px; top: 230px">
+        <div class="pb-ico"><svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V4h10v17M15 9h4v12M10 12h.01"/></svg></div>
+        <div><b>Salles à louer</b><small>et à préparer</small></div>
+      </div>
+      <div class="pb-etiquette" id="pb-surveillant" style="left: 150px; top: 430px">
+        <div class="pb-ico"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></div>
+        <div><b>Surveillants à payer</b><small>dans chaque salle</small></div>
+      </div>
+      <div class="pb-etiquette" id="pb-correction" style="left: 150px; top: 630px">
+        <div class="pb-ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></div>
+        <div><b>Correction : semaine <span id="pb-semaine">1</span></b><small>copie par copie</small></div>
+      </div>
+
+      <div id="pb-tel">
+        <div id="pb-ecran">
+          <div class="pb-heure">18:40</div>
+          <div class="pb-date">Vendredi</div>
+          <div id="pb-notif"><b>Résultats du concours</b><span>Toujours aucune nouvelle.</span></div>
+        </div>
+      </div>
+
+      <div id="pb-copie">
+        <h3>COPIE N° 0427</h3>
+        <p>Épreuve écrite · page 1 sur 4</p>
+        <i style="width: 92%"></i><i style="width: 80%"></i><i style="width: 88%"></i><i style="width: 70%"></i>
+        <i style="width: 90%"></i><i style="width: 76%"></i><i style="width: 84%"></i><i style="width: 60%"></i>
+        <div id="pb-tampon">NOTE CONTESTÉE</div>
+        <div id="pb-question">?</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Construit les piles : des tranches de copies et une copie visible au sommet.
+    [["#pb-pile-1", 13], ["#pb-pile-2", 18], ["#pb-pile-3", 11]].forEach(([sel, n]) => {
+      const pile = document.querySelector(sel);
+      for (let i = 0; i < n; i++) {
+        const f = document.createElement("div");
+        f.className = "pb-feuille";
+        f.style.bottom = `${i * 24}px`;
+        f.style.left = `${((i * 37) % 11) - 5}px`;
+        pile.appendChild(f);
+      }
+      const top = document.createElement("div");
+      top.className = "pb-dessus";
+      top.style.bottom = `${n * 24}px`;
+      top.innerHTML = "<b>COPIE</b><i style='width:90%'></i><i style='width:72%'></i><i style='width:84%'></i><i style='width:60%'></i>";
+      pile.appendChild(top);
+    });
+
+    const tl = gsap.timeline({ paused: true });
+    // Image 0 : les piles sont déjà là, elles montent jusqu'à la « montagne ».
+    tl.set("#pb-piles", { scale: 1.22, transformOrigin: "50% 100%" }, 0);
+    tl.fromTo(".pb-pile", { scaleY: 0.62 }, { scaleY: 1, duration: 3.2, ease: "power2.out", stagger: 0.15 }, 0);
+    tl.set(["#pb-salle", "#pb-surveillant", "#pb-correction", "#pb-tel", "#pb-copie"], { opacity: 0 }, 0);
+
+    // 4,9–8,8 s : ce que ça coûte. Les piles se rangent à droite, les étiquettes arrivent sur la voix.
+    tl.to("#pb-piles", { x: 300, scale: 0.86, transformOrigin: "50% 100%", duration: 0.7, ease: "power2.inOut" }, 4.8);
+    tl.fromTo("#pb-salle", { opacity: 0, x: -60 }, { opacity: 1, x: 0, duration: 0.35, ease: "power3.out", immediateRender: false }, 5.3);
+    tl.fromTo("#pb-surveillant", { opacity: 0, x: -60 }, { opacity: 1, x: 0, duration: 0.35, ease: "power3.out", immediateRender: false }, 6.4);
+    tl.fromTo("#pb-correction", { opacity: 0, x: -60 }, { opacity: 1, x: 0, duration: 0.35, ease: "power3.out", immediateRender: false }, 7.3);
+    // Les semaines défilent.
+    [["2", 7.9], ["3", 8.4], ["4", 8.9]].forEach(([n, t]) => {
+      tl.set("#pb-semaine", { textContent: n }, t);
+      tl.fromTo("#pb-semaine", { yPercent: -40, opacity: 0.2 }, { yPercent: 0, opacity: 1, duration: 0.18, ease: "power3.out", immediateRender: false }, t);
+    });
+
+    // 9,0–11,9 s : les candidats attendent. Le bureau s'efface derrière le téléphone.
+    tl.to(["#pb-piles", "#pb-salle", "#pb-surveillant", "#pb-correction", "#pb-sur"], { opacity: 0.18, duration: 0.4, ease: "power2.inOut" }, 8.9);
+    tl.fromTo("#pb-tel", { opacity: 0, y: 700 }, { opacity: 1, y: 0, duration: 0.7, ease: "expo.out", immediateRender: false }, 9.0);
+    tl.fromTo("#pb-notif", { opacity: 0, scale: 0.92 }, { opacity: 1, scale: 1, duration: 0.3, ease: "power3.out" }, 9.9);
+
+    // 12,2–16,4 s : la note contestée.
+    tl.to("#pb-tel", { x: 700, opacity: 0, duration: 0.45, ease: "power3.in" }, 12.0);
+    tl.fromTo("#pb-copie", { opacity: 0, y: 160, rotation: 4 }, { opacity: 1, y: 0, rotation: -2, duration: 0.6, ease: "expo.out", immediateRender: false }, 12.25);
+    tl.fromTo("#pb-tampon", { opacity: 0, scale: 1.9 }, { opacity: 1, scale: 1, duration: 0.22, ease: "power4.in" }, 13.3);
+    tl.fromTo("#pb-question", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.6)" }, 14.3);
+
+    // 16,4 s : la copie devient l'écran — la copie grandit et le bureau disparaît.
+    tl.to("#pb-copie", { scale: 2.4, rotation: 0, opacity: 0, duration: 0.7, ease: "power3.in" }, 16.3);
+    tl.to("#pb-fond", { opacity: 0, duration: 0.5, ease: "power2.in" }, 16.6);
+
+    window.__timelines["probleme"] = tl;
+  </script>
+</template>

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>SELECTA — Des résultats incontestables</title>
+    <script src="assets/vendor/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: #eef1f7; }
+      #main { position: relative; width: 1920px; height: 1080px; overflow: hidden; }
+    </style>
+  </head>
+  <body>
+    <!-- Film SELECTA : le problème (coût, copies, attente, triche, fiabilité), puis la solution. SCRIPT.md, SPEC.md. -->
+    <div id="main" data-composition-id="main" data-start="0" data-duration="49.5" data-width="1920" data-height="1080">
+      <div id="probleme" data-composition-id="probleme" data-composition-src="compositions/probleme.html"
+           data-start="0" data-duration="17.4" data-track-index="1" data-track-kind="graphics"
+           data-width="1920" data-height="1080" style="z-index: 2"></div>
+      <div id="solution" data-composition-id="solution" data-composition-src="compositions/solution.html"
+           data-start="16.6" data-duration="25.4" data-track-index="2" data-track-kind="graphics"
+           data-width="1920" data-height="1080" style="z-index: 1"></div>
+      <div id="fin" data-composition-id="fin" data-composition-src="compositions/fin.html"
+           data-start="41.6" data-duration="7.9" data-track-index="3" data-track-kind="graphics"
+           data-width="1920" data-height="1080" style="z-index: 3"></div>
+
+      <!-- Voix off (SIWIS, CC-BY 4.0), une phrase par fichier. -->
+      <audio id="vo-01" class="clip" src="assets/audio/phrases/01.wav" data-duration="3.437" data-start="1.0" data-track-index="10" data-volume="1"></audio>
+      <audio id="vo-02" class="clip" src="assets/audio/phrases/02.wav" data-duration="3.81" data-start="4.9" data-track-index="10" data-volume="1"></audio>
+      <audio id="vo-03" class="clip" src="assets/audio/phrases/03.wav" data-duration="2.88" data-start="9.0" data-track-index="10" data-volume="1"></audio>
+      <audio id="vo-04" class="clip" src="assets/audio/phrases/04.wav" data-duration="3.998" data-start="12.2" data-track-index="10" data-volume="1"></audio>
+      <audio id="vo-05" class="clip" src="assets/audio/phrases/05.wav" data-duration="4.487" data-start="17.2" data-track-index="10" data-volume="1"></audio>
+      <audio id="vo-06" class="clip" src="assets/audio/phrases/06.wav" data-duration="3.894" data-start="22.0" data-track-index="10" data-volume="1"></audio>
+      <audio id="vo-07" class="clip" src="assets/audio/phrases/07.wav" data-duration="5.157" data-start="26.2" data-track-index="10" data-volume="1"></audio>
+      <audio id="vo-08" class="clip" src="assets/audio/phrases/08.wav" data-duration="3.955" data-start="31.7" data-track-index="10" data-volume="1"></audio>
+      <audio id="vo-09" class="clip" src="assets/audio/phrases/09.wav" data-duration="5.461" data-start="36.0" data-track-index="10" data-volume="1"></audio>
+      <audio id="vo-10" class="clip" src="assets/audio/phrases/10.wav" data-duration="4.26" data-start="42.2" data-track-index="10" data-volume="1"></audio>
+
+      <!-- Bruitages (Pixabay Content License), chacun sur une action visible. -->
+      <audio id="sfx-conteste" class="clip" src="assets/audio/error.mp3" data-duration="1.62" data-start="13.3" data-track-index="11" data-volume="0.3"></audio>
+      <audio id="sfx-ouverture" class="clip" src="assets/audio/whoosh-short.mp3" data-duration="0.575" data-start="16.7" data-track-index="12" data-volume="0.5"></audio>
+      <audio id="sfx-code" class="clip" src="assets/audio/typing.mp3" data-duration="1.541" data-start="22.4" data-track-index="11" data-volume="0.35"></audio>
+      <audio id="sfx-ecran" class="clip" src="assets/audio/whoosh.mp3" data-duration="0.575" data-start="26.0" data-track-index="12" data-volume="0.4"></audio>
+      <audio id="sfx-admis" class="clip" src="assets/audio/pop.mp3" data-duration="0.72" data-start="32.3" data-track-index="11" data-volume="0.35"></audio>
+      <audio id="sfx-pv" class="clip" src="assets/audio/click-soft.mp3" data-duration="0.366" data-start="36.6" data-track-index="12" data-volume="0.45"></audio>
+      <audio id="sfx-sceau" class="clip" src="assets/audio/impact-bass-2.mp3" data-duration="2.592" data-start="42.15" data-track-index="11" data-volume="0.5"></audio>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = gsap.timeline({ paused: true });
+    </script>
+  </body>
+</html>
