@@ -19,3 +19,18 @@ Plugins du marketplace officiel `anthropics/claude-plugins-official`, activés p
 | Docs | `context7` | Documentation à jour des librairies |
 | Langages | `typescript-lsp`, `pyright-lsp` | Diagnostics TS/JS et Python |
 | Maintenance | `claude-md-management` | Tenir ce fichier à jour |
+
+## Production vidéo (projet `film/`)
+
+Skills installés dans `.claude/skills/` par `npx skills add` (versions figées dans `skills-lock.json`, mise à jour : `npx skills update -p`) :
+
+| Source | Skills | Usage |
+|---|---|---|
+| `heygen-com/hyperframes` | `hyperframes`, `hyperframes-cli`, `hyperframes-registry`, `media-use`, `figma`, `slideshow`, `remotion-to-hyperframes` | Films en HTML rendus en MP4 (moteur du projet `film/`), musique, bruitages, voix, étalonnage |
+| `remotion-dev/skills` | `remotion-*` (dont `remotion-saas`, `remotion-captions`, `remotion-render`) | Vidéo programmatique en React, alternative à HyperFrames |
+
+- Lire `/hyperframes` avant toute vidéo. Rendu : `cd film && npm run check && npm run render` (FFmpeg et Chrome headless présents).
+- GSAP est servi en local (`film/assets/vendor/gsap.min.js`) : le Chrome de rendu n'atteint pas les CDN derrière le proxy, et un rendu ne doit rien charger du réseau.
+- Télémétrie HyperFrames coupée pour le projet (`HYPERFRAMES_NO_TELEMETRY=1` dans `.claude/settings.json`).
+- Images réelles des produits : `docs/captures/` (SELECTA fr/en, Liputa) ; nouvelles captures ou enregistrements d'écran avec `playwright`.
+- Connecteurs claude.ai déjà reliés : HyperFrames by HeyGen (projets hébergés et rendu cloud), Canva, Figma.

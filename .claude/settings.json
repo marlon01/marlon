@@ -1,4 +1,7 @@
 {
+  "env": {
+    "HYPERFRAMES_NO_TELEMETRY": "1"
+  },
   "extraKnownMarketplaces": {
     "claude-plugins-official": {
       "source": {
